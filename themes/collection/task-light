@@ -1,0 +1,26 @@
+# ghostty-config collection · task-light
+# Birren · Warm light over the work surface
+
+background = #fbfbf7
+foreground = #26261f
+cursor-color = #8a6a20
+cursor-text = #fbfbf7
+selection-background = #abbadb
+selection-foreground = #26261f
+
+palette = 0=#4b4b44
+palette = 1=#ae4a29
+palette = 2=#2d7c1d
+palette = 3=#8d6c21
+palette = 4=#2951ae
+palette = 5=#ae2984
+palette = 6=#1d7c6e
+palette = 7=#a3a399
+palette = 8=#252522
+palette = 9=#7e3c26
+palette = 10=#357e26
+palette = 11=#7e6326
+palette = 12=#26407e
+palette = 13=#7e2662
+palette = 14=#267e70
+palette = 15=#7b7b6f

@@ -1,0 +1,26 @@
+# ghostty-config collection · brown-comfort
+# Luscher · Brown, the bodily one
+
+background = #16110d
+foreground = #ded0c2
+cursor-color = #ae7448
+cursor-text = #16110d
+selection-background = #2d3959
+selection-foreground = #ded0c2
+
+palette = 0=#302e2c
+palette = 1=#d36d4b
+palette = 2=#62d34b
+palette = 3=#d3a14b
+palette = 4=#537ad5
+palette = 5=#d34ba8
+palette = 6=#4bcad3
+palette = 7=#cac7c4
+palette = 8=#5b5652
+palette = 9=#db9e8a
+palette = 10=#98db8a
+palette = 11=#dbbe8a
+palette = 12=#8aa2db
+palette = 13=#db8ac1
+palette = 14=#8ad5db
+palette = 15=#f0f0ef

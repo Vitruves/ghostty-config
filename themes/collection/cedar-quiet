@@ -1,0 +1,26 @@
+# ghostty-config collection · cedar-quiet
+# Calm · Green over brown, wooden and low
+
+background = #121611
+foreground = #ced3c6
+cursor-color = #6f8f4e
+cursor-text = #121611
+selection-background = #28485a
+selection-foreground = #ced3c6
+
+palette = 0=#2d302c
+palette = 1=#d16e4d
+palette = 2=#63d14d
+palette = 3=#d1cc4d
+palette = 4=#4d9ad1
+palette = 5=#d14da7
+palette = 6=#4dd1bd
+palette = 7=#c5cac4
+palette = 8=#545b52
+palette = 9=#d99f8c
+palette = 10=#99d98c
+palette = 11=#d9d68c
+palette = 12=#8cb9d9
+palette = 13=#d98cc1
+palette = 14=#8cd9ce
+palette = 15=#eff0ef

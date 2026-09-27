@@ -1,0 +1,26 @@
+# ghostty-config collection · unique-hues
+# Opponent · The four hues that look mixed with nothing
+
+background = #0e1014
+foreground = #d0d4dc
+cursor-color = #c85a4a
+cursor-text = #0e1014
+selection-background = #323463
+selection-foreground = #d0d4dc
+
+palette = 0=#2c2d30
+palette = 1=#db5643
+palette = 2=#5cdb43
+palette = 3=#dba443
+palette = 4=#6e6fe3
+palette = 5=#db43ab
+palette = 6=#43d1db
+palette = 7=#c4c6ca
+palette = 8=#52555b
+palette = 9=#e09085
+palette = 10=#94e085
+palette = 11=#e0bf85
+palette = 12=#8586e0
+palette = 13=#e085c3
+palette = 14=#85dae0
+palette = 15=#efeff0

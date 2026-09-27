@@ -1,0 +1,26 @@
+# ghostty-config collection · toasted-oat
+# Warmth · Beige with body
+
+background = #f7f2e6
+foreground = #2d2820
+cursor-color = #846428
+cursor-text = #f7f2e6
+selection-background = #a9b5d1
+selection-foreground = #2d2820
+
+palette = 0=#4b4944
+palette = 1=#ae4a29
+palette = 2=#2d7c1d
+palette = 3=#8d6721
+palette = 4=#2951ae
+palette = 5=#ae2984
+palette = 6=#1d7c6e
+palette = 7=#a3a099
+palette = 8=#252422
+palette = 9=#7e3c26
+palette = 10=#357e26
+palette = 11=#7e5f26
+palette = 12=#26407e
+palette = 13=#7e2662
+palette = 14=#247669
+palette = 15=#7b786f

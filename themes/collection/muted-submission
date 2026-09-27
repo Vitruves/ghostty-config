@@ -1,0 +1,26 @@
+# ghostty-config collection · muted-submission
+# Affect · Low brightness, low chroma
+
+background = #141618
+foreground = #ccced2
+cursor-color = #808c94
+cursor-text = #141618
+selection-background = #2c425c
+selection-foreground = #ccced2
+
+palette = 0=#2c2e30
+palette = 1=#cc605c
+palette = 2=#54ca87
+palette = 3=#cab254
+palette = 4=#548bca
+palette = 5=#b05ccc
+palette = 6=#54b6ca
+palette = 7=#c4c7ca
+palette = 8=#52575b
+palette = 9=#d49391
+palette = 10=#91d4ae
+palette = 11=#d4c791
+palette = 12=#91b0d4
+palette = 13=#c491d4
+palette = 14=#91c9d4
+palette = 15=#eff0f0

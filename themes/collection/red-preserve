@@ -1,0 +1,26 @@
+# ghostty-config collection · red-preserve
+# Scotopic · Red light, because rods barely see it
+
+background = #0c0505
+foreground = #dcc2c0
+cursor-color = #d14848
+cursor-text = #0c0505
+selection-background = #302d5a
+selection-foreground = #dcc2c0
+
+palette = 0=#302c2c
+palette = 1=#dd4040
+palette = 2=#5bdd40
+palette = 3=#dda440
+palette = 4=#6b6ee5
+palette = 5=#dd40ac
+palette = 6=#40d3dd
+palette = 7=#cac4c4
+palette = 8=#5b5252
+palette = 9=#e28383
+palette = 10=#93e283
+palette = 11=#e2c083
+palette = 12=#8385e2
+palette = 13=#e283c4
+palette = 14=#83dce2
+palette = 15=#f0efef

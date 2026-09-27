@@ -1,0 +1,26 @@
+# ghostty-config collection · modern-edge
+# Image Scale · Cool and hard, cleanly lit
+
+background = #0a0c10
+foreground = #ccd2dc
+cursor-color = #3ea0d8
+cursor-text = #0a0c10
+selection-background = #1f3c5e
+selection-foreground = #ccd2dc
+
+palette = 0=#2c2d30
+palette = 1=#dc4742
+palette = 2=#42dc85
+palette = 3=#dcbd42
+palette = 4=#428adc
+palette = 5=#b84bde
+palette = 6=#42c2dc
+palette = 7=#c4c6ca
+palette = 8=#52555b
+palette = 9=#e18784
+palette = 10=#84e1ad
+palette = 11=#e1ce84
+palette = 12=#84afe1
+palette = 13=#ca84e1
+palette = 14=#84d1e1
+palette = 15=#efeff0

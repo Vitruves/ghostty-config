@@ -1,0 +1,26 @@
+# ghostty-config collection · amber-lamp
+# Warmth · Lamplight amber, low blue for evenings
+
+background = #16120b
+foreground = #e0d5c2
+cursor-color = #d99a3c
+cursor-text = #16120b
+selection-background = #2e3b5a
+selection-foreground = #e0d5c2
+
+palette = 0=#302f2c
+palette = 1=#d96a45
+palette = 2=#5ed945
+palette = 3=#d9a345
+palette = 4=#567edc
+palette = 5=#d945aa
+palette = 6=#45d9c3
+palette = 7=#cac8c4
+palette = 8=#5b5852
+palette = 9=#df9c86
+palette = 10=#95df86
+palette = 11=#dfbf86
+palette = 12=#86a1df
+palette = 13=#df86c3
+palette = 14=#86dfd2
+palette = 15=#f0f0ef

@@ -1,0 +1,26 @@
+# ghostty-config collection · orchid-hour
+# Imagination · Orchid, soft and strange
+
+background = #170f1a
+foreground = #dfcfe2
+cursor-color = #b064c4
+cursor-text = #170f1a
+selection-background = #3b3768
+selection-foreground = #dfcfe2
+
+palette = 0=#2f2c30
+palette = 1=#de4a65
+palette = 2=#41dc56
+palette = 3=#dca441
+palette = 4=#7577e6
+palette = 5=#bf4ade
+palette = 6=#41b0dc
+palette = 7=#c8c4ca
+palette = 8=#59525b
+palette = 9=#e18495
+palette = 10=#84e190
+palette = 11=#e1bf84
+palette = 12=#8485e1
+palette = 13=#ce84e1
+palette = 14=#84c7e1
+palette = 15=#f0eff0

@@ -1,0 +1,26 @@
+# ghostty-config collection · linen-morning
+# Warmth · Warm neutral, kind at 8am
+
+background = #faf7f2
+foreground = #2a2622
+cursor-color = #936637
+cursor-text = #faf7f2
+selection-background = #abb8d8
+selection-foreground = #2a2622
+
+palette = 0=#4b4844
+palette = 1=#ad4a2a
+palette = 2=#2e7c1e
+palette = 3=#8c6522
+palette = 4=#2a51ad
+palette = 5=#ad2a83
+palette = 6=#207d84
+palette = 7=#a39f99
+palette = 8=#252422
+palette = 9=#7d3c26
+palette = 10=#357d26
+palette = 11=#7d5e26
+palette = 12=#26407d
+palette = 13=#7d2662
+palette = 14=#26777d
+palette = 15=#7b776f

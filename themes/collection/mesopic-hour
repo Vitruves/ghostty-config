@@ -1,0 +1,26 @@
+# ghostty-config collection · mesopic-hour
+# Scotopic · Rods and cones both half working
+
+background = #0a0c12
+foreground = #c6cdda
+cursor-color = #6a80b0
+cursor-text = #0a0c12
+selection-background = #26375c
+selection-foreground = #c6cdda
+
+palette = 0=#2c2d30
+palette = 1=#d24c64
+palette = 2=#4cd286
+palette = 3=#d2b74c
+palette = 4=#547cd4
+palette = 5=#b454d4
+palette = 6=#4cacd2
+palette = 7=#c4c5ca
+palette = 8=#52555b
+palette = 9=#da8b99
+palette = 10=#8bdaad
+palette = 11=#daca8b
+palette = 12=#8ba4da
+palette = 13=#c68bda
+palette = 14=#8bc4da
+palette = 15=#efeff0

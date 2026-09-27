@@ -1,0 +1,26 @@
+# ghostty-config collection · functional-blue-green
+# Birren · The hue he prescribed for sustained work
+
+background = #08161a
+foreground = #c8dcdc
+cursor-color = #2e9aa0
+cursor-text = #08161a
+selection-background = #204861
+selection-foreground = #c8dcdc
+
+palette = 0=#2c2f30
+palette = 1=#d75550
+palette = 2=#48d586
+palette = 3=#d5d048
+palette = 4=#489ad5
+palette = 5=#b959d9
+palette = 6=#48ced5
+palette = 7=#c4c8ca
+palette = 8=#52595b
+palette = 9=#dc8b89
+palette = 10=#89dcad
+palette = 11=#dcd989
+palette = 12=#89b9dc
+palette = 13=#c889dc
+palette = 14=#89d8dc
+palette = 15=#eff0f0

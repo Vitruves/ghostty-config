@@ -1,0 +1,26 @@
+# ghostty-config collection · redshift
+# Energy · Crimson, urgent and cold-edged
+
+background = #14090c
+foreground = #e0c8cd
+cursor-color = #d34a68
+cursor-text = #14090c
+selection-background = #373161
+selection-foreground = #e0c8cd
+
+palette = 0=#302c2d
+palette = 1=#e33b5a
+palette = 2=#57e33b
+palette = 3=#e3a63b
+palette = 4=#7173eb
+palette = 5=#e33bae
+palette = 6=#3bd8e3
+palette = 7=#cac4c6
+palette = 8=#5b5255
+palette = 9=#e67f92
+palette = 10=#91e67f
+palette = 11=#e6c17f
+palette = 12=#7f81e6
+palette = 13=#e67fc5
+palette = 14=#7fdfe6
+palette = 15=#f0efef

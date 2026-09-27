@@ -1,0 +1,26 @@
+# ghostty-config collection · minus-side
+# Goethe · The passive pole, blue and unhurried
+
+background = #0b1020
+foreground = #c6cee6
+cursor-color = #617ccf
+cursor-text = #0b1020
+selection-background = #293866
+selection-foreground = #c6cee6
+
+palette = 0=#2c2d30
+palette = 1=#d75069
+palette = 2=#48d586
+palette = 3=#d5b948
+palette = 4=#5978d9
+palette = 5=#b550d7
+palette = 6=#48add5
+palette = 7=#c4c5ca
+palette = 8=#52545b
+palette = 9=#dc8998
+palette = 10=#89dcad
+palette = 11=#dccc89
+palette = 12=#899ddc
+palette = 13=#c889dc
+palette = 14=#89c5dc
+palette = 15=#efeff0

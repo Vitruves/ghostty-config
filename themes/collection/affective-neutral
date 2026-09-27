@@ -1,0 +1,26 @@
+# ghostty-config collection · affective-neutral
+# Affect · The middle of every axis
+
+background = #121416
+foreground = #d0d4d6
+cursor-color = #8c969c
+cursor-text = #121416
+selection-background = #2a415b
+selection-foreground = #d0d4d6
+
+palette = 0=#2c2e30
+palette = 1=#ce5d59
+palette = 2=#51cc87
+palette = 3=#ccb451
+palette = 4=#518bcc
+palette = 5=#b259ce
+palette = 6=#51b8cc
+palette = 7=#c4c7ca
+palette = 8=#52575b
+palette = 9=#d6918f
+palette = 10=#8fd6ae
+palette = 11=#d6c88f
+palette = 12=#8fb0d6
+palette = 13=#c58fd6
+palette = 14=#8fcad6
+palette = 15=#eff0f0

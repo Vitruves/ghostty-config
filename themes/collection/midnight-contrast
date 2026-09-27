@@ -1,0 +1,26 @@
+# ghostty-config collection · midnight-contrast
+# Contrast · True black, maximum separation
+
+background = #000000
+foreground = #f2f2f2
+cursor-color = #4d8ef0
+cursor-text = #000000
+selection-background = #1a2f53
+selection-foreground = #f2f2f2
+
+palette = 0=#302c2c
+palette = 1=#da445f
+palette = 2=#44da85
+palette = 3=#dabc44
+palette = 4=#447cda
+palette = 5=#b544da
+palette = 6=#44b3da
+palette = 7=#cac4c4
+palette = 8=#5b5252
+palette = 9=#df8696
+palette = 10=#86dfad
+palette = 11=#dfcd86
+palette = 12=#86a7df
+palette = 13=#c986df
+palette = 14=#86c8df
+palette = 15=#f0efef

@@ -1,0 +1,26 @@
+# ghostty-config collection · winter-sphere
+# Itten · Cool and clear, the opposite quarter
+
+background = #0a0e14
+foreground = #ccd6e2
+cursor-color = #4a9ad4
+cursor-text = #0a0e14
+selection-background = #213d5e
+selection-foreground = #ccd6e2
+
+palette = 0=#2c2d30
+palette = 1=#d84b46
+palette = 2=#46d886
+palette = 3=#d8bb46
+palette = 4=#468ad8
+palette = 5=#b74eda
+palette = 6=#46bfd8
+palette = 7=#c4c6ca
+palette = 8=#52565b
+palette = 9=#de8a87
+palette = 10=#87dead
+palette = 11=#decd87
+palette = 12=#87afde
+palette = 13=#c987de
+palette = 14=#87d0de
+palette = 15=#eff0f0

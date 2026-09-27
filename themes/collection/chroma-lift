@@ -1,0 +1,26 @@
+# ghostty-config collection · chroma-lift
+# Affect · Saturation raised, brightness held
+
+background = #0e0c14
+foreground = #d4cee0
+cursor-color = #9062da
+cursor-text = #0e0c14
+selection-background = #313064
+selection-foreground = #d4cee0
+
+palette = 0=#2d2c30
+palette = 1=#df3e5c
+palette = 2=#3edf85
+palette = 3=#dfa53e
+palette = 4=#6a6ce6
+palette = 5=#ba47e0
+palette = 6=#3eb2df
+palette = 7=#c5c4ca
+palette = 8=#55525b
+palette = 9=#e38294
+palette = 10=#82e3ac
+palette = 11=#e3c082
+palette = 12=#8284e3
+palette = 13=#cb82e3
+palette = 14=#82c8e3
+palette = 15=#efeff0

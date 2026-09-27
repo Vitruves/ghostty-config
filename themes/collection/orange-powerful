@@ -1,0 +1,26 @@
+# ghostty-config collection · orange-powerful
+# Goethe · Yellow-red, the energy raised a step
+
+background = #1a1108
+foreground = #e6d6c0
+cursor-color = #d8802a
+cursor-text = #1a1108
+selection-background = #2f3a5a
+selection-foreground = #e6d6c0
+
+palette = 0=#302e2c
+palette = 1=#de673f
+palette = 2=#5ade3f
+palette = 3=#dea53f
+palette = 4=#507ce1
+palette = 5=#de3fac
+palette = 6=#3fd4de
+palette = 7=#cac7c4
+palette = 8=#5b5752
+palette = 9=#e39a82
+palette = 10=#93e382
+palette = 11=#e3c082
+palette = 12=#829fe3
+palette = 13=#e382c4
+palette = 14=#82dce3
+palette = 15=#f0f0ef

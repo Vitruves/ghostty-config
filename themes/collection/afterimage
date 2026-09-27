@@ -1,0 +1,26 @@
+# ghostty-config collection · afterimage
+# Opponent · What the eye supplies when you look away
+
+background = #12100e
+foreground = #d8d2ca
+cursor-color = #56b0a0
+cursor-text = #12100e
+selection-background = #26455a
+selection-foreground = #d8d2ca
+
+palette = 0=#302e2c
+palette = 1=#d74c47
+palette = 2=#47d786
+palette = 3=#d7d147
+palette = 4=#479bd7
+palette = 5=#b64fd9
+palette = 6=#47d7c1
+palette = 7=#cac7c4
+palette = 8=#5b5752
+palette = 9=#dd8b88
+palette = 10=#88ddad
+palette = 11=#ddda88
+palette = 12=#88b9dd
+palette = 13=#c888dd
+palette = 14=#88ddd0
+palette = 15=#f0f0ef

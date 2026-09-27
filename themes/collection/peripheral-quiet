@@ -1,0 +1,26 @@
+# ghostty-config collection · peripheral-quiet
+# Birren · Nothing at the edge of vision competing
+
+background = #101212
+foreground = #ced0d0
+cursor-color = #7c8a88
+cursor-text = #101212
+selection-background = #294558
+selection-foreground = #ced0d0
+
+palette = 0=#2c3030
+palette = 1=#cd5e5a
+palette = 2=#52cb87
+palette = 3=#cbc752
+palette = 4=#5299cb
+palette = 5=#b15acd
+palette = 6=#52cbba
+palette = 7=#c4caca
+palette = 8=#525b5b
+palette = 9=#d6928f
+palette = 10=#8fd6ae
+palette = 11=#d6d38f
+palette = 12=#8fb8d6
+palette = 13=#c48fd6
+palette = 14=#8fd6cc
+palette = 15=#eff0f0

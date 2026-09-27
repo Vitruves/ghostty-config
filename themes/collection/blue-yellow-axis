@@ -1,0 +1,26 @@
+# ghostty-config collection · blue-yellow-axis
+# Opponent · The second axis takes the lead
+
+background = #0c0f18
+foreground = #ccd2e0
+cursor-color = #d0b040
+cursor-text = #0c0f18
+selection-background = #253762
+selection-foreground = #ccd2e0
+
+palette = 0=#2c2d30
+palette = 1=#d86a46
+palette = 2=#5fd846
+palette = 3=#d8b746
+palette = 4=#4e78da
+palette = 5=#d846aa
+palette = 6=#46d8c2
+palette = 7=#c4c5ca
+palette = 8=#52555b
+palette = 9=#de9d87
+palette = 10=#96de87
+palette = 11=#decb87
+palette = 12=#87a1de
+palette = 13=#de87c3
+palette = 14=#87ded1
+palette = 15=#efeff0

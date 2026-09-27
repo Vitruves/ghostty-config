@@ -1,0 +1,26 @@
+# ghostty-config collection · moss-hour
+# Calm · Olive and earth, softly lit
+
+background = #12150e
+foreground = #d0d4c4
+cursor-color = #8a9a4a
+cursor-text = #12150e
+selection-background = #284858
+selection-foreground = #d0d4c4
+
+palette = 0=#2e302c
+palette = 1=#d26d4b
+palette = 2=#62d24b
+palette = 3=#d2cd4b
+palette = 4=#4b9ad2
+palette = 5=#d24ba8
+palette = 6=#4bd2be
+palette = 7=#c7cac4
+palette = 8=#575b52
+palette = 9=#da9f8b
+palette = 10=#98da8b
+palette = 11=#dad78b
+palette = 12=#8bb9da
+palette = 13=#da8bc1
+palette = 14=#8bdace
+palette = 15=#f0f0ef

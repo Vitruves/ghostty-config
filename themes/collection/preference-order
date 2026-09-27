@@ -1,0 +1,26 @@
+# ghostty-config collection · preference-order
+# Luscher · The eight, ranked and read
+
+background = #0e1014
+foreground = #ced2da
+cursor-color = #5a80a8
+cursor-text = #0e1014
+selection-background = #263c5c
+selection-foreground = #ced2da
+
+palette = 0=#2c2d30
+palette = 1=#d2504c
+palette = 2=#4cd286
+palette = 3=#d2b74c
+palette = 4=#4c84d2
+palette = 5=#b454d4
+palette = 6=#4cb5d2
+palette = 7=#c4c6ca
+palette = 8=#52555b
+palette = 9=#da8e8b
+palette = 10=#8bdaad
+palette = 11=#daca8b
+palette = 12=#8bacda
+palette = 13=#c68bda
+palette = 14=#8bc9da
+palette = 15=#efeff0

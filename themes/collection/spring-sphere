@@ -1,0 +1,26 @@
+# ghostty-config collection · spring-sphere
+# Itten · Light and warm, on paper
+
+background = #f6f8ee
+foreground = #232a1e
+cursor-color = #487b2a
+cursor-text = #f6f8ee
+selection-background = #a7c7d6
+selection-foreground = #232a1e
+
+palette = 0=#4a4b44
+palette = 1=#b04927
+palette = 2=#2c7e1c
+palette = 3=#76721a
+palette = 4=#2776b0
+palette = 5=#b027ab
+palette = 6=#1c7e6f
+palette = 7=#a1a399
+palette = 8=#252522
+palette = 9=#7f3b24
+palette = 10=#337f24
+palette = 11=#777422
+palette = 12=#24597f
+palette = 13=#7f247c
+palette = 14=#22776b
+palette = 15=#797b6f

@@ -1,0 +1,26 @@
+# ghostty-config collection · elegant-reserve
+# Image Scale · Cool, soft, and deliberately quiet
+
+background = #14121a
+foreground = #d6d0dc
+cursor-color = #9a80b8
+cursor-text = #14121a
+selection-background = #393863
+selection-foreground = #d6d0dc
+
+palette = 0=#2d2c30
+palette = 1=#d3556c
+palette = 2=#4dd186
+palette = 3=#d1a14d
+palette = 4=#7677db
+palette = 5=#b455d3
+palette = 6=#4dabd1
+palette = 7=#c5c4ca
+palette = 8=#55525b
+palette = 9=#d98c9a
+palette = 10=#8cd9ae
+palette = 11=#d9bd8c
+palette = 12=#8c8dd9
+palette = 13=#c68cd9
+palette = 14=#8cc3d9
+palette = 15=#efeff0

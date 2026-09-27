@@ -1,0 +1,26 @@
+# ghostty-config collection · violet-reverie
+# Imagination · Violet field for wandering work
+
+background = #120e1c
+foreground = #d5cee6
+cursor-color = #8b6cd8
+cursor-text = #120e1c
+selection-background = #343268
+selection-foreground = #d5cee6
+
+palette = 0=#2d2c30
+palette = 1=#de4a65
+palette = 2=#41dc85
+palette = 3=#dcbd41
+palette = 4=#6c6ee4
+palette = 5=#b94ade
+palette = 6=#41b0dc
+palette = 7=#c6c4ca
+palette = 8=#55525b
+palette = 9=#e18495
+palette = 10=#84e1ad
+palette = 11=#e1cf84
+palette = 12=#8485e1
+palette = 13=#ca84e1
+palette = 14=#84c7e1
+palette = 15=#efeff0

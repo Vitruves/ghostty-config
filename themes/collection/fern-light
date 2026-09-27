@@ -1,0 +1,26 @@
+# ghostty-config collection · fern-light
+# Calm · Pale green daylight
+
+background = #f4f8f2
+foreground = #1f2a22
+cursor-color = #37803f
+cursor-text = #f4f8f2
+selection-background = #a7c7d8
+selection-foreground = #1f2a22
+
+palette = 0=#464b44
+palette = 1=#ae4a29
+palette = 2=#1d7c27
+palette = 3=#74711b
+palette = 4=#2976ae
+palette = 5=#ae29a9
+palette = 6=#1d7c6e
+palette = 7=#9ca399
+palette = 8=#232522
+palette = 9=#7e3c26
+palette = 10=#267e2f
+palette = 11=#767224
+palette = 12=#26597e
+palette = 13=#7e267b
+palette = 14=#267e70
+palette = 15=#737b6f

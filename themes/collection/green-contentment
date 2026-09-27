@@ -1,0 +1,26 @@
+# ghostty-config collection · green-contentment
+# Goethe · Blue and yellow met, a real satisfaction
+
+background = #0c150e
+foreground = #cbd8c8
+cursor-color = #4c9e56
+cursor-text = #0c150e
+selection-background = #234859
+selection-foreground = #cbd8c8
+
+palette = 0=#2c302d
+palette = 1=#d46c49
+palette = 2=#49d45a
+palette = 3=#d4cf49
+palette = 4=#499ad4
+palette = 5=#d449d0
+palette = 6=#49d4bf
+palette = 7=#c4cac5
+palette = 8=#525b54
+palette = 9=#dc9e89
+palette = 10=#89dc93
+palette = 11=#dcd989
+palette = 12=#89b9dc
+palette = 13=#dc89d9
+palette = 14=#89dccf
+palette = 15=#eff0ef

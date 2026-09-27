@@ -1,0 +1,26 @@
+# ghostty-config collection · melanopic-low
+# Circadian · Short wavelengths pulled right out
+
+background = #150f08
+foreground = #e0d2bc
+cursor-color = #d09a38
+cursor-text = #150f08
+selection-background = #2b3757
+selection-foreground = #e0d2bc
+
+palette = 0=#302e2c
+palette = 1=#d76b47
+palette = 2=#5fd747
+palette = 3=#d7a447
+palette = 4=#4f78d9
+palette = 5=#d747aa
+palette = 6=#47d7c1
+palette = 7=#cac7c4
+palette = 8=#5b5752
+palette = 9=#de9d87
+palette = 10=#96de87
+palette = 11=#debf87
+palette = 12=#87a1de
+palette = 13=#de87c2
+palette = 14=#87ded1
+palette = 15=#f0f0ef

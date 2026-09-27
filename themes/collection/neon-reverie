@@ -1,0 +1,26 @@
+# ghostty-config collection · neon-reverie
+# Imagination · Magenta turned up
+
+background = #0f0a16
+foreground = #ded0ea
+cursor-color = #c04ce0
+cursor-text = #0f0a16
+selection-background = #312f66
+selection-foreground = #ded0ea
+
+palette = 0=#2e2c30
+palette = 1=#e23c5a
+palette = 2=#3ce252
+palette = 3=#e2a63c
+palette = 4=#686be9
+palette = 5=#be3ce2
+palette = 6=#3cb3e2
+palette = 7=#c6c4ca
+palette = 8=#56525b
+palette = 9=#e58093
+palette = 10=#80e58d
+palette = 11=#e5c080
+palette = 12=#8082e5
+palette = 13=#cf80e5
+palette = 14=#80c8e5
+palette = 15=#f0eff0

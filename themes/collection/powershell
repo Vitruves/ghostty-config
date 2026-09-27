@@ -1,0 +1,26 @@
+# ghostty-config collection · powershell
+# Focus · The Windows PowerShell console, Campbell ramp lifted to AA
+
+background = #012456
+foreground = #eeedf0
+cursor-color = #f9f1a5
+cursor-text = #012456
+selection-background = #254a96
+selection-foreground = #eeedf0
+
+palette = 0=#0c0c0c
+palette = 1=#f35c69
+palette = 2=#14aa0f
+palette = 3=#c19c00
+palette = 4=#6088ff
+palette = 5=#d458e6
+palette = 6=#3a96dd
+palette = 7=#cccccc
+palette = 8=#767676
+palette = 9=#f1919a
+palette = 10=#16c60c
+palette = 11=#f9f1a5
+palette = 12=#93b4ff
+palette = 13=#ff72ee
+palette = 14=#61d6d6
+palette = 15=#f2f2f2

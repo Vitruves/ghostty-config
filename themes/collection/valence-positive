@@ -1,0 +1,26 @@
+# ghostty-config collection · valence-positive
+# Affect · Bright and green-leaning
+
+background = #0c1410
+foreground = #ccd8ce
+cursor-color = #4aa868
+cursor-text = #0c1410
+selection-background = #22475c
+selection-foreground = #ccd8ce
+
+palette = 0=#2c302e
+palette = 1=#d86a46
+palette = 2=#46d874
+palette = 3=#d8d246
+palette = 4=#469bd8
+palette = 5=#d846d3
+palette = 6=#46d8c2
+palette = 7=#c4cac7
+palette = 8=#525b57
+palette = 9=#de9d87
+palette = 10=#87dea3
+palette = 11=#dedb87
+palette = 12=#87bade
+palette = 13=#de87db
+palette = 14=#87ded1
+palette = 15=#eff0f0

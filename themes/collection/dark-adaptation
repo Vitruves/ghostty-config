@@ -1,0 +1,26 @@
+# ghostty-config collection · dark-adaptation
+# Scotopic · Twenty minutes to full sensitivity
+
+background = #060606
+foreground = #c8c8c8
+cursor-color = #7a7a7a
+cursor-text = #060606
+selection-background = #2c2d53
+selection-foreground = #c8c8c8
+
+palette = 0=#302c2c
+palette = 1=#ca5353
+palette = 2=#67ca53
+palette = 3=#ca9f53
+palette = 4=#6a6cd1
+palette = 5=#ca53a5
+palette = 6=#53c3ca
+palette = 7=#cac4c4
+palette = 8=#5b5252
+palette = 9=#d59090
+palette = 10=#9cd590
+palette = 11=#d5bc90
+palette = 12=#9091d5
+palette = 13=#d590bf
+palette = 14=#90d0d5
+palette = 15=#f0efef

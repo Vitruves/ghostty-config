@@ -1,0 +1,26 @@
+# ghostty-config collection · chronotype-owl
+# Circadian · Built for whoever is up at two
+
+background = #0d0b12
+foreground = #d2cbdc
+cursor-color = #866bc6
+cursor-text = #0d0b12
+selection-background = #333260
+selection-foreground = #d2cbdc
+
+palette = 0=#2d2c30
+palette = 1=#d74761
+palette = 2=#47d786
+palette = 3=#d7a347
+palette = 4=#7172e0
+palette = 5=#b64fd9
+palette = 6=#47aed7
+palette = 7=#c6c4ca
+palette = 8=#55525b
+palette = 9=#de8797
+palette = 10=#87dead
+palette = 11=#debe87
+palette = 12=#8789de
+palette = 13=#c887de
+palette = 14=#87c5de
+palette = 15=#efeff0

@@ -1,0 +1,26 @@
+# ghostty-config collection · copper-patina
+# Warmth · Copper against oxidised teal
+
+background = #0e1618
+foreground = #d2dcdb
+cursor-color = #c07a45
+cursor-text = #0e1618
+selection-background = #2a3e62
+selection-foreground = #d2dcdb
+
+palette = 0=#2c2f30
+palette = 1=#d76b47
+palette = 2=#5fd747
+palette = 3=#d7a347
+palette = 4=#587fdb
+palette = 5=#d747a9
+palette = 6=#47cdd7
+palette = 7=#c4c9ca
+palette = 8=#52595b
+palette = 9=#dd9d88
+palette = 10=#96dd88
+palette = 11=#ddbe88
+palette = 12=#88a1dd
+palette = 13=#dd88c2
+palette = 14=#88d8dd
+palette = 15=#eff0f0

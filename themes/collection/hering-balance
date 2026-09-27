@@ -1,0 +1,26 @@
+# ghostty-config collection · hering-balance
+# Opponent · Neither axis allowed to win
+
+background = #101418
+foreground = #cfd6dc
+cursor-color = #5f96b8
+cursor-text = #101418
+selection-background = #26415f
+selection-foreground = #cfd6dc
+
+palette = 0=#2c2e30
+palette = 1=#d55752
+palette = 2=#4ad386
+palette = 3=#d3b84a
+palette = 4=#4a8ad3
+palette = 5=#b552d5
+palette = 6=#4abcd3
+palette = 7=#c4c7ca
+palette = 8=#52575b
+palette = 9=#db8d8a
+palette = 10=#8adbad
+palette = 11=#dbcb8a
+palette = 12=#8ab0db
+palette = 13=#c78adb
+palette = 14=#8acedb
+palette = 15=#eff0f0

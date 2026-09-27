@@ -1,0 +1,26 @@
+# ghostty-config collection · summer-sphere
+# Itten · Light and cool, on paper
+
+background = #f2f6fa
+foreground = #1e2632
+cursor-color = #3570a5
+cursor-text = #f2f6fa
+selection-background = #a5bedd
+selection-foreground = #1e2632
+
+palette = 0=#44474b
+palette = 1=#ae2c28
+palette = 2=#1d7c47
+palette = 3=#7c691d
+palette = 4=#2863ae
+palette = 5=#8d28ae
+palette = 6=#20788d
+palette = 7=#999ea3
+palette = 8=#222425
+palette = 9=#7e2825
+palette = 10=#257e4c
+palette = 11=#7e6c25
+palette = 12=#254c7e
+palette = 13=#68257e
+palette = 14=#256d7e
+palette = 15=#6f757b

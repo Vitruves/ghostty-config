@@ -1,0 +1,26 @@
+# ghostty-config collection · newsprint
+# Neutral · Off-white, low glare
+
+background = #f6f6f4
+foreground = #26272a
+cursor-color = #4a4d52
+cursor-text = #f6f6f4
+selection-background = #a9bbd8
+selection-foreground = #26272a
+
+palette = 0=#4b4b44
+palette = 1=#aa2c43
+palette = 2=#22814b
+palette = 3=#816e22
+palette = 4=#2c5aaa
+palette = 5=#8b2caa
+palette = 6=#267592
+palette = 7=#a3a399
+palette = 8=#252522
+palette = 9=#7b2837
+palette = 10=#287b4c
+palette = 11=#7b6a28
+palette = 12=#28467b
+palette = 13=#66287b
+palette = 14=#28657b
+palette = 15=#7b7b6f

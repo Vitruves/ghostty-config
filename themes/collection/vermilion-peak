@@ -1,0 +1,26 @@
+# ghostty-config collection · vermilion-peak
+# Goethe · The hue he thought most energetic
+
+background = #180d0a
+foreground = #e6cec4
+cursor-color = #d4522a
+cursor-text = #180d0a
+selection-background = #2d375d
+selection-foreground = #e6cec4
+
+palette = 0=#302d2c
+palette = 1=#e1633d
+palette = 2=#59e13d
+palette = 3=#e1a53d
+palette = 4=#4f7be4
+palette = 5=#e13dad
+palette = 6=#3dd6e1
+palette = 7=#cac5c4
+palette = 8=#5b5452
+palette = 9=#e49881
+palette = 10=#92e481
+palette = 11=#e4c081
+palette = 12=#819fe4
+palette = 13=#e481c5
+palette = 14=#81dee4
+palette = 15=#f0efef

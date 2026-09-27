@@ -1,0 +1,26 @@
+# ghostty-config collection · astronomer-red
+# Scotopic · The observatory convention, kept dark
+
+background = #0a0404
+foreground = #d8bcba
+cursor-color = #d74646
+cursor-text = #0a0404
+selection-background = #2f2c5a
+selection-foreground = #d8bcba
+
+palette = 0=#302c2c
+palette = 1=#de3f3f
+palette = 2=#5ade3f
+palette = 3=#dea53f
+palette = 4=#6b6de5
+palette = 5=#de3fac
+palette = 6=#3fd4de
+palette = 7=#cac4c4
+palette = 8=#5b5252
+palette = 9=#e38282
+palette = 10=#93e382
+palette = 11=#e3c082
+palette = 12=#8284e3
+palette = 13=#e382c4
+palette = 14=#82dce3
+palette = 15=#f0efef

@@ -1,0 +1,26 @@
+# ghostty-config collection · yellow-aspiration
+# Luscher · Bright yellow, the fourth
+
+background = #16150a
+foreground = #e2dfc0
+cursor-color = #d4c22e
+cursor-text = #16150a
+selection-background = #2d3d5b
+selection-foreground = #e2dfc0
+
+palette = 0=#30302c
+palette = 1=#dc6842
+palette = 2=#5cdc42
+palette = 3=#dccb42
+palette = 4=#537ddf
+palette = 5=#dc42ab
+palette = 6=#42dcc5
+palette = 7=#cac9c4
+palette = 8=#5b5a52
+palette = 9=#e19b84
+palette = 10=#94e184
+palette = 11=#e1d784
+palette = 12=#84a0e1
+palette = 13=#e184c4
+palette = 14=#84e1d3
+palette = 15=#f0f0ef

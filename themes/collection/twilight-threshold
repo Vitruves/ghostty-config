@@ -1,0 +1,26 @@
+# ghostty-config collection · twilight-threshold
+# Scotopic · The minutes the shift happens in
+
+background = #090b14
+foreground = #c4cadc
+cursor-color = #697bc6
+cursor-text = #090b14
+selection-background = #27325f
+selection-foreground = #c4cadc
+
+palette = 0=#2c2c30
+palette = 1=#d54862
+palette = 2=#48d586
+palette = 3=#d5b948
+palette = 4=#5972d9
+palette = 5=#b550d7
+palette = 6=#48add5
+palette = 7=#c4c5ca
+palette = 8=#52545b
+palette = 9=#dc8998
+palette = 10=#89dcad
+palette = 11=#dccc89
+palette = 12=#8999dc
+palette = 13=#c889dc
+palette = 14=#89c5dc
+palette = 15=#efeff0

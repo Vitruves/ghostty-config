@@ -1,0 +1,26 @@
+# ghostty-config collection · chic-monochrome
+# Image Scale · Hard and cool with the hue removed
+
+background = #131313
+foreground = #d6d6d6
+cursor-color = #8e8e8e
+cursor-text = #131313
+selection-background = #37385c
+selection-foreground = #d6d6d6
+
+palette = 0=#302c2c
+palette = 1=#cc5b5b
+palette = 2=#67ca53
+palette = 3=#ca9f53
+palette = 4=#7274d4
+palette = 5=#ca53a5
+palette = 6=#53c3ca
+palette = 7=#cac4c4
+palette = 8=#5b5252
+palette = 9=#d59090
+palette = 10=#9cd590
+palette = 11=#d5bc90
+palette = 12=#9091d5
+palette = 13=#d590bf
+palette = 14=#90d0d5
+palette = 15=#f0efef

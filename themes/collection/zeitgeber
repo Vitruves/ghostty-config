@@ -1,0 +1,26 @@
+# ghostty-config collection · zeitgeber
+# Circadian · The cue that sets the clock
+
+background = #0a1018
+foreground = #c8d2e0
+cursor-color = #3a86cc
+cursor-text = #0a1018
+selection-background = #203c61
+selection-foreground = #c8d2e0
+
+palette = 0=#2c2e30
+palette = 1=#d94a45
+palette = 2=#45d985
+palette = 3=#d9bb45
+palette = 4=#4585d9
+palette = 5=#b74ddb
+palette = 6=#45bcd9
+palette = 7=#c4c6ca
+palette = 8=#52565b
+palette = 9=#df8986
+palette = 10=#86dfad
+palette = 11=#dfcd86
+palette = 12=#86addf
+palette = 13=#c986df
+palette = 14=#86cddf
+palette = 15=#eff0f0

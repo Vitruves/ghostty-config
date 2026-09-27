@@ -1,0 +1,26 @@
+# ghostty-config collection · complement-tension
+# Itten · Opposites held apart
+
+background = #0e1410
+foreground = #ccd6cc
+cursor-color = #c8617d
+cursor-text = #0e1410
+selection-background = #353961
+selection-foreground = #ccd6cc
+
+palette = 0=#2c302d
+palette = 1=#df4964
+palette = 2=#5bdd40
+palette = 3=#dda440
+palette = 4=#7476e6
+palette = 5=#dd40ac
+palette = 6=#40d3dd
+palette = 7=#c4cac6
+palette = 8=#525b55
+palette = 9=#e28394
+palette = 10=#93e283
+palette = 11=#e2c083
+palette = 12=#8385e2
+palette = 13=#e283c4
+palette = 14=#83dce2
+palette = 15=#eff0ef

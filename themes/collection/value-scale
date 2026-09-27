@@ -1,0 +1,26 @@
+# ghostty-config collection · value-scale
+# Colour Order · Nine steps from black to white
+
+background = #f7f7f7
+foreground = #242424
+cursor-color = #4a4a4a
+cursor-text = #f7f7f7
+selection-background = #abacd9
+selection-foreground = #242424
+
+palette = 0=#4b4444
+palette = 1=#a82f2f
+palette = 2=#338024
+palette = 3=#906a28
+palette = 4=#2f31a8
+palette = 5=#a82f81
+palette = 6=#247980
+palette = 7=#a39999
+palette = 8=#252222
+palette = 9=#792a2a
+palette = 10=#38792a
+palette = 11=#795c2a
+palette = 12=#2a2c79
+palette = 13=#792a60
+palette = 14=#2a7479
+palette = 15=#7b6f6f

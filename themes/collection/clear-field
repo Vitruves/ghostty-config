@@ -1,0 +1,26 @@
+# ghostty-config collection · clear-field
+# Image Scale · Cool and clean, nothing muddied
+
+background = #f4faff
+foreground = #1c2630
+cursor-color = #2875af
+cursor-text = #f4faff
+selection-background = #a6c2e1
+selection-foreground = #1c2630
+
+palette = 0=#44484b
+palette = 1=#b02b27
+palette = 2=#1c7e46
+palette = 3=#86711e
+palette = 4=#2766b0
+palette = 5=#8e27b0
+palette = 6=#207b8f
+palette = 7=#999fa3
+palette = 8=#222425
+palette = 9=#7f2724
+palette = 10=#247f4c
+palette = 11=#7f6d24
+palette = 12=#244e7f
+palette = 13=#69247f
+palette = 14=#24707f
+palette = 15=#6f767b

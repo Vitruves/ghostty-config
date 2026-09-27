@@ -1,0 +1,26 @@
+# ghostty-config collection · nocturne
+# Contrast · Blue pulled out for the last hours of the day
+
+background = #14100e
+foreground = #ddd2c6
+cursor-color = #c08a4a
+cursor-text = #14100e
+selection-background = #2b385a
+selection-foreground = #ddd2c6
+
+palette = 0=#302d2c
+palette = 1=#d56c48
+palette = 2=#60d548
+palette = 3=#d5a248
+palette = 4=#5079d7
+palette = 5=#d548a9
+palette = 6=#48ccd5
+palette = 7=#cac6c4
+palette = 8=#5b5552
+palette = 9=#dc9e89
+palette = 10=#97dc89
+palette = 11=#dcbe89
+palette = 12=#89a2dc
+palette = 13=#dc89c2
+palette = 14=#89d7dc
+palette = 15=#f0efef

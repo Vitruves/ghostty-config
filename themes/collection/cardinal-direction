@@ -1,0 +1,26 @@
+# ghostty-config collection · cardinal-direction
+# Opponent · Four bearings on the colour plane
+
+background = #0e1216
+foreground = #ccd4dc
+cursor-color = #4ea0a8
+cursor-text = #0e1216
+selection-background = #24455f
+selection-foreground = #ccd4dc
+
+palette = 0=#2c2e30
+palette = 1=#d75550
+palette = 2=#48d586
+palette = 3=#d5d048
+palette = 4=#4898d5
+palette = 5=#b550d7
+palette = 6=#48cbd5
+palette = 7=#c4c7ca
+palette = 8=#52575b
+palette = 9=#dc8b89
+palette = 10=#89dcad
+palette = 11=#dcd989
+palette = 12=#89b8dc
+palette = 13=#c889dc
+palette = 14=#89d7dc
+palette = 15=#eff0f0

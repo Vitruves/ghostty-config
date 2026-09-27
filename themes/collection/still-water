@@ -1,0 +1,26 @@
+# ghostty-config collection · still-water
+# Focus · Teal, quiet and even
+
+background = #08171a
+foreground = #c2d6d6
+cursor-color = #3fa6a6
+cursor-text = #08171a
+selection-background = #214961
+selection-foreground = #c2d6d6
+
+palette = 0=#2c2f30
+palette = 1=#d65651
+palette = 2=#49d486
+palette = 3=#d4cf49
+palette = 4=#499ad4
+palette = 5=#b95ad8
+palette = 6=#49d4d4
+palette = 7=#c4c9ca
+palette = 8=#525a5b
+palette = 9=#dc8c89
+palette = 10=#89dcad
+palette = 11=#dcd989
+palette = 12=#89b9dc
+palette = 13=#c789dc
+palette = 14=#89dcdc
+palette = 15=#eff0f0

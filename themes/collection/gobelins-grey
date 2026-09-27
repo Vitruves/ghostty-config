@@ -1,0 +1,26 @@
+# ghostty-config collection · gobelins-grey
+# Colour Order · Where he found the effect, in the dye works
+
+background = #141414
+foreground = #d4d4d4
+cursor-color = #8a8a92
+cursor-text = #141414
+selection-background = #3a3b5e
+selection-foreground = #d4d4d4
+
+palette = 0=#302c2c
+palette = 1=#cd5a6f
+palette = 2=#52cb87
+palette = 3=#cbb352
+palette = 4=#797bd7
+palette = 5=#b15acd
+palette = 6=#52a9cb
+palette = 7=#cac4c4
+palette = 8=#5b5252
+palette = 9=#d68f9c
+palette = 10=#8fd6ae
+palette = 11=#d6c88f
+palette = 12=#8f91d6
+palette = 13=#c48fd6
+palette = 14=#8fc2d6
+palette = 15=#f0efef

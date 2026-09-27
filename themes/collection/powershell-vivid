@@ -1,0 +1,26 @@
+# ghostty-config collection · powershell-vivid
+# Focus · The console's blue, with every PSReadLine token given its own readable colour
+
+background = #012456
+foreground = #eeedf0
+cursor-color = #ffd75f
+cursor-text = #012456
+selection-background = #2a5b96
+selection-foreground = #eeedf0
+
+palette = 0=#0c0c0c
+palette = 1=#ff6b6b
+palette = 2=#5fe07a
+palette = 3=#ffd75f
+palette = 4=#6cb4ff
+palette = 5=#ee88ff
+palette = 6=#5fe0e0
+palette = 7=#d8dce6
+palette = 8=#9aa6c4
+palette = 9=#ff9a9a
+palette = 10=#8bf09c
+palette = 11=#fff0a0
+palette = 12=#9ccbff
+palette = 13=#f7b0ff
+palette = 14=#9cf0f0
+palette = 15=#ffffff

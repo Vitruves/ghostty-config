@@ -1,0 +1,26 @@
+# ghostty-config collection · saturated-signal
+# Affect · High chroma on a dark ground
+
+background = #0a0e12
+foreground = #ccd6e0
+cursor-color = #00a8c8
+cursor-text = #0a0e12
+selection-background = #1d4161
+selection-foreground = #ccd6e0
+
+palette = 0=#2c2e30
+palette = 1=#e2413c
+palette = 2=#3ce284
+palette = 3=#e2dc3c
+palette = 4=#3c93e2
+palette = 5=#bc45e3
+palette = 6=#3cd0e2
+palette = 7=#c4c7ca
+palette = 8=#52575b
+palette = 9=#e58380
+palette = 10=#80e5ac
+palette = 11=#e5e180
+palette = 12=#80b5e5
+palette = 13=#cc80e5
+palette = 14=#80dae5
+palette = 15=#eff0f0

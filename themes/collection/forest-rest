@@ -1,0 +1,26 @@
+# ghostty-config collection · forest-rest
+# Calm · Green depth, easy on a long afternoon
+
+background = #0b1610
+foreground = #c9d8cc
+cursor-color = #46a35e
+cursor-text = #0b1610
+selection-background = #23485a
+selection-foreground = #c9d8cc
+
+palette = 0=#2c302e
+palette = 1=#d36c4a
+palette = 2=#4ad36e
+palette = 3=#d3ce4a
+palette = 4=#4a9ad3
+palette = 5=#d34acf
+palette = 6=#4ad3bf
+palette = 7=#c4cac7
+palette = 8=#525b56
+palette = 9=#db9e8a
+palette = 10=#8adb9f
+palette = 11=#dbd88a
+palette = 12=#8ab9db
+palette = 13=#db8ad8
+palette = 14=#8adbcf
+palette = 15=#eff0f0

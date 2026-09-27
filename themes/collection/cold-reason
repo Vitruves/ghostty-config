@@ -1,0 +1,26 @@
+# ghostty-config collection · cold-reason
+# Focus · Slate blue, cool and unhurried
+
+background = #10151d
+foreground = #ccd3dd
+cursor-color = #6f9dc6
+cursor-text = #10151d
+selection-background = #264062
+selection-foreground = #ccd3dd
+
+palette = 0=#2c2d30
+palette = 1=#d45853
+palette = 2=#4bd286
+palette = 3=#d2b74b
+palette = 4=#4b87d2
+palette = 5=#b85bd6
+palette = 6=#4bb8d2
+palette = 7=#c4c6ca
+palette = 8=#52565b
+palette = 9=#da8d8b
+palette = 10=#8bdaad
+palette = 11=#daca8b
+palette = 12=#8baeda
+palette = 13=#c78bda
+palette = 14=#8bcbda
+palette = 15=#eff0f0

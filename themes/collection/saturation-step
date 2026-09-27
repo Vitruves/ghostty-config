@@ -1,0 +1,26 @@
+# ghostty-config collection · saturation-step
+# Itten · One hue, walked down in chroma
+
+background = #101216
+foreground = #ced2da
+cursor-color = #5a8fd0
+cursor-text = #101216
+selection-background = #253c5f
+selection-foreground = #ced2da
+
+palette = 0=#2c2d30
+palette = 1=#d94f68
+palette = 2=#47d786
+palette = 3=#d7ba47
+palette = 4=#4780d7
+palette = 5=#b64fd9
+palette = 6=#47b5d7
+palette = 7=#c4c6ca
+palette = 8=#52555b
+palette = 9=#dd8897
+palette = 10=#88ddad
+palette = 11=#ddcc88
+palette = 12=#88aadd
+palette = 13=#c888dd
+palette = 14=#88c9dd
+palette = 15=#efeff0

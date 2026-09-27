@@ -1,0 +1,26 @@
+# ghostty-config collection · achromatic-axis
+# Opponent · Only the black-white channel left
+
+background = #101010
+foreground = #dcdcdc
+cursor-color = #9a9a9a
+cursor-text = #101010
+selection-background = #35365a
+selection-foreground = #dcdcdc
+
+palette = 0=#302c2c
+palette = 1=#cd5a5a
+palette = 2=#67cb52
+palette = 3=#cb9f52
+palette = 4=#7173d4
+palette = 5=#cb52a5
+palette = 6=#52c3cb
+palette = 7=#cac4c4
+palette = 8=#5b5252
+palette = 9=#d68f8f
+palette = 10=#9bd68f
+palette = 11=#d6bc8f
+palette = 12=#8f91d6
+palette = 13=#d68fc0
+palette = 14=#8fd1d6
+palette = 15=#f0efef

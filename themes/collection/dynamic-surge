@@ -1,0 +1,26 @@
+# ghostty-config collection · dynamic-surge
+# Image Scale · Warm and hard, the loudest corner
+
+background = #100c0a
+foreground = #e0d4cc
+cursor-color = #e0642a
+cursor-text = #100c0a
+selection-background = #24345d
+selection-foreground = #e0d4cc
+
+palette = 0=#302d2c
+palette = 1=#e3653b
+palette = 2=#57e33b
+palette = 3=#e3a63b
+palette = 4=#4474e4
+palette = 5=#e33bae
+palette = 6=#3bd8e3
+palette = 7=#cac6c4
+palette = 8=#5b5552
+palette = 9=#e6997f
+palette = 10=#91e67f
+palette = 11=#e6c17f
+palette = 12=#7f9ee6
+palette = 13=#e67fc5
+palette = 14=#7fdfe6
+palette = 15=#f0efef

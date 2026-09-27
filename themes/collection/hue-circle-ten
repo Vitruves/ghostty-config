@@ -1,0 +1,26 @@
+# ghostty-config collection · hue-circle-ten
+# Colour Order · His ten principal hues, evenly spaced
+
+background = #0e1014
+foreground = #ced2d8
+cursor-color = #5a8cc0
+cursor-text = #0e1014
+selection-background = #243c5e
+selection-foreground = #ced2d8
+
+palette = 0=#2c2d30
+palette = 1=#d74b47
+palette = 2=#47d786
+palette = 3=#d7ba47
+palette = 4=#4783d7
+palette = 5=#b64fd9
+palette = 6=#47b8d7
+palette = 7=#c4c6ca
+palette = 8=#52555b
+palette = 9=#de8a87
+palette = 10=#87dead
+palette = 11=#decc87
+palette = 12=#87acde
+palette = 13=#c887de
+palette = 14=#87cbde
+palette = 15=#efeff0

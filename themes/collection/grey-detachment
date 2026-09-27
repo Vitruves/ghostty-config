@@ -1,0 +1,26 @@
+# ghostty-config collection · grey-detachment
+# Luscher · Grey, standing outside the set
+
+background = #131315
+foreground = #d2d2d4
+cursor-color = #8c8c90
+cursor-text = #131315
+selection-background = #37385e
+selection-foreground = #d2d2d4
+
+palette = 0=#2c2c30
+palette = 1=#cc5b70
+palette = 2=#53ca87
+palette = 3=#cab353
+palette = 4=#7274d4
+palette = 5=#b15bcc
+palette = 6=#53a9ca
+palette = 7=#c4c4ca
+palette = 8=#52525b
+palette = 9=#d5909d
+palette = 10=#90d5ae
+palette = 11=#d5c790
+palette = 12=#9091d5
+palette = 13=#c490d5
+palette = 14=#90c1d5
+palette = 15=#efeff0

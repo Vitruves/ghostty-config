@@ -1,0 +1,26 @@
+# ghostty-config collection · aloe
+# Calm · Mint on white, clean and cool
+
+background = #f1f9f4
+foreground = #1d2a24
+cursor-color = #2a7d5d
+cursor-text = #f1f9f4
+selection-background = #a5c7d9
+selection-foreground = #1d2a24
+
+palette = 0=#444b47
+palette = 1=#ae2d29
+palette = 2=#1d7c47
+palette = 3=#74711b
+palette = 4=#2976ae
+palette = 5=#8d29ae
+palette = 6=#1d7c6e
+palette = 7=#99a39d
+palette = 8=#222523
+palette = 9=#7e2826
+palette = 10=#267e4c
+palette = 11=#767224
+palette = 12=#26597e
+palette = 13=#68267e
+palette = 14=#267e70
+palette = 15=#6f7b74

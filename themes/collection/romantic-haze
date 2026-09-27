@@ -1,0 +1,26 @@
+# ghostty-config collection · romantic-haze
+# Image Scale · Soft and warm, the tender quarter
+
+background = #fbf4f7
+foreground = #2e2430
+cursor-color = #a85482
+cursor-text = #fbf4f7
+selection-background = #aca8db
+selection-foreground = #2e2430
+
+palette = 0=#4b4447
+palette = 1=#ad2a42
+palette = 2=#1e7c2a
+palette = 3=#8c6522
+palette = 4=#2a2cad
+palette = 5=#ad2a83
+palette = 6=#247594
+palette = 7=#a3999d
+palette = 8=#252223
+palette = 9=#7d2636
+palette = 10=#267d32
+palette = 11=#7d5e26
+palette = 12=#26287d
+palette = 13=#7d2662
+palette = 14=#26647d
+palette = 15=#7b6f74

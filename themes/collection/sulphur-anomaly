@@ -1,0 +1,26 @@
+# ghostty-config collection · sulphur-anomaly
+# Goethe · Yellow tipped just past pleasantness
+
+background = #14160a
+foreground = #dbdfc2
+cursor-color = #b8bc2e
+cursor-text = #14160a
+selection-background = #2c3d5b
+selection-foreground = #dbdfc2
+
+palette = 0=#2f302c
+palette = 1=#db6943
+palette = 2=#5cdb43
+palette = 3=#dbd543
+palette = 4=#547dde
+palette = 5=#db43ab
+palette = 6=#43dbc4
+palette = 7=#c9cac4
+palette = 8=#5a5b52
+palette = 9=#e09c85
+palette = 10=#94e085
+palette = 11=#e0dd85
+palette = 12=#85a0e0
+palette = 13=#e085c3
+palette = 14=#85e0d3
+palette = 15=#f0f0ef

@@ -1,0 +1,26 @@
+# ghostty-config collection · firebrand
+# Energy · Scarlet, unmistakably awake
+
+background = #1a0c0c
+foreground = #e6cccb
+cursor-color = #e0452e
+cursor-text = #1a0c0c
+selection-background = #3b3361
+selection-foreground = #e6cccb
+
+palette = 0=#302c2c
+palette = 1=#e3513b
+palette = 2=#57e33b
+palette = 3=#e3a63b
+palette = 4=#7173eb
+palette = 5=#e33bae
+palette = 6=#3bd8e3
+palette = 7=#cac4c4
+palette = 8=#5b5252
+palette = 9=#e68d7f
+palette = 10=#91e67f
+palette = 11=#e6c17f
+palette = 12=#7f81e6
+palette = 13=#e67fc5
+palette = 14=#7fdfe6
+palette = 15=#f0efef

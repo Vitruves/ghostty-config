@@ -1,0 +1,26 @@
+# ghostty-config collection · night-watch
+# Scotopic · Dim, cool, and steady for hours
+
+background = #070a0c
+foreground = #c2cccf
+cursor-color = #4f8a92
+cursor-text = #070a0c
+selection-background = #213f58
+selection-foreground = #c2cccf
+
+palette = 0=#2c2e30
+palette = 1=#d3504b
+palette = 2=#4bd386
+palette = 3=#d3cd4b
+palette = 4=#4b95d3
+palette = 5=#b14bd3
+palette = 6=#4bc7d3
+palette = 7=#c4c7ca
+palette = 8=#52585b
+palette = 9=#db8d8a
+palette = 10=#8adbad
+palette = 11=#dbd88a
+palette = 12=#8ab6db
+palette = 13=#c78adb
+palette = 14=#8ad4db
+palette = 15=#eff0f0

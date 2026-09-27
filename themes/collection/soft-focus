@@ -1,0 +1,26 @@
+# ghostty-config collection · soft-focus
+# Contrast · Gentle on tired eyes, still above AA
+
+background = #191b1e
+foreground = #c2c6cc
+cursor-color = #7f96b0
+cursor-text = #191b1e
+selection-background = #2d4362
+selection-foreground = #c2c6cc
+
+palette = 0=#2c2d30
+palette = 1=#d4625e
+palette = 2=#4ed087
+palette = 3=#d0b64e
+palette = 4=#4e83d0
+palette = 5=#b75ed4
+palette = 6=#4eb3d0
+palette = 7=#c4c6ca
+palette = 8=#52565b
+palette = 9=#d98f8c
+palette = 10=#8cd9ae
+palette = 11=#d9c98c
+palette = 12=#8cacd9
+palette = 13=#c68cd9
+palette = 14=#8cc8d9
+palette = 15=#eff0f0

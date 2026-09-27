@@ -1,0 +1,26 @@
+# ghostty-config collection · safety-green
+# Birren · The signal green of his colour codes
+
+background = #0a140e
+foreground = #c8d8ca
+cursor-color = #3aa050
+cursor-text = #0a140e
+selection-background = #21475a
+selection-foreground = #c8d8ca
+
+palette = 0=#2c302d
+palette = 1=#d76b47
+palette = 2=#47d766
+palette = 3=#d7d147
+palette = 4=#479bd7
+palette = 5=#d747d2
+palette = 6=#47d7c1
+palette = 7=#c4cac6
+palette = 8=#525b56
+palette = 9=#dd9d88
+palette = 10=#88dd9a
+palette = 11=#ddda88
+palette = 12=#88b9dd
+palette = 13=#dd88da
+palette = 14=#88ddd0
+palette = 15=#eff0f0

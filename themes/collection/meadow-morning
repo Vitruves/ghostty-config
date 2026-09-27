@@ -1,0 +1,26 @@
+# ghostty-config collection · meadow-morning
+# Calm · Warm green under early sun
+
+background = #f7faf1
+foreground = #232b1e
+cursor-color = #467b27
+cursor-text = #f7faf1
+selection-background = #a8c8d8
+selection-foreground = #232b1e
+
+palette = 0=#494b44
+palette = 1=#b04927
+palette = 2=#2c7e1c
+palette = 3=#76721a
+palette = 4=#2776b0
+palette = 5=#b027ab
+palette = 6=#1c7e6f
+palette = 7=#a0a399
+palette = 8=#242522
+palette = 9=#7f3b24
+palette = 10=#337f24
+palette = 11=#777422
+palette = 12=#24597f
+palette = 13=#7f247c
+palette = 14=#247f72
+palette = 15=#777b6f

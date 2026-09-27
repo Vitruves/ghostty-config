@@ -1,0 +1,26 @@
+# ghostty-config collection · alarum
+# Energy · Maximum signal, minimum ambiguity
+
+background = #100808
+foreground = #edd6d4
+cursor-color = #e33b3b
+cursor-text = #100808
+selection-background = #312d5e
+selection-foreground = #edd6d4
+
+palette = 0=#302c2c
+palette = 1=#e43a3a
+palette = 2=#57e43a
+palette = 3=#e4a63a
+palette = 4=#6769ea
+palette = 5=#e43aae
+palette = 6=#3ad9e4
+palette = 7=#cac4c4
+palette = 8=#5b5252
+palette = 9=#e77e7e
+palette = 10=#90e77e
+palette = 11=#e7c17e
+palette = 12=#7e80e7
+palette = 13=#e77ec6
+palette = 14=#7ee0e7
+palette = 15=#f0efef

@@ -1,0 +1,26 @@
+# ghostty-config collection · cold-warm-divide
+# Itten · His cold-warm contrast, held in balance
+
+background = #0d1418
+foreground = #d0d8dc
+cursor-color = #d88a44
+cursor-text = #0d1418
+selection-background = #293c62
+selection-foreground = #d0d8dc
+
+palette = 0=#2c2f30
+palette = 1=#d96a45
+palette = 2=#5ed945
+palette = 3=#d9a345
+palette = 4=#567edc
+palette = 5=#d945aa
+palette = 6=#45cfd9
+palette = 7=#c4c8ca
+palette = 8=#52585b
+palette = 9=#df9c86
+palette = 10=#95df86
+palette = 11=#dfbf86
+palette = 12=#86a1df
+palette = 13=#df86c3
+palette = 14=#86d9df
+palette = 15=#eff0f0

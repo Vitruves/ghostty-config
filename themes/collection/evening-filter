@@ -1,0 +1,26 @@
+# ghostty-config collection · evening-filter
+# Circadian · The last working hours, filtered
+
+background = #16110a
+foreground = #e2d4bc
+cursor-color = #d8a344
+cursor-text = #16110a
+selection-background = #2e3a5a
+selection-foreground = #e2d4bc
+
+palette = 0=#302e2c
+palette = 1=#d96a45
+palette = 2=#5ed945
+palette = 3=#d9a445
+palette = 4=#567edc
+palette = 5=#d945aa
+palette = 6=#45d9c3
+palette = 7=#cac7c4
+palette = 8=#5b5752
+palette = 9=#df9c86
+palette = 10=#95df86
+palette = 11=#dfbf86
+palette = 12=#86a1df
+palette = 13=#df86c3
+palette = 14=#86dfd2
+palette = 15=#f0f0ef

@@ -1,0 +1,26 @@
+# ghostty-config collection · signal-clarity
+# Focus · Crisp cyan, everything legible at a glance
+
+background = #06121a
+foreground = #cfe2ec
+cursor-color = #24a8d4
+cursor-text = #06121a
+selection-background = #1e4063
+selection-foreground = #cfe2ec
+
+palette = 0=#2c2e30
+palette = 1=#d94a45
+palette = 2=#45d985
+palette = 3=#d9d345
+palette = 4=#458cd9
+palette = 5=#b74ddb
+palette = 6=#45c3d9
+palette = 7=#c4c7ca
+palette = 8=#52585b
+palette = 9=#df8986
+palette = 10=#86dfad
+palette = 11=#dfdc86
+palette = 12=#86b1df
+palette = 13=#c986df
+palette = 14=#86d1df
+palette = 15=#eff0f0

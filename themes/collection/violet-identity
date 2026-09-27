@@ -1,0 +1,26 @@
+# ghostty-config collection · violet-identity
+# Luscher · Violet, between red and blue
+
+background = #100c18
+foreground = #d4cee0
+cursor-color = #8f65cd
+cursor-text = #100c18
+selection-background = #333266
+selection-foreground = #d4cee0
+
+palette = 0=#2d2c30
+palette = 1=#dc425e
+palette = 2=#42dc85
+palette = 3=#dca442
+palette = 4=#6d6fe4
+palette = 5=#b84bde
+palette = 6=#42b0dc
+palette = 7=#c6c4ca
+palette = 8=#55525b
+palette = 9=#e18495
+palette = 10=#84e1ad
+palette = 11=#e1bf84
+palette = 12=#8486e1
+palette = 13=#ca84e1
+palette = 14=#84c7e1
+palette = 15=#efeff0

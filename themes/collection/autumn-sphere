@@ -1,0 +1,26 @@
+# ghostty-config collection · autumn-sphere
+# Itten · The warm, muted quarter of his sphere
+
+background = #16110c
+foreground = #e0d2c0
+cursor-color = #b8763a
+cursor-text = #16110c
+selection-background = #2f3b5b
+selection-foreground = #e0d2c0
+
+palette = 0=#302e2c
+palette = 1=#d76b47
+palette = 2=#5fd747
+palette = 3=#d7a347
+palette = 4=#587fdb
+palette = 5=#d747a9
+palette = 6=#47cdd7
+palette = 7=#cac7c4
+palette = 8=#5b5752
+palette = 9=#dd9d88
+palette = 10=#96dd88
+palette = 11=#ddbe88
+palette = 12=#88a1dd
+palette = 13=#dd88c2
+palette = 14=#88d8dd
+palette = 15=#f0f0ef

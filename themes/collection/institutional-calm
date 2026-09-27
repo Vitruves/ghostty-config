@@ -1,0 +1,26 @@
+# ghostty-config collection · institutional-calm
+# Birren · The green of a room meant to settle you
+
+background = #f4f7f6
+foreground = #212a28
+cursor-color = #34786e
+cursor-text = #f4f7f6
+selection-background = #a7c6da
+selection-foreground = #212a28
+
+palette = 0=#444b49
+palette = 1=#ad2e2a
+palette = 2=#1e7c47
+palette = 3=#74701c
+palette = 4=#2a76ad
+palette = 5=#8c2aad
+palette = 6=#1e7c6d
+palette = 7=#99a3a0
+palette = 8=#222524
+palette = 9=#7d2926
+palette = 10=#267d4c
+palette = 11=#757224
+palette = 12=#26597d
+palette = 13=#67267d
+palette = 14=#267d70
+palette = 15=#6f7b77

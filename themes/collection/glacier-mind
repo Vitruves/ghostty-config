@@ -1,0 +1,26 @@
+# ghostty-config collection · glacier-mind
+# Focus · Bright ice for daylight rooms
+
+background = #f2f6fb
+foreground = #1e2833
+cursor-color = #2f6fb0
+cursor-text = #f2f6fb
+selection-background = #a5bddf
+selection-foreground = #1e2833
+
+palette = 0=#44474b
+palette = 1=#b02b27
+palette = 2=#1c7e46
+palette = 3=#7e6a1c
+palette = 4=#2761b0
+palette = 5=#8e27b0
+palette = 6=#20778f
+palette = 7=#999ea3
+palette = 8=#222425
+palette = 9=#7f2724
+palette = 10=#247f4c
+palette = 11=#7f6d24
+palette = 12=#244b7f
+palette = 13=#69247f
+palette = 14=#246c7f
+palette = 15=#6f757b

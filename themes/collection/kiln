@@ -1,0 +1,26 @@
+# ghostty-config collection · kiln
+# Energy · Orange-red at working heat
+
+background = #180f09
+foreground = #e4d0c2
+cursor-color = #d96a2a
+cursor-text = #180f09
+selection-background = #2d385d
+selection-foreground = #e4d0c2
+
+palette = 0=#302d2c
+palette = 1=#e2653c
+palette = 2=#58e23c
+palette = 3=#e2a63c
+palette = 4=#4e7be5
+palette = 5=#e23cae
+palette = 6=#3cd7e2
+palette = 7=#cac6c4
+palette = 8=#5b5652
+palette = 9=#e59980
+palette = 10=#91e580
+palette = 11=#e5c080
+palette = 12=#809ee5
+palette = 13=#e580c5
+palette = 14=#80dee5
+palette = 15=#f0f0ef

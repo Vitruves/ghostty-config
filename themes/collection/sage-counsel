@@ -1,0 +1,26 @@
+# ghostty-config collection · sage-counsel
+# Calm · Muted sage, nothing insistent
+
+background = #141a16
+foreground = #ccd4cc
+cursor-color = #86a68c
+cursor-text = #141a16
+selection-background = #2b4a5c
+selection-foreground = #ccd4cc
+
+palette = 0=#2c302d
+palette = 1=#ce6f50
+palette = 2=#50ce68
+palette = 3=#cec950
+palette = 4=#5099ce
+palette = 5=#ce50c9
+palette = 6=#50cebb
+palette = 7=#c4cac6
+palette = 8=#525b55
+palette = 9=#d7a08e
+palette = 10=#8ed79c
+palette = 11=#d7d48e
+palette = 12=#8eb8d7
+palette = 13=#d78ed5
+palette = 14=#8ed7cc
+palette = 15=#eff0ef

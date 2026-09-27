@@ -1,0 +1,26 @@
+# ghostty-config collection · red-green-axis
+# Opponent · One axis pushed, the other quiet
+
+background = #101210
+foreground = #d4d8d2
+cursor-color = #46a05a
+cursor-text = #101210
+selection-background = #24465d
+selection-foreground = #d4d8d2
+
+palette = 0=#2c302c
+palette = 1=#da6944
+palette = 2=#44da65
+palette = 3=#dad444
+palette = 4=#449bda
+palette = 5=#da44d5
+palette = 6=#44dac3
+palette = 7=#c4cac4
+palette = 8=#525b52
+palette = 9=#df9c86
+palette = 10=#86df9a
+palette = 11=#dfdc86
+palette = 12=#86badf
+palette = 13=#df86dc
+palette = 14=#86dfd2
+palette = 15=#eff0ef

@@ -1,0 +1,26 @@
+# ghostty-config collection · luminance-lift
+# Affect · Brightness raised, saturation held
+
+background = #ffffff
+foreground = #1a1a1a
+cursor-color = #2060c0
+cursor-text = #ffffff
+selection-background = #adc0e1
+selection-foreground = #1a1a1a
+
+palette = 0=#4b4444
+palette = 1=#b02740
+palette = 2=#1e864b
+palette = 3=#86711e
+palette = 4=#275ab0
+palette = 5=#8e27b0
+palette = 6=#237f9f
+palette = 7=#a39999
+palette = 8=#252222
+palette = 9=#7f2435
+palette = 10=#247f4c
+palette = 11=#7f6d24
+palette = 12=#24467f
+palette = 13=#69247f
+palette = 14=#24687f
+palette = 15=#7b6f6f

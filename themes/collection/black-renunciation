@@ -1,0 +1,26 @@
+# ghostty-config collection · black-renunciation
+# Luscher · Black, the refusal
+
+background = #050505
+foreground = #d0d0d0
+cursor-color = #808080
+cursor-text = #050505
+selection-background = #2c2d53
+selection-foreground = #d0d0d0
+
+palette = 0=#302c2c
+palette = 1=#ca5454
+palette = 2=#68ca54
+palette = 3=#ca9f54
+palette = 4=#6b6dd1
+palette = 5=#ca54a5
+palette = 6=#54c2ca
+palette = 7=#cac4c4
+palette = 8=#5b5252
+palette = 9=#d49191
+palette = 10=#9cd491
+palette = 11=#d4bc91
+palette = 12=#9192d4
+palette = 13=#d491bf
+palette = 14=#91d0d4
+palette = 15=#f0efef

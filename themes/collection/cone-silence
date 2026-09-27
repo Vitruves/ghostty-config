@@ -1,0 +1,26 @@
+# ghostty-config collection · cone-silence
+# Scotopic · Colour vision almost switched off
+
+background = #05070a
+foreground = #bec6d0
+cursor-color = #518192
+cursor-text = #05070a
+selection-background = #203a56
+selection-foreground = #bec6d0
+
+palette = 0=#2c2d30
+palette = 1=#d1514d
+palette = 2=#4dd186
+palette = 3=#d1cc4d
+palette = 4=#4d8cd1
+palette = 5=#b04dd1
+palette = 6=#4dbdd1
+palette = 7=#c4c6ca
+palette = 8=#52565b
+palette = 9=#d98e8c
+palette = 10=#8cd9ae
+palette = 11=#d9d68c
+palette = 12=#8cb1d9
+palette = 13=#c68cd9
+palette = 14=#8cced9
+palette = 15=#eff0f0

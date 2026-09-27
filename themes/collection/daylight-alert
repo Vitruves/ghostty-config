@@ -1,0 +1,26 @@
+# ghostty-config collection · daylight-alert
+# Circadian · Short-wavelength rich, for the morning
+
+background = #f2f8ff
+foreground = #1a2430
+cursor-color = #1a6ec8
+cursor-text = #f2f8ff
+selection-background = #a4bee2
+selection-foreground = #1a2430
+
+palette = 0=#44474b
+palette = 1=#b32824
+palette = 2=#1a8046
+palette = 3=#806b1a
+palette = 4=#245fb3
+palette = 5=#8f24b3
+palette = 6=#1d7891
+palette = 7=#999ea3
+palette = 8=#222425
+palette = 9=#822522
+palette = 10=#22824c
+palette = 11=#826e22
+palette = 12=#224a82
+palette = 13=#6a2282
+palette = 14=#226d82
+palette = 15=#6f757b

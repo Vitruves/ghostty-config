@@ -1,0 +1,26 @@
+# ghostty-config collection · slate-discipline
+# Neutral · Grey with a trace of blue
+
+background = #14181c
+foreground = #ccd2d8
+cursor-color = #7c8b99
+cursor-text = #14181c
+selection-background = #2a4260
+selection-foreground = #ccd2d8
+
+palette = 0=#2c2e30
+palette = 1=#d15b57
+palette = 2=#4fcf87
+palette = 3=#cfb54f
+palette = 4=#4f86cf
+palette = 5=#b65fd3
+palette = 6=#4fb5cf
+palette = 7=#c4c7ca
+palette = 8=#52575b
+palette = 9=#d88f8d
+palette = 10=#8dd8ae
+palette = 11=#d8c98d
+palette = 12=#8daed8
+palette = 13=#c58dd8
+palette = 14=#8dc9d8
+palette = 15=#eff0f0

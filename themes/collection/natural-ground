@@ -1,0 +1,26 @@
+# ghostty-config collection · natural-ground
+# Image Scale · Warm and soft, undyed
+
+background = #f8f5ec
+foreground = #2a2820
+cursor-color = #677431
+cursor-text = #f8f5ec
+selection-background = #a9c2d1
+selection-foreground = #2a2820
+
+palette = 0=#4b4944
+palette = 1=#ad4a2a
+palette = 2=#2e7c1e
+palette = 3=#74701c
+palette = 4=#2870a5
+palette = 5=#ad2a83
+palette = 6=#1e7c6d
+palette = 7=#a3a199
+palette = 8=#252522
+palette = 9=#7d3c26
+palette = 10=#357d26
+palette = 11=#757224
+palette = 12=#26597d
+palette = 13=#7d2662
+palette = 14=#267d70
+palette = 15=#7b786f

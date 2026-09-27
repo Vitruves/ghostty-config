@@ -1,0 +1,26 @@
+# ghostty-config collection · mulberry-dusk
+# Imagination · Deep berry, quieter than it looks
+
+background = #150c14
+foreground = #ddcbd8
+cursor-color = #bc5992
+cursor-text = #150c14
+selection-background = #373262
+selection-foreground = #ddcbd8
+
+palette = 0=#302c30
+palette = 1=#da445f
+palette = 2=#44da58
+palette = 3=#daa344
+palette = 4=#6f71e2
+palette = 5=#da44ab
+palette = 6=#44afda
+palette = 7=#cac4c9
+palette = 8=#5b525a
+palette = 9=#df8696
+palette = 10=#86df92
+palette = 11=#dfbf86
+palette = 12=#8687df
+palette = 13=#df86c3
+palette = 14=#86c6df
+palette = 15=#f0eff0

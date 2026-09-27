@@ -1,0 +1,26 @@
+# ghostty-config collection · paper-mind
+# Neutral · White page, black ink
+
+background = #fafafa
+foreground = #232323
+cursor-color = #555555
+cursor-text = #fafafa
+selection-background = #acaddb
+selection-foreground = #232323
+
+palette = 0=#4b4444
+palette = 1=#a92d2d
+palette = 2=#328122
+palette = 3=#916a27
+palette = 4=#2d2fa9
+palette = 5=#a92d82
+palette = 6=#227b81
+palette = 7=#a39999
+palette = 8=#252222
+palette = 9=#7a2929
+palette = 10=#377a29
+palette = 11=#7a5d29
+palette = 12=#292a7a
+palette = 13=#7a2961
+palette = 14=#29757a
+palette = 15=#7b6f6f

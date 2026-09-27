@@ -1,0 +1,26 @@
+# ghostty-config collection · hearth
+# Warmth · Warm brown, close and settled
+
+background = #1a120e
+foreground = #e2d2c6
+cursor-color = #c07a4a
+cursor-text = #1a120e
+selection-background = #323b5c
+selection-foreground = #e2d2c6
+
+palette = 0=#302d2c
+palette = 1=#d76b47
+palette = 2=#5fd747
+palette = 3=#d7a347
+palette = 4=#587fdb
+palette = 5=#d747a9
+palette = 6=#47cdd7
+palette = 7=#cac6c4
+palette = 8=#5b5552
+palette = 9=#dd9d88
+palette = 10=#96dd88
+palette = 11=#ddbe88
+palette = 12=#88a1dd
+palette = 13=#dd88c2
+palette = 14=#88d8dd
+palette = 15=#f0efef

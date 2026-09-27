@@ -1,0 +1,26 @@
+# ghostty-config collection · iris-bloom
+# Imagination · Violet on white paper
+
+background = #f7f4fc
+foreground = #262233
+cursor-color = #6a4bb8
+cursor-text = #f7f4fc
+selection-background = #a7a6e0
+selection-foreground = #262233
+
+palette = 0=#47444b
+palette = 1=#b3243e
+palette = 2=#1a8046
+palette = 3=#806b1a
+palette = 4=#2426b3
+palette = 5=#8f24b3
+palette = 6=#1f769a
+palette = 7=#9d99a3
+palette = 8=#232225
+palette = 9=#822233
+palette = 10=#207a47
+palette = 11=#826e22
+palette = 12=#222382
+palette = 13=#6a2282
+palette = 14=#226682
+palette = 15=#746f7b

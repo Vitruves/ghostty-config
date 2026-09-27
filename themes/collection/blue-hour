@@ -1,0 +1,26 @@
+# ghostty-config collection · blue-hour
+# Focus · Indigo of the minutes after sunset
+
+background = #0d1024
+foreground = #c8cce4
+cursor-color = #6a79d2
+cursor-text = #0d1024
+selection-background = #30386b
+selection-foreground = #c8cce4
+
+palette = 0=#2c2c30
+palette = 1=#d94f68
+palette = 2=#47d786
+palette = 3=#d7ba47
+palette = 4=#697ade
+palette = 5=#b64fd9
+palette = 6=#47aed7
+palette = 7=#c4c5ca
+palette = 8=#52535b
+palette = 9=#dd8897
+palette = 10=#88ddad
+palette = 11=#ddcc88
+palette = 12=#8894dd
+palette = 13=#c888dd
+palette = 14=#88c5dd
+palette = 15=#efeff0

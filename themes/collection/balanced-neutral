@@ -1,0 +1,26 @@
+# ghostty-config collection · balanced-neutral
+# Colour Order · Equidistant from every hue
+
+background = #121416
+foreground = #d0d4d6
+cursor-color = #869098
+cursor-text = #121416
+selection-background = #2a405c
+selection-foreground = #d0d4d6
+
+palette = 0=#2c2e30
+palette = 1=#cf5d58
+palette = 2=#50cd87
+palette = 3=#cdb450
+palette = 4=#5089cd
+palette = 5=#b258cf
+palette = 6=#50b7cd
+palette = 7=#c4c7ca
+palette = 8=#52575b
+palette = 9=#d7918e
+palette = 10=#8ed7ae
+palette = 11=#d7c88e
+palette = 12=#8eafd7
+palette = 13=#c58ed7
+palette = 14=#8ecad7
+palette = 15=#eff0f0

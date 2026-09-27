@@ -1,0 +1,26 @@
+# ghostty-config collection · orange-desire
+# Luscher · Orange-red, the third
+
+background = #180f08
+foreground = #e2d0bc
+cursor-color = #d87a24
+cursor-text = #180f08
+selection-background = #2d385b
+selection-foreground = #e2d0bc
+
+palette = 0=#302e2c
+palette = 1=#df673e
+palette = 2=#5adf3e
+palette = 3=#dfa53e
+palette = 4=#4f7ce2
+palette = 5=#df3ead
+palette = 6=#3ed4df
+palette = 7=#cac7c4
+palette = 8=#5b5652
+palette = 9=#e39a82
+palette = 10=#92e382
+palette = 11=#e3c082
+palette = 12=#829fe3
+palette = 13=#e382c5
+palette = 14=#82dde3
+palette = 15=#f0f0ef

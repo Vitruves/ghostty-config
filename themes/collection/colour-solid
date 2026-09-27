@@ -1,0 +1,26 @@
+# ghostty-config collection · colour-solid
+# Colour Order · The whole arrangement, in three dimensions
+
+background = #0c0e12
+foreground = #ccd0d8
+cursor-color = #5c7ea8
+cursor-text = #0c0e12
+selection-background = #243a5b
+selection-foreground = #ccd0d8
+
+palette = 0=#2c2d30
+palette = 1=#d34b64
+palette = 2=#4bd386
+palette = 3=#d3b74b
+palette = 4=#4b81d3
+palette = 5=#b553d5
+palette = 6=#4bb3d3
+palette = 7=#c4c6ca
+palette = 8=#52555b
+palette = 9=#db8a99
+palette = 10=#8adbad
+palette = 11=#dbcb8a
+palette = 12=#8aaadb
+palette = 13=#c78adb
+palette = 14=#8ac8db
+palette = 15=#efeff0

@@ -1,0 +1,26 @@
+# ghostty-config collection · blue-suppressed
+# Circadian · Amber throughout, by design
+
+background = #171208
+foreground = #e4d6b8
+cursor-color = #dcae3a
+cursor-text = #171208
+selection-background = #2f3b59
+selection-foreground = #e4d6b8
+
+palette = 0=#302f2c
+palette = 1=#da6944
+palette = 2=#5dda44
+palette = 3=#daaf44
+palette = 4=#557edd
+palette = 5=#da44ab
+palette = 6=#44dac3
+palette = 7=#cac8c4
+palette = 8=#5b5852
+palette = 9=#df9c86
+palette = 10=#95df86
+palette = 11=#dfc686
+palette = 12=#86a1df
+palette = 13=#df86c3
+palette = 14=#86dfd2
+palette = 15=#f0f0ef

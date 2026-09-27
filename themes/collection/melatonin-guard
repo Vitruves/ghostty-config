@@ -1,0 +1,26 @@
+# ghostty-config collection · melatonin-guard
+# Circadian · Warm enough to leave the night alone
+
+background = #140e08
+foreground = #ded0ba
+cursor-color = #c88a30
+cursor-text = #140e08
+selection-background = #2a3658
+selection-foreground = #ded0ba
+
+palette = 0=#302e2c
+palette = 1=#d86a46
+palette = 2=#5fd846
+palette = 3=#d8a346
+palette = 4=#4e78da
+palette = 5=#d846aa
+palette = 6=#46d8c2
+palette = 7=#cac7c4
+palette = 8=#5b5752
+palette = 9=#de9d87
+palette = 10=#96de87
+palette = 11=#debf87
+palette = 12=#87a1de
+palette = 13=#de87c3
+palette = 14=#87ded1
+palette = 15=#f0f0ef

@@ -1,0 +1,26 @@
+# ghostty-config collection · chromatic-cancel
+# Opponent · Opposites cancelling towards grey
+
+background = #0f1214
+foreground = #ccd2d6
+cursor-color = #7a9ab0
+cursor-text = #0f1214
+selection-background = #27405b
+selection-foreground = #ccd2d6
+
+palette = 0=#2c2e30
+palette = 1=#d25a56
+palette = 2=#4ed087
+palette = 3=#d0b64e
+palette = 4=#4e8ad0
+palette = 5=#b456d2
+palette = 6=#4ebad0
+palette = 7=#c4c7ca
+palette = 8=#52585b
+palette = 9=#d98f8c
+palette = 10=#8cd9ae
+palette = 11=#d9c98c
+palette = 12=#8cb0d9
+palette = 13=#c68cd9
+palette = 14=#8cccd9
+palette = 15=#eff0f0

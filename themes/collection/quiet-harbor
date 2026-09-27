@@ -1,0 +1,26 @@
+# ghostty-config collection · quiet-harbor
+# Focus · Blue-grey with the volume down
+
+background = #121820
+foreground = #ccd4dc
+cursor-color = #7fa0bb
+cursor-text = #121820
+selection-background = #294363
+selection-foreground = #ccd4dc
+
+palette = 0=#2c2e30
+palette = 1=#d25a56
+palette = 2=#4ed087
+palette = 3=#d0b64e
+palette = 4=#4e88d0
+palette = 5=#b75ed4
+palette = 6=#4eb8d0
+palette = 7=#c4c6ca
+palette = 8=#52565b
+palette = 9=#d98f8c
+palette = 10=#8cd9ae
+palette = 11=#d9c98c
+palette = 12=#8cafd9
+palette = 13=#c68cd9
+palette = 14=#8ccbd9
+palette = 15=#eff0f0

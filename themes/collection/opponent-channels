@@ -1,0 +1,26 @@
+# ghostty-config collection · opponent-channels
+# Opponent · The three axes, given equal weight
+
+background = #0c1016
+foreground = #ccd4de
+cursor-color = #4a8ec4
+cursor-text = #0c1016
+selection-background = #233e5f
+selection-foreground = #ccd4de
+
+palette = 0=#2c2d30
+palette = 1=#d54d48
+palette = 2=#48d586
+palette = 3=#d5b948
+palette = 4=#4888d5
+palette = 5=#b550d7
+palette = 6=#48bcd5
+palette = 7=#c4c6ca
+palette = 8=#52565b
+palette = 9=#dc8b89
+palette = 10=#89dcad
+palette = 11=#dccc89
+palette = 12=#89afdc
+palette = 13=#c889dc
+palette = 14=#89cddc
+palette = 15=#eff0f0

@@ -1,0 +1,26 @@
+# ghostty-config collection · light-dark-ladder
+# Itten · Contrast of value, nothing else
+
+background = #0a0a0c
+foreground = #e4e4e8
+cursor-color = #8890a0
+cursor-text = #0a0a0c
+selection-background = #233457
+selection-foreground = #e4e4e8
+
+palette = 0=#2c2c30
+palette = 1=#d14d65
+palette = 2=#4dd186
+palette = 3=#d1b64d
+palette = 4=#4d79d1
+palette = 5=#b04dd1
+palette = 6=#4dabd1
+palette = 7=#c4c4ca
+palette = 8=#52525b
+palette = 9=#d98c9a
+palette = 10=#8cd9ae
+palette = 11=#d9ca8c
+palette = 12=#8ca6d9
+palette = 13=#c68cd9
+palette = 14=#8cc3d9
+palette = 15=#efeff0

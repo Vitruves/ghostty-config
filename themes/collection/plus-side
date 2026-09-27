@@ -1,0 +1,26 @@
+# ghostty-config collection · plus-side
+# Goethe · The active pole, yellow through red
+
+background = #16130a
+foreground = #e6dcc2
+cursor-color = #e0b93a
+cursor-text = #16130a
+selection-background = #2e3c5a
+selection-foreground = #e6dcc2
+
+palette = 0=#302f2c
+palette = 1=#da6944
+palette = 2=#5dda44
+palette = 3=#dab744
+palette = 4=#557edd
+palette = 5=#da44ab
+palette = 6=#44dac3
+palette = 7=#cac8c4
+palette = 8=#5b5952
+palette = 9=#df9c86
+palette = 10=#95df86
+palette = 11=#dfca86
+palette = 12=#86a1df
+palette = 13=#df86c3
+palette = 14=#86dfd2
+palette = 15=#f0f0ef

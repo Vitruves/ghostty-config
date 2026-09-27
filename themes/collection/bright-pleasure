@@ -1,0 +1,26 @@
+# ghostty-config collection · bright-pleasure
+# Affect · The brightest end of the scale
+
+background = #fafcff
+foreground = #1e2530
+cursor-color = #2675b7
+cursor-text = #fafcff
+selection-background = #a9c2e1
+selection-foreground = #1e2530
+
+palette = 0=#44474b
+palette = 1=#b12a25
+palette = 2=#1a7e46
+palette = 3=#87711c
+palette = 4=#2564b1
+palette = 5=#8e25b1
+palette = 6=#1e7a8f
+palette = 7=#999da3
+palette = 8=#222325
+palette = 9=#802623
+palette = 10=#23804c
+palette = 11=#806e23
+palette = 12=#234d80
+palette = 13=#692380
+palette = 14=#236f80
+palette = 15=#6f747b

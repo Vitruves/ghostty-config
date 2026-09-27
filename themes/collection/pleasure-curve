@@ -1,0 +1,26 @@
+# ghostty-config collection · pleasure-curve
+# Affect · Bright and moderately saturated
+
+background = #0e1218
+foreground = #d2d8e0
+cursor-color = #52a0d0
+cursor-text = #0e1218
+selection-background = #244061
+selection-foreground = #d2d8e0
+
+palette = 0=#2c2d30
+palette = 1=#d9544f
+palette = 2=#47d786
+palette = 3=#d7ba47
+palette = 4=#478ad7
+palette = 5=#b64fd9
+palette = 6=#47bfd7
+palette = 7=#c4c6ca
+palette = 8=#52565b
+palette = 9=#dd8b88
+palette = 10=#88ddad
+palette = 11=#ddcc88
+palette = 12=#88b0dd
+palette = 13=#c888dd
+palette = 14=#88cfdd
+palette = 15=#eff0f0

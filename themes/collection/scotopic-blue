@@ -1,0 +1,26 @@
+# ghostty-config collection · scotopic-blue
+# Scotopic · Peak rod sensitivity, near 500 nanometres
+
+background = #04060e
+foreground = #bcc6dc
+cursor-color = #4e79cc
+cursor-text = #04060e
+selection-background = #1d315b
+selection-foreground = #bcc6dc
+
+palette = 0=#2c2d30
+palette = 1=#d84660
+palette = 2=#46d886
+palette = 3=#d8bb46
+palette = 4=#4678d8
+palette = 5=#b446d8
+palette = 6=#46afd8
+palette = 7=#c4c5ca
+palette = 8=#52545b
+palette = 9=#de8797
+palette = 10=#87dead
+palette = 11=#decd87
+palette = 12=#87a5de
+palette = 13=#c987de
+palette = 14=#87c5de
+palette = 15=#efeff0

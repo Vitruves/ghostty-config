@@ -1,0 +1,26 @@
+# ghostty-config collection · visual-rest
+# Birren · The colour to look at between tasks
+
+background = #0e1512
+foreground = #cad6d0
+cursor-color = #5a9c84
+cursor-text = #0e1512
+selection-background = #26485b
+selection-foreground = #cad6d0
+
+palette = 0=#2c302e
+palette = 1=#d35955
+palette = 2=#4dd186
+palette = 3=#d1cc4d
+palette = 4=#4d9ad1
+palette = 5=#b455d3
+palette = 6=#4dd1bd
+palette = 7=#c4cac7
+palette = 8=#525b57
+palette = 9=#d98e8c
+palette = 10=#8cd9ae
+palette = 11=#d9d68c
+palette = 12=#8cb9d9
+palette = 13=#c68cd9
+palette = 14=#8cd9ce
+palette = 15=#eff0f0

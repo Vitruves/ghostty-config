@@ -1,0 +1,26 @@
+# ghostty-config collection · gorgeous-depth
+# Image Scale · Saturated and dark, the rich corner
+
+background = #120a14
+foreground = #ddccdc
+cursor-color = #bf4fab
+cursor-text = #120a14
+selection-background = #343063
+selection-foreground = #ddccdc
+
+palette = 0=#2f2c30
+palette = 1=#de3f5c
+palette = 2=#3fde55
+palette = 3=#dea53f
+palette = 4=#6b6de5
+palette = 5=#de3fc2
+palette = 6=#3fb1de
+palette = 7=#c9c4ca
+palette = 8=#59525b
+palette = 9=#e38294
+palette = 10=#82e38f
+palette = 11=#e3c082
+palette = 12=#8284e3
+palette = 13=#e382d1
+palette = 14=#82c7e3
+palette = 15=#f0eff0
