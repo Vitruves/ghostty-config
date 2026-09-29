@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"time"
 )
 
 // State is this tool's own memory: favourites, and the few preferences that
@@ -15,10 +16,14 @@ type State struct {
 	AutoReload *bool    `json:"auto_reload,omitempty"`
 	MonoOnly   *bool    `json:"mono_only,omitempty"`
 	// Interface is the colour scheme of the editor's own chrome, kept apart
-	// from the theme being looked at: "graphite", "paper" or "theme".
+	// from the theme being looked at: "clear", "paper", "graphite" or "theme".
 	Interface string `json:"interface,omitempty"`
-	path      string
-	favSet    map[string]bool
+	// UpdateCheckedAt and LatestRelease remember the last look at GitHub,
+	// so the network is asked at most once a day.
+	UpdateCheckedAt time.Time `json:"update_checked_at,omitempty"`
+	LatestRelease   string    `json:"latest_release,omitempty"`
+	path            string
+	favSet          map[string]bool
 }
 
 // LoadState reads state.json, or starts fresh.

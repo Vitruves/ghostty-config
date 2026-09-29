@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -10,6 +11,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/vitruves/ghostty-config/internal/ghostty"
+	"github.com/vitruves/ghostty-config/internal/update"
 )
 
 // overlay is a dialog drawn over the screen and owning the keyboard.
@@ -40,6 +42,10 @@ type Options struct {
 	NoReload bool
 	// Plain keeps to glyphs every terminal and font can draw.
 	Plain bool
+	// Version is this build's version, compared with the newest release.
+	Version string
+	// NoUpdateCheck never asks GitHub for a newer release.
+	NoUpdateCheck bool
 }
 
 // Model is the whole editor: one prompt, a list of what it can mean, and a
@@ -121,8 +127,12 @@ type Model struct {
 	reloadSeq int
 
 	reloadFailed bool
-	exitNote     string
-	quitting     bool
+	// top is the terminal row the editor's first row sits on: it draws in
+	// the bottom rows, under what was on screen.
+	top        int
+	exitNote   string
+	updateNote string // a newer release, told again on the way out
+	quitting   bool
 }
 
 // New builds the editor over loaded configuration.
@@ -192,10 +202,35 @@ func (m *Model) landOnApplied() {
 }
 
 // ExitNote is printed after the UI tears down.
-func (m *Model) ExitNote() string { return m.exitNote }
+func (m *Model) ExitNote() string {
+	switch {
+	case m.updateNote == "":
+		return m.exitNote
+	case m.exitNote == "":
+		return m.updateNote
+	}
+	return m.exitNote + "\n" + m.updateNote
+}
 
-// Init starts the spinner.
-func (m *Model) Init() tea.Cmd { return m.spin.Tick }
+// Init starts the spinner and the update check.
+func (m *Model) Init() tea.Cmd { return tea.Batch(m.spin.Tick, m.checkUpdate()) }
+
+// checkUpdate asks GitHub for the newest release in the background. The UI
+// never waits on it: offline, it times out quietly. A recent answer is reused
+// from the state file instead of asking again.
+func (m *Model) checkUpdate() tea.Cmd {
+	if m.opts.NoUpdateCheck || m.opts.Version == "" {
+		return nil
+	}
+	if time.Since(m.state.UpdateCheckedAt) < update.Interval {
+		latest := m.state.LatestRelease
+		return func() tea.Msg { return updateMsg{latest: latest, cached: true} }
+	}
+	return func() tea.Msg {
+		latest, err := update.Latest(context.Background())
+		return updateMsg{latest: latest, err: err}
+	}
+}
 
 // Messages.
 type (
@@ -210,13 +245,19 @@ type (
 		written, skipped int
 		err              error
 	}
+	updateMsg struct {
+		latest string
+		cached bool
+		err    error
+	}
 )
 
 // Update dispatches to the overlay or the prompt.
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.width, m.height = msg.Width, msg.Height
+		m.width, m.height = msg.Width, InlineHeight(msg.Height)
+		m.top = msg.Height - m.height
 		return m, nil
 	case spinner.TickMsg:
 		var cmd tea.Cmd
@@ -247,6 +288,24 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case installDoneMsg:
 		return m, m.finishInstall(msg)
+	case updateMsg:
+		if msg.err != nil {
+			// Offline or rate limited: try again next start.
+			return m, nil
+		}
+		if !msg.cached {
+			m.state.UpdateCheckedAt = time.Now()
+			m.state.LatestRelease = msg.latest
+		}
+		if update.Newer(msg.latest, m.opts.Version) {
+			m.updateNote = fmt.Sprintf("ghostty-config %s is available (you have %s): %s", msg.latest, m.opts.Version, update.InstallHint)
+			// Only take a line that is showing the selection, never a
+			// message the user may still be reading.
+			if m.statusKind == statusPlain {
+				m.info("ghostty-config %s is available — details on exit", msg.latest)
+			}
+		}
+		return m, nil
 	case collectionMsg:
 		m.overlay = overlayNone
 		if msg.err != nil {
@@ -307,14 +366,15 @@ func (m *Model) View() string {
 // chrome background.
 func (m *Model) fillScreen(body string) string {
 	lines := strings.Split(body, "\n")
-	base := m.c.base()
+	c := m.clearChrome()
+	base := c.base()
 	out := make([]string, 0, m.height)
 	for i := 0; i < m.height; i++ {
 		line := ""
 		if i < len(lines) {
 			line = lines[i]
 		}
-		out = append(out, rebase(m.c.fill(line, m.width), base))
+		out = append(out, rebase(c.fill(line, m.width), base))
 	}
 	return strings.Join(out, "\n")
 }

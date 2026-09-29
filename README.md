@@ -89,6 +89,7 @@ Browsing never changes your config. A value is written only when you press `Ente
 -no-reload              never ask Ghostty to reload
 -plain                  use only glyphs that every terminal can draw
 -paths                  print the files that are read and written
+-no-update-check        never look for a newer release on GitHub
 -version                print the version
 ```
 
@@ -97,6 +98,8 @@ Browsing never changes your config. A value is written only when you press `Ente
 The tool reads the same files as Ghostty, in the same order: `config` and `config.ghostty` in `~/.config/ghostty/`, then on macOS the same names in `~/Library/Application Support/com.mitchellh.ghostty/`, then any file included with `config-file`. A setting is rewritten on the line where it is currently defined. Comments and other lines are left untouched.
 
 Each file is backed up to `~/.config/ghostty-config/backups/` before its first change. Themes you save go to `~/.config/ghostty/themes/`.
+
+At most once a day, the tool asks GitHub in the background whether a newer release exists and tells you on exit. It never delays startup, stays silent offline, and downloads nothing. Use `-no-update-check` to turn it off.
 
 Ghostty has no reload command. On macOS the tool sends the reload shortcut to Ghostty, which requires the Accessibility permission. Elsewhere, reload Ghostty yourself after a change.
 

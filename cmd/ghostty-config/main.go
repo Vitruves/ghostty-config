@@ -7,15 +7,18 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/x/term"
 
 	"github.com/vitruves/ghostty-config/internal/collection"
 	"github.com/vitruves/ghostty-config/internal/ghostty"
 	"github.com/vitruves/ghostty-config/internal/tui"
 )
 
-const version = "1.0.0"
+// version is overridden at build time with -ldflags "-X main.version=...".
+var version = "0.1.0"
 
 func main() {
 	configPath := flag.String("config", "", "Ghostty config file to edit instead of the default ones")
@@ -25,6 +28,7 @@ func main() {
 	plain := flag.Bool("plain", false, "Use only glyphs every terminal and font can draw")
 	showVersion := flag.Bool("version", false, "Show version information")
 	listPaths := flag.Bool("paths", false, "Print the files this tool would read and write, then exit")
+	noUpdateCheck := flag.Bool("no-update-check", false, "Never ask GitHub whether a newer release exists")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, `ghostty-config — themes, fonts and window settings for Ghostty, edited live
@@ -39,6 +43,7 @@ Options:
   -no-reload             Never send the reload keystroke to Ghostty
   -plain                 Use only glyphs every terminal and font can draw
   -paths                 Show which files are read and written
+  -no-update-check       Never look for a newer release on GitHub
   -version               Show version
 
 Ghostty's config files are read in the order Ghostty reads them — config,
@@ -110,14 +115,31 @@ Keys:
 	}
 	state := ghostty.LoadState(paths)
 
-	model := tui.New(paths, tree, lib, state, tui.Options{NoReload: *noReload, Plain: *plain})
-	program := tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion())
+	model := tui.New(paths, tree, lib, state, tui.Options{
+		NoReload: *noReload, Plain: *plain,
+		Version: version, NoUpdateCheck: *noUpdateCheck,
+	})
+	reserveRows()
+	program := tea.NewProgram(model, tea.WithMouseCellMotion())
 	if _, err := program.Run(); err != nil {
 		fail("%v", err)
 	}
 	if note := model.ExitNote(); note != "" {
 		fmt.Println(note)
 	}
+}
+
+// reserveRows makes room for the editor in the bottom rows of the terminal,
+// the way fzf --height does: what is on screen scrolls up just enough to
+// clear them, and drawing starts on the first of them. The editor then
+// knows where it sits, which the mouse needs.
+func reserveRows() {
+	w, h, err := term.GetSize(os.Stdout.Fd())
+	if err != nil || w <= 0 || h <= 0 {
+		return
+	}
+	rows := tui.InlineHeight(h)
+	fmt.Print(strings.Repeat("\n", rows) + fmt.Sprintf("\x1b[%d;1H", h-rows+1))
 }
 
 func fail(format string, a ...interface{}) {

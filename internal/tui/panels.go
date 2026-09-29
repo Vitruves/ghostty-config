@@ -11,10 +11,12 @@ import (
 	"github.com/vitruves/ghostty-config/internal/ghostty"
 )
 
-// The screen is a terminal, painted in the theme being judged, with one
-// palette floating over it. The palette holds a prompt, the four groups,
-// one short list, and what the highlighted line means. Everything the
-// editor can do is reachable from it, and only one list is ever on screen.
+// The editor draws in the bottom rows of the terminal it was started from,
+// under whatever was on screen, the way fzf --height does: the terminal
+// above is the user's own, and in Ghostty it takes the colours of the theme
+// being browsed as the highlight moves. The palette holds a prompt, the four
+// groups, one short list, and what the highlighted line means. Everything
+// the editor can do is reachable from it, and only one list is ever on screen.
 
 // layout is where the palette sits for the current window and content.
 type layout struct {
@@ -75,13 +77,15 @@ func (m *Model) detailWanted(width int) int {
 }
 
 // Interfaces are the colour schemes the editor's own chrome can wear. The
-// terminal behind the palette is always painted in the theme being judged;
-// the palette, the header and the status line are the editor. They are light
-// by default: most terminal themes are dark, and a light card on a dark
-// terminal is the one that cannot be missed.
-var interfaceNames = []string{"paper", "graphite", "theme"}
+// default, clear, paints no background at all: the palette sits on the
+// terminal's own, which in Ghostty is the theme being browsed, inside a thin
+// rounded frame. A cell has one background, so the frame can only be round
+// where the card and what surrounds it share it, and here they always do.
+// The others are cards of their own colour.
+var interfaceNames = []string{"clear", "paper", "graphite", "theme"}
 
 var interfaceNotes = map[string]string{
+	"clear":    "the terminal's own background, in a rounded frame",
 	"paper":    "light, whatever the theme",
 	"graphite": "dark grey, whatever the theme",
 	"theme":    "a lighter shade of the theme being shown",
@@ -94,7 +98,15 @@ func (m *Model) interfaceName() string {
 			return n
 		}
 	}
-	return "paper"
+	return "clear"
+}
+
+// clearChrome is the theme's chrome painting no background, for the rows
+// around the palette: they show the terminal as it is.
+func (m *Model) clearChrome() chrome {
+	c := m.c
+	c.clear = true
+	return c
 }
 
 // panelChrome is the chrome of the editor itself. Its border is a colour of
@@ -102,6 +114,21 @@ func (m *Model) interfaceName() string {
 // whether that is dark or light.
 func (m *Model) panelChrome() chrome {
 	switch m.interfaceName() {
+	case "clear":
+		// The colours are worked out against the theme's background, which
+		// is what the terminal shows while the theme is previewed.
+		p := m.c
+		p.clear = true
+		p.faint = color.Blend(p.fg, p.bg, 0.75)
+		p.muted = color.EnsureContrast(color.Blend(p.fg, p.bg, 0.40), p.bg, 4.5)
+		p.selBg = color.Blend(p.accent, p.bg, 0.66)
+		if color.Contrast(p.fg, p.selBg) >= color.Contrast(p.bg, p.selBg) {
+			p.selFg = p.fg
+		} else {
+			p.selFg = p.bg
+		}
+		p.border = p.accent
+		return p
 	case "paper":
 		p := buildChrome("#f6f3ec", "#23201c", "#1f55c0", "#0f7b8a", "#8a5a00", "#b3261e", "#1f7a3a")
 		p.faint = "#d9d3c5"
@@ -130,20 +157,16 @@ func (m *Model) panelChrome() chrome {
 	return p
 }
 
-// viewMain draws the terminal behind, the palette over it, and the two
-// lines that frame them.
+// viewMain draws the palette and the two lines that frame it, on rows that
+// otherwise paint nothing.
 func (m *Model) viewMain() string {
-	c := m.c
-	lines := make([]string, m.height)
-	lines[0] = m.viewHeader()
-	back := m.backdrop(m.width, m.height-2)
-	for i := 1; i < m.height-1; i++ {
-		lines[i] = c.fill(back[i-1], m.width)
-	}
-	lines[m.height-1] = m.viewStatus()
+	lines := m.viewEmpty()
 	if m.peek {
 		ui := m.panelChrome()
 		lines[m.height-1] = rebase(ui.fill(ui.base().Render(" ")+ui.keyHintFit(m.width-2, "any key", "brings the palette back"), m.width), ui.base())
+		for i := 0; i < m.height-1; i++ {
+			lines[i] = ""
+		}
 		return strings.Join(lines, "\n")
 	}
 
@@ -159,16 +182,21 @@ func (m *Model) viewMain() string {
 	return strings.Join(lines, "\n")
 }
 
-// viewMainBackdrop is the screen without the palette, for dialogs to sit on.
-func (m *Model) viewMainBackdrop() string {
+// viewEmpty is the header, the status line, and clear rows between them.
+func (m *Model) viewEmpty() []string {
+	c := m.clearChrome()
 	lines := make([]string, m.height)
 	lines[0] = m.viewHeader()
-	back := m.backdrop(m.width, m.height-2)
 	for i := 1; i < m.height-1; i++ {
-		lines[i] = m.c.fill(back[i-1], m.width)
+		lines[i] = c.fill("", m.width)
 	}
 	lines[m.height-1] = m.viewStatus()
-	return strings.Join(lines, "\n")
+	return lines
+}
+
+// viewMainBackdrop is the screen without the palette, for dialogs to sit on.
+func (m *Model) viewMainBackdrop() string {
+	return strings.Join(m.viewEmpty(), "\n")
 }
 
 // viewHeader is the top line: wordmark, the applied theme, warnings, the
@@ -228,110 +256,18 @@ func (m *Model) viewStatus() string {
 	return rebase(c.fill(c.base().Render(" ")+c.text(tone).Render(truncate(m.status, m.width-2)), m.width), c.base())
 }
 
-// --- the terminal behind ----------------------------------------------------
-
-// judgingColours reports whether the list on screen is about colour, in
-// which case the terminal behind is shown at full strength.
-func (m *Model) judgingColours() bool {
-	if m.editing || m.peek {
-		return true
-	}
-	if m.cmd == nil {
-		return false
-	}
-	switch m.cmd.name {
-	case "theme", "favs", "edit", "new", "random", "undo", "save", "fork", "fav":
-		return true
-	}
-	return false
-}
-
-// backdrop draws a slice of real terminal output in the theme on screen:
-// a listing, a git status, some code, a test run. It is what the theme and
-// the font are judged on, so it is drawn in the exact colours being edited.
-func (m *Model) backdrop(width, height int) []string {
-	c := m.c
-	if m.cur == nil {
-		return make([]string, height)
-	}
-	dim := 0.38
-	if m.judgingColours() {
-		dim = 0
-	}
-	t := m.cur
-	bg := t.Background()
-	col := func(i int, fallback string) lipgloss.Style {
-		v := color.Normalize(t.Get(paletteKey(i)), fallback)
-		return c.text(color.Blend(v, bg, dim))
-	}
-	fg := c.text(color.Blend(t.Foreground(), bg, dim))
-	red, green, yellow, blue, magenta, cyan := col(1, "#ff0000"), col(2, "#00ff00"), col(3, "#ffff00"), col(4, "#0000ff"), col(5, "#ff00ff"), col(6, "#00ffff")
-	grey := col(8, "#808080")
-	prompt := func(cmd, arg string) string {
-		return green.Render("user") + fg.Render("@") + green.Render("host") + fg.Render(" ") + blue.Render("~/projects") + fg.Render(" $ ") + blue.Render(cmd) + fg.Render(" ") + cyan.Render(arg)
-	}
-	file := func(mode, name string, s lipgloss.Style) string {
-		return grey.Render(mode) + fg.Render(" ") + yellow.Render("user staff") + fg.Render(" ") + s.Render(name)
-	}
-	rows := []string{
-		"",
-		prompt("ls", "-la"),
-		file("drwxr-xr-x", "src/", blue),
-		file("-rwxr-xr-x", "ghostty-config", green),
-		file("-rw-r--r--", "README.md", fg),
-		file("-rw-r--r--", ".gitignore", cyan),
-		file("-rw-r--r--", "backup.tar.gz", magenta),
-		file("lrwxrwxrwx", "broken -> missing", red),
-		"",
-		prompt("git", "status"),
-		fg.Render("On branch ") + green.Render("main"),
-		fg.Render("  ") + green.Render("modified:   internal/tui/panels.go"),
-		fg.Render("  ") + red.Render("deleted:    internal/tui/gallery.go"),
-		fg.Render("  ") + yellow.Render("untracked:  notes.md"),
-		"",
-		magenta.Render("func") + fg.Render(" ") + blue.Render("Render") + fg.Render("(n ") + cyan.Render("int") + fg.Render(") ") + cyan.Render("error") + fg.Render(" {"),
-		fg.Render("    ") + cyan.Render("fmt") + fg.Render(".") + blue.Render("Println") + fg.Render("(") + yellow.Render("\"hello\"") + fg.Render(", ") + magenta.Render("42") + fg.Render(")  ") + grey.Render("// a comment sits here"),
-		fg.Render("    ") + magenta.Render("return") + fg.Render(" ") + red.Render("nil"),
-		fg.Render("}"),
-		"",
-		prompt("make", "test"),
-		green.Render("ok") + fg.Render("    internal/ghostty   0.19s"),
-		green.Render("ok") + fg.Render("    internal/tui       1.07s"),
-		"",
-		fg.Render("il1I| oO0 rn m  -> => != <=   0123456789  {}[]()<>"),
-	}
-	// The right margin carries the sixteen slots by name, normal beside
-	// bright, so the ramp is in view whatever the palette covers.
-	var ramp []string
-	if width >= 60 {
-		ramp = append(ramp, "")
-		for i := 0; i < 8; i++ {
-			n := color.Blend(color.Normalize(t.Get(paletteKey(i)), bg), bg, dim)
-			b := color.Blend(color.Normalize(t.Get(paletteKey(i+8)), bg), bg, dim)
-			ramp = append(ramp, c.text(n).Render("██")+c.text(b).Render("██")+fg.Render(" ")+grey.Render(pad(color.ANSI[i], 8)))
-		}
-	}
-	const rampW = 13
-	out := make([]string, height)
-	for i := 0; i < height; i++ {
-		line := ""
-		if i < len(rows) && rows[i] != "" {
-			line = c.base().Render("  ") + rows[i]
-		}
-		if i < len(ramp) && ramp[i] != "" {
-			line = c.fill(truncateExact(line, width-rampW), width-rampW) + ramp[i]
-		}
-		out[i] = line
-	}
-	return out
-}
-
-// --- the palette ------------------------------------------------------------
-
 // on is a style with both colours given, for the cells where the card
 // meets the terminal and neither chrome applies.
+// An empty colour is left to the terminal.
 func on(fg, bg string) lipgloss.Style {
-	return lipgloss.NewStyle().Foreground(lipgloss.Color(fg)).Background(lipgloss.Color(bg))
+	s := lipgloss.NewStyle()
+	if fg != "" {
+		s = s.Foreground(lipgloss.Color(fg))
+	}
+	if bg != "" {
+		s = s.Background(lipgloss.Color(bg))
+	}
+	return s
 }
 
 // The card and its border are drawn with sextants, a cell cut in two columns
@@ -355,7 +291,10 @@ const (
 // top and bottom are the colours of the first and last rows, which may
 // differ from each other when the card ends in a strip.
 func (m *Model) frame(rows []string, width int, top, bottom, border string) []string {
-	outer := m.c.bg
+	if m.interfaceName() == "clear" {
+		return m.frameRound(rows, width, border)
+	}
+	outer := "" // around the card is the terminal itself
 	blank := on(outer, outer).Render(" ")
 	left := on(border, outer).Render("▐")
 	right := on(border, outer).Render("▌")
@@ -379,6 +318,20 @@ func (m *Model) frame(rows []string, width int, top, bottom, border string) []st
 	return append(out, blank+on(border, outer).Render(strings.Repeat(below, width))+blank)
 }
 
+// frameRound wraps the rows in a thin rounded line. It is used by the clear
+// interface, where the card, its frame and the cells around it all show the
+// terminal's own background, so the corners are round and nothing shows
+// square behind them.
+func (m *Model) frameRound(rows []string, width int, border string) []string {
+	b := on(border, "")
+	out := make([]string, 0, len(rows)+2)
+	out = append(out, b.Render("╭"+strings.Repeat("─", width)+"╮"))
+	for _, r := range rows {
+		out = append(out, b.Render("│")+r+b.Render("│"))
+	}
+	return append(out, b.Render("╰"+strings.Repeat("─", width)+"╯"))
+}
+
 // viewPalette draws the floating card: a filled panel inside a border, with
 // a strip of keys at its foot.
 func (m *Model) viewPalette(l layout) string {
@@ -388,11 +341,18 @@ func (m *Model) viewPalette(l layout) string {
 	if !color.IsDark(p.bg) {
 		foot.bg = color.Blend(p.bg, "#000000", 0.06)
 	}
+	if p.clear {
+		foot.bg = p.bg
+	}
 	foot.muted = color.EnsureContrast(color.Blend(p.fg, foot.bg, 0.40), foot.bg, 4.5)
 	w := l.w
 
 	row := func(ch chrome, content string) string { return rebase(ch.fill(content, w), ch.base()) }
 	rule := row(p, p.faintS().Render(strings.Repeat("─", w)))
+	if p.clear {
+		// Inside a thin frame a rule that touched it would read as a join.
+		rule = row(p, p.base().Render("  ")+p.faintS().Render(strings.Repeat("─", maxInt(w-4, 0))))
+	}
 
 	var rows []string
 	rows = append(rows, row(p, m.viewPromptLine(p, w, l)))
@@ -512,7 +472,7 @@ func (m *Model) viewGroups(p chrome, width int, l layout) string {
 	searching := m.cmd == nil && strings.TrimSpace(m.prompt.Value()) != ""
 	for i, g := range groups {
 		if i == m.group && !searching {
-			b.WriteString(m.capL(p.accent, p.bg) + on(p.bg, p.accent).Bold(true).Render(" "+g+" ") + m.capR(p.accent, p.bg))
+			b.WriteString(m.capL(p.accent, p.paint()) + on(p.bg, p.accent).Bold(true).Render(" "+g+" ") + m.capR(p.accent, p.paint()))
 		} else {
 			b.WriteString(p.base().Render(" ") + p.mutedS().Render(" "+g+" ") + p.base().Render(" "))
 		}
@@ -612,7 +572,7 @@ func slotLabel(key string) string {
 // row is a pill with rounded ends.
 func (m *Model) renderOption(p chrome, o option, selected bool, width int) string {
 	inner := width - 6 // a margin, the pill's ends, and the marker's cell
-	bg := p.bg
+	bg := p.paint()
 	text, note := p.base(), p.mutedS()
 	if o.cmd != nil && m.cmd == nil && strings.TrimSpace(m.prompt.Value()) == "" {
 		note = p.text(p.accent2)
@@ -664,7 +624,7 @@ func (m *Model) renderOption(p chrome, o option, selected bool, width int) strin
 		body += fillS.Render(strings.Repeat(" ", inner-w))
 	}
 	if selected {
-		return p.base().Render("  ") + m.capL(bg, p.bg) + body + m.capR(bg, p.bg) + p.base().Render("  ")
+		return p.base().Render("  ") + m.capL(bg, p.paint()) + body + m.capR(bg, p.paint()) + p.base().Render("  ")
 	}
 	return p.base().Render("   ") + body + p.base().Render("   ")
 }

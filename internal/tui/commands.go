@@ -415,7 +415,7 @@ func (m *Model) buildCommands() []*command {
 		},
 		preview: previewOverview,
 	})
-	add(&command{name: "interface", group: "Tool", syntax: "interface graphite|paper|theme", desc: "The colours of the editor itself, kept apart from the theme being looked at",
+	add(&command{name: "interface", group: "Tool", syntax: "interface clear|paper|graphite|theme", desc: "The colours of the editor itself, kept apart from the theme being looked at",
 		options: func(m *Model, arg string) []option {
 			var out []option
 			for _, n := range interfaceNames {

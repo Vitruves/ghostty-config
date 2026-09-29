@@ -104,7 +104,7 @@ func (m *Model) confirmButtons(row int) string {
 	no := " n  no "
 	m.addRegion(3, row, lipgloss.Width(yes)+2, 1, hitButton, 0, "confirm-yes")
 	m.addRegion(3+lipgloss.Width(yes)+4, row, lipgloss.Width(no)+2, 1, hitButton, 1, "confirm-no")
-	return m.capL(c.accent, c.bg) + on(c.bg, c.accent).Bold(true).Render(yes) + m.capR(c.accent, c.bg) + c.base().Render("  ") + m.capL(c.selBg, c.bg) + on(c.selFg, c.selBg).Render(no) + m.capR(c.selBg, c.bg) + c.mutedS().Render("   Esc stays")
+	return m.capL(c.accent, c.paint()) + on(c.bg, c.accent).Bold(true).Render(yes) + m.capR(c.accent, c.paint()) + c.base().Render("  ") + m.capL(c.selBg, c.paint()) + on(c.selFg, c.selBg).Render(no) + m.capR(c.selBg, c.paint()) + c.mutedS().Render("   Esc stays")
 }
 
 // overlayCentered composes a dialog over the body by replacing the rows it

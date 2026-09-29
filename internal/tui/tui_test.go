@@ -165,8 +165,10 @@ func (h *harness) config() string {
 	return string(data)
 }
 
+// click presses at a cell of the editor; the terminal reports it counted
+// from the top of the screen, and the editor sits in the bottom rows.
 func (h *harness) click(x, y int) {
-	h.send(tea.MouseMsg{X: x, Y: y, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft})
+	h.send(tea.MouseMsg{X: x, Y: y + h.m.top, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft})
 }
 
 func (h *harness) find(kind hitKind, index int, name string) (region, bool) {
@@ -193,13 +195,13 @@ func TestPaletteReachesEveryCommandAtTheUsersWindowSize(t *testing.T) {
 	if !strings.Contains(v, "Theme <name>") || !strings.Contains(v, "moving previews it in this window.") {
 		t.Fatalf("the highlighted command should be described in full:\n%s", v)
 	}
-	// The terminal behind is there to be judged.
-	if !strings.Contains(v, "user@host") {
-		t.Fatalf("the terminal sample should show around the palette:\n%s", v)
+	// Around the palette is the user's own terminal: nothing is drawn there.
+	if strings.Contains(v, "user@host") {
+		t.Fatalf("no terminal sample is drawn around the palette:\n%s", v)
 	}
 	lines := strings.Split(v, "\n")
-	if len(lines) != 28 {
-		t.Fatalf("view should fill the terminal: %d lines", len(lines))
+	if len(lines) != InlineHeight(28) {
+		t.Fatalf("view should fill the bottom rows it takes: %d lines", len(lines))
 	}
 	for i, l := range lines {
 		if w := ansi.StringWidth(l); w != 105 {
@@ -257,11 +259,11 @@ func TestPaletteReachesEveryCommandAtTheUsersWindowSize(t *testing.T) {
 
 	// F2 hides the palette to look at the terminal alone.
 	h.send(tea.KeyMsg{Type: tea.KeyF2})
-	if strings.Contains(h.view(), cornerTL) || !strings.Contains(h.view(), "user@host") {
+	if strings.Contains(h.view(), "╭") || !strings.Contains(h.view(), "brings the palette back") {
 		t.Fatalf("F2 should leave only the terminal:\n%s", h.view())
 	}
 	h.key("x")
-	if !strings.Contains(h.view(), cornerTL) {
+	if !strings.Contains(h.view(), "╭") {
 		t.Fatal("any key should bring the palette back")
 	}
 }
@@ -279,7 +281,7 @@ func TestOpensOnTheThemesWithTheirColours(t *testing.T) {
 		t.Fatalf("the applied theme should be highlighted, on %+v", o)
 	}
 	v := h.view()
-	for _, want := range []string{cornerTL, cornerTR, cornerBL, cornerBR, "normal", "bright", "#282a36", "█"} {
+	for _, want := range []string{"╭", "╮", "╰", "╯", "normal", "bright", "#282a36", "█"} {
 		if !strings.Contains(v, want) {
 			t.Fatalf("opening view lacks %q:\n%s", want, v)
 		}
@@ -581,11 +583,27 @@ func TestInterfaceHasItsOwnColoursAndRampsLineUp(t *testing.T) {
 	if paper == "" {
 		t.Fatal("could not work out how the interface background is encoded")
 	}
+	// By default nothing paints a background: the palette sits on the
+	// terminal's own, so the frame around it can be round.
+	painted := regexp.MustCompile(`[\[;]48;`)
+	if painted.MatchString(strings.Split(h.m.View(), "\n")[1]) || h.m.panelChrome().paint() != "" || !strings.Contains(h.view(), "╭") || !strings.Contains(h.view(), "╯") {
+		t.Fatalf("the clear palette paints no background and has a rounded frame:\n%s", h.view())
+	}
+	if len(strings.Split(h.m.View(), "\n")) != InlineHeight(28) || h.m.top != 28-InlineHeight(28) {
+		t.Fatal("the editor draws in the bottom rows only")
+	}
+	h.send(tea.KeyMsg{Type: tea.KeyF2})
+	h.key("x")
+	h.key("esc")
+	h.typeText("interface paper")
+	h.key("enter")
+	h.key("esc")
+	h.typeText("theme ")
 	if !strings.Contains(h.m.View(), paper) {
-		t.Fatal("by default the palette is light, whatever the theme")
+		t.Fatal("interface paper draws a light palette")
 	}
 	if !color.IsDark(h.m.cur.Background()) || color.IsDark(h.m.panelChrome().bg) {
-		t.Fatal("a light palette over a dark theme is the point of the default")
+		t.Fatal("a light palette over a dark theme is the point of paper")
 	}
 	ui := h.m.panelChrome()
 	if color.Contrast(ui.border, ui.bg) < 2.5 || color.Contrast(ui.border, h.m.cur.Background()) < 2.5 {

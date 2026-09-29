@@ -18,6 +18,9 @@ import (
 // AA against the background so the interface stays legible on any theme.
 type chrome struct {
 	bg, fg, muted, faint, accent, accent2, warn, danger, ok, selBg, selFg, border string
+	// clear leaves the background to the terminal. bg is still what the
+	// colours are worked out against.
+	clear bool
 }
 
 func defaultChrome() chrome {
@@ -30,6 +33,15 @@ func chromeFor(t *ghostty.Theme) chrome {
 	if t == nil {
 		return defaultChrome()
 	}
+	return chromeOn(t, t.Background())
+}
+
+// chromeOn is the theme's chrome on another background: the accents are the
+// theme's, lifted until they read on bg, and so is the text.
+func chromeOn(t *ghostty.Theme, bg string) chrome {
+	if t == nil {
+		return defaultChrome()
+	}
 	pick := func(bright, normal int, fallback string) string {
 		for _, k := range []string{paletteKey(bright), paletteKey(normal)} {
 			if v := t.Get(k); color.IsHex(v) {
@@ -38,7 +50,11 @@ func chromeFor(t *ghostty.Theme) chrome {
 		}
 		return fallback
 	}
-	return buildChrome(t.Background(), t.Foreground(),
+	fg := t.Foreground()
+	if bg != t.Background() {
+		fg = color.EnsureReadable(fg, bg)
+	}
+	return buildChrome(bg, fg,
 		pick(12, 4, "#7aa2f7"), pick(14, 6, "#7dcfff"), pick(11, 3, "#e0af68"), pick(9, 1, "#f7768e"), pick(10, 2, "#9ece6a"))
 }
 
@@ -69,7 +85,15 @@ func buildChrome(bg, fg, blue, cyan, yellow, red, green string) chrome {
 // text is the one style factory: every run of text carries the background,
 // so a nested reset can never punch a hole in a filled row.
 func (c chrome) text(fg string) lipgloss.Style {
-	return lipgloss.NewStyle().Foreground(lipgloss.Color(fg)).Background(lipgloss.Color(c.bg))
+	return on(fg, c.paint())
+}
+
+// paint is the background cells are painted with: none when clear.
+func (c chrome) paint() string {
+	if c.clear {
+		return ""
+	}
+	return c.bg
 }
 
 func (c chrome) base() lipgloss.Style   { return c.text(c.fg) }

@@ -66,6 +66,7 @@ func (m *Model) isDouble(r region) bool {
 
 // updateMouse routes clicks and wheel movement.
 func (m *Model) updateMouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
+	msg.Y -= m.top
 	if m.peek {
 		if msg.Action == tea.MouseActionPress {
 			m.peek = false
