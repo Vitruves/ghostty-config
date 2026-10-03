@@ -6,6 +6,35 @@ A terminal UI to set up [Ghostty](https://ghostty.org): themes, colours, fonts a
 
 ## Install
 
+### Homebrew (macOS)
+
+```bash
+brew tap vitruves/ghostty-config https://github.com/Vitruves/ghostty-config
+brew install vitruves/ghostty-config/ghostty-config
+```
+
+Homebrew installs the tagged release and handles the Go build dependency for you.
+Ghostty itself must be installed separately. Run `ghostty-config` in Ghostty after
+installation.
+
+To build the latest development version instead:
+
+```bash
+brew install --HEAD vitruves/ghostty-config/ghostty-config
+```
+
+Upgrade or uninstall with:
+
+```bash
+brew upgrade vitruves/ghostty-config/ghostty-config
+brew uninstall vitruves/ghostty-config/ghostty-config
+```
+
+Uninstalling removes the tool; your Ghostty configuration, themes and backups
+remain in your home directory.
+
+### Go or source
+
 ```bash
 go install github.com/vitruves/ghostty-config/cmd/ghostty-config@latest
 ```
