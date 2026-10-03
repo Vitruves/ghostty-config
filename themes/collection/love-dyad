@@ -1,0 +1,26 @@
+# ghostty-config collection · love-dyad
+# Plutchik · Joy and trust mixed, a fresh yellow-green
+
+background = #f1f7e8
+foreground = #232b17
+cursor-color = #5b7622
+cursor-text = #f1f7e8
+selection-background = #a3c4d0
+selection-foreground = #232b17
+
+palette = 0=#484b44
+palette = 1=#b04927
+palette = 2=#2c7e1c
+palette = 3=#76721a
+palette = 4=#2570a8
+palette = 5=#b02784
+palette = 6=#1c7e6f
+palette = 7=#9fa399
+palette = 8=#242522
+palette = 9=#7f3b24
+palette = 10=#337f24
+palette = 11=#6f6c1f
+palette = 12=#24597f
+palette = 13=#7f2463
+palette = 14=#22776b
+palette = 15=#767b6f

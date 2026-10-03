@@ -1,0 +1,26 @@
+# ghostty-config collection · vkhutemas-black
+# Modernism · Pure black with one orange-gold signal
+
+background = #080808
+foreground = #dbdbdb
+cursor-color = #f49d25
+cursor-text = #080808
+selection-background = #20315a
+selection-foreground = #dbdbdb
+
+palette = 0=#302c2c
+palette = 1=#e0663e
+palette = 2=#59e03e
+palette = 3=#e0a53e
+palette = 4=#4775e1
+palette = 5=#e03ead
+palette = 6=#3ee0c7
+palette = 7=#cac4c4
+palette = 8=#5b5252
+palette = 9=#e39a82
+palette = 10=#92e382
+palette = 11=#e3c082
+palette = 12=#829fe3
+palette = 13=#e382c5
+palette = 14=#82e3d5
+palette = 15=#f0efef

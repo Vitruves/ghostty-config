@@ -1,0 +1,26 @@
+# ghostty-config collection · neue-grafik
+# Modernism · Cool white page with a cobalt rule
+
+background = #f1f2f4
+foreground = #1d2125
+cursor-color = #0a66c2
+cursor-text = #f1f2f4
+selection-background = #a2bbdc
+selection-foreground = #1d2125
+
+palette = 0=#44464b
+palette = 1=#b62520
+palette = 2=#157941
+palette = 3=#826d17
+palette = 4=#2060b6
+palette = 5=#9120b6
+palette = 6=#18738b
+palette = 7=#999ca3
+palette = 8=#222325
+palette = 9=#84221f
+palette = 10=#1d7c46
+palette = 11=#7c691d
+palette = 12=#1f4a84
+palette = 13=#6b1f84
+palette = 14=#1f6f84
+palette = 15=#6f737b

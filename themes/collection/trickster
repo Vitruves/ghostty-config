@@ -1,0 +1,26 @@
+# ghostty-config collection · trickster
+# Jung · Chaos in dark teal and a lime that will not sit still
+
+background = #0c1715
+foreground = #d6e0de
+cursor-color = #9df425
+cursor-text = #0c1715
+selection-background = #1d4a64
+selection-foreground = #d6e0de
+
+palette = 0=#2c302f
+palette = 1=#e4643a
+palette = 2=#57e43a
+palette = 3=#e4de3a
+palette = 4=#3a9de4
+palette = 5=#e43aae
+palette = 6=#3ae4ca
+palette = 7=#c4cac9
+palette = 8=#525b59
+palette = 9=#e7987e
+palette = 10=#90e77e
+palette = 11=#e7e37e
+palette = 12=#7ebbe7
+palette = 13=#e77ec6
+palette = 14=#7ee7d7
+palette = 15=#eff0f0

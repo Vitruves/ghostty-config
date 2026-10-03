@@ -1,0 +1,26 @@
+# ghostty-config collection · impression-sunrise
+# Movements · A small orange sun over blue-grey water
+
+background = #e8eff3
+foreground = #17242b
+cursor-color = #bd430f
+cursor-text = #e8eff3
+selection-background = #9db2db
+selection-foreground = #17242b
+
+palette = 0=#44484b
+palette = 1=#b44722
+palette = 2=#277817
+palette = 3=#89611a
+palette = 4=#224eb4
+palette = 5=#b42286
+palette = 6=#177178
+palette = 7=#999fa3
+palette = 8=#222425
+palette = 9=#833921
+palette = 10=#2e7b1f
+palette = 11=#835f21
+palette = 12=#213e83
+palette = 13=#832164
+palette = 14=#1f747b
+palette = 15=#6f777b

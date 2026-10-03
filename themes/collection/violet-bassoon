@@ -1,0 +1,26 @@
+# ghostty-config collection · violet-bassoon
+# Kandinsky · A cooled red, slightly sick and sad
+
+background = #f3edf7
+foreground = #23172b
+cursor-color = #6f2e9e
+cursor-text = #f3edf7
+selection-background = #a5a3dc
+selection-foreground = #23172b
+
+palette = 0=#48444b
+palette = 1=#b02740
+palette = 2=#1a7641
+palette = 3=#86601e
+palette = 4=#2729b0
+palette = 5=#8e27b0
+palette = 6=#206f8f
+palette = 7=#9f99a3
+palette = 8=#242225
+palette = 9=#7f2435
+palette = 10=#227747
+palette = 11=#7f5e24
+palette = 12=#24267f
+palette = 13=#69247f
+palette = 14=#24657f
+palette = 15=#766f7b

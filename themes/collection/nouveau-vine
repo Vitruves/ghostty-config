@@ -1,0 +1,26 @@
+# ghostty-config collection · nouveau-vine
+# Movements · Pale green paper, a curling amber line
+
+background = #edefe7
+foreground = #252919
+cursor-color = #985c20
+cursor-text = #edefe7
+selection-background = #a2b3d2
+selection-foreground = #252919
+
+palette = 0=#494b44
+palette = 1=#b04927
+palette = 2=#29761a
+palette = 3=#86601e
+palette = 4=#2750b0
+palette = 5=#b02784
+palette = 6=#1c777e
+palette = 7=#a1a399
+palette = 8=#252522
+palette = 9=#7f3b24
+palette = 10=#307722
+palette = 11=#7f5e24
+palette = 12=#243f7f
+palette = 13=#7f2463
+palette = 14=#227177
+palette = 15=#787b6f

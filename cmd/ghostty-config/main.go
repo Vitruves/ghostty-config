@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/term"
 
 	"github.com/vitruves/ghostty-config/internal/collection"
@@ -25,6 +25,8 @@ func main() {
 	themesPath := flag.String("themes", "", "User themes directory (default: ~/.config/ghostty/themes)")
 	exportPath := flag.String("export-collection", "", "Write the curated collection to a directory and exit")
 	noReload := flag.Bool("no-reload", false, "Never ask the running Ghostty to reload")
+	noImages := flag.Bool("no-images", false, "Never show the highlighted theme as a picture")
+	forceImages := flag.Bool("images", false, "Draw pictures through the Kitty graphics protocol even where this terminal is not known to support it")
 	plain := flag.Bool("plain", false, "Use only glyphs every terminal and font can draw")
 	showVersion := flag.Bool("version", false, "Show version information")
 	listPaths := flag.Bool("paths", false, "Print the files this tool would read and write, then exit")
@@ -41,6 +43,8 @@ Options:
   -themes dir            User themes directory (default ~/.config/ghostty/themes)
   -export-collection dir Write the %d curated themes to a directory and exit
   -no-reload             Never send the reload keystroke to Ghostty
+  -no-images             Never show the highlighted theme as a picture
+  -images                Show theme pictures even where this terminal is not known to draw them
   -plain                 Use only glyphs every terminal and font can draw
   -paths                 Show which files are read and written
   -no-update-check       Never look for a newer release on GitHub
@@ -117,12 +121,18 @@ Keys:
 
 	model := tui.New(paths, tree, lib, state, tui.Options{
 		NoReload: *noReload, Plain: *plain,
+		Images:  !*noImages && (*forceImages || tui.ImagesSupported()),
 		Version: version, NoUpdateCheck: *noUpdateCheck,
 	})
 	reserveRows()
-	program := tea.NewProgram(model, tea.WithMouseCellMotion())
+	// The mouse is asked for by the view itself.
+	program := tea.NewProgram(model)
 	if _, err := program.Run(); err != nil {
 		fail("%v", err)
+	}
+	if !*noImages && (*forceImages || tui.ImagesSupported()) {
+		// Free the pictures the terminal still holds.
+		fmt.Print("\x1b_Ga=d,d=A,q=2\x1b\\")
 	}
 	if note := model.ExitNote(); note != "" {
 		fmt.Println(note)

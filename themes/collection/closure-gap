@@ -1,0 +1,26 @@
+# ghostty-config collection · closure-gap
+# Gestalt · Violet ground, amber gap the eye fills in
+
+background = #19141f
+foreground = #dbd6e0
+cursor-color = #e0b152
+cursor-text = #19141f
+selection-background = #303c67
+selection-foreground = #dbd6e0
+
+palette = 0=#2e2c30
+palette = 1=#d96a45
+palette = 2=#5ed945
+palette = 3=#d9a845
+palette = 4=#567edc
+palette = 5=#d945aa
+palette = 6=#45d9c3
+palette = 7=#c7c4ca
+palette = 8=#56525b
+palette = 9=#df9c86
+palette = 10=#95df86
+palette = 11=#dfc186
+palette = 12=#86a1df
+palette = 13=#df86c3
+palette = 14=#86dfd2
+palette = 15=#f0eff0

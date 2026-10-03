@@ -2,9 +2,10 @@ package tui
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/vitruves/ghostty-config/internal/color"
 	"github.com/vitruves/ghostty-config/internal/ghostty"
@@ -27,8 +28,7 @@ func (m *Model) showTheme(t *ghostty.Theme) {
 	m.discardArmed = false
 	m.previewScrl = 0
 	m.c = chromeFor(m.cur)
-	m.live.Reset()
-	m.live.Show(m.cur.Colors)
+
 }
 
 // --- applying -------------------------------------------------------------
@@ -56,7 +56,7 @@ func (m *Model) applyTheme(t *ghostty.Theme) bool {
 	case m.setting.Pair:
 		m.info("Applied %s as the %s half of your light/dark pair", t.Name, styleWord(t))
 	default:
-		m.info("Applied %s", t.Name)
+		m.info("Applied %s — written to %s; %s", t.Name, filepath.Base(m.tree.Primary.Path), m.reloadWord())
 	}
 	return true
 }
@@ -76,6 +76,7 @@ func (m *Model) applyNow() tea.Cmd {
 	if !m.applyTheme(m.cur) {
 		return nil
 	}
+	m.tintApplied()
 	return m.commitConfig()
 }
 
@@ -197,33 +198,67 @@ func (m *Model) forkTheme() tea.Cmd {
 
 // deleteTheme removes the theme on screen after confirmation.
 func (m *Model) deleteTheme() {
-	t := m.cur
-	if t == nil {
+	if m.cur == nil {
 		return
 	}
-	if t.Source != ghostty.SourceOwned {
-		m.warn("%s was not written by this tool — fork it instead", t.Name)
-		return
-	}
-	name := t.Name
-	m.openConfirm(fmt.Sprintf("Delete %s? This cannot be undone.", name), func(m *Model) tea.Cmd {
-		if err := ghostty.DeleteTheme(t); err != nil {
-			m.fail("Could not delete: %v", err)
-			return nil
+	m.deleteThemes([]*ghostty.Theme{m.cur})
+}
+
+// deleteThemes removes theme files after one confirmation that says what is
+// about to go. Bundled themes are refused; files someone else wrote are
+// allowed, but the question says so.
+func (m *Model) deleteThemes(ts []*ghostty.Theme) {
+	var doomed []*ghostty.Theme
+	foreign, applied := false, false
+	for _, t := range ts {
+		if !t.Deletable() {
+			continue
 		}
-		if m.state.IsFavorite(name) {
-			m.state.ToggleFavorite(name)
+		doomed = append(doomed, t)
+		foreign = foreign || t.Source == ghostty.SourceUser
+		applied = applied || t.Name == m.applied
+	}
+	if len(doomed) == 0 {
+		if len(ts) == 1 {
+			m.warn("%s is bundled with Ghostty and cannot be deleted", ts[0].Name)
+		} else {
+			m.warn("Nothing to delete")
+		}
+		return
+	}
+	what := fmt.Sprintf("%d themes", len(doomed))
+	if len(doomed) == 1 {
+		what = doomed[0].Name
+	}
+	question := fmt.Sprintf("Delete %s? This cannot be undone.", what)
+	if foreign {
+		question = fmt.Sprintf("Delete %s? It was not written by this tool. This cannot be undone.", what)
+	}
+	if applied {
+		question += " The configured theme is among them: choose another afterwards."
+	}
+	m.openConfirm(question, func(m *Model) tea.Cmd {
+		removed := 0
+		for _, t := range doomed {
+			if err := ghostty.DeleteTheme(t); err != nil {
+				m.fail("Could not delete %s: %v", t.Name, err)
+				break
+			}
+			if m.state.IsFavorite(t.Name) {
+				m.state.ToggleFavorite(t.Name)
+			}
+			removed++
 		}
 		m.reloadLibrary()
 		if len(m.lib.Themes) > 0 {
 			next, ok := m.lib.Get(m.applied)
-			if !ok || next.Name == name {
+			if !ok {
 				next = m.lib.Themes[0]
 			}
 			m.showTheme(next)
 		}
 		m.recompute()
-		m.info("Deleted %s", name)
+		m.info("Deleted %d theme(s)", removed)
 		return nil
 	})
 }
@@ -247,8 +282,7 @@ func (m *Model) revert() {
 	m.dirty = false
 	m.discardArmed = false
 	m.c = chromeFor(m.cur)
-	m.live.Reset()
-	m.live.Show(m.cur.Colors)
+
 	m.recompute()
 	m.info("Reverted %s to the saved version", m.cur.Name)
 }
@@ -266,15 +300,14 @@ func (m *Model) setColor(key, hex string) {
 	m.dirty = !m.cur.Equal(m.base) || m.cur.Source == ghostty.SourceDraft
 	m.discardArmed = false
 	m.c = chromeFor(m.cur)
-	m.live.Show(map[string]string{key: hex})
+
 }
 
 // clearColor empties a slot, which is only possible for the optional pairs.
 func (m *Model) clearColor(key string) {
 	delete(m.cur.Colors, key)
 	m.dirty = !m.cur.Equal(m.base)
-	m.live.Reset()
-	m.live.Show(m.cur.Colors)
+
 }
 
 // adjust nudges a slot one step.
@@ -336,8 +369,7 @@ func (m *Model) loadDraft(s *color.Scheme, note string) {
 	m.dirty = true
 	m.discardArmed = false
 	m.c = chromeFor(m.cur)
-	m.live.Reset()
-	m.live.Show(m.cur.Colors)
+
 	m.recompute()
 }
 
@@ -390,4 +422,18 @@ func (m *Model) renderStatus() {
 	b.WriteString(m.cur.Name + "  ·  " + sourceWord(m.cur))
 	b.WriteString("  ·  font " + orDash(m.fontFamily) + " " + ghostty.FormatSize(m.fontSize))
 	m.status, m.statusKind = b.String(), statusPlain
+}
+
+// tintApplied paints the terminal in the theme that was just applied, so
+// Enter shows at once whether or not Ghostty can be asked to reload. When it
+// does reload, the configuration says the same colours.
+func (m *Model) tintApplied() {
+	if !m.caps.inGhostty || m.cur == nil {
+		return
+	}
+	if m.applyLive == nil {
+		m.applyLive = ghostty.OpenLive()
+	}
+	m.applyLive.Reset()
+	m.applyLive.Show(m.cur.Colors)
 }

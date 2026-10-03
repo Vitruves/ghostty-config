@@ -1,0 +1,26 @@
+# ghostty-config collection · equal-light
+# Albers · Red and green at one luminance, vibrating at the edge
+
+background = #35211d
+foreground = #e0d8d6
+cursor-color = #53c6b3
+cursor-text = #35211d
+selection-background = #3d4f63
+selection-foreground = #e0d8d6
+
+palette = 0=#302c2c
+palette = 1=#dc6e6a
+palette = 2=#49d486
+palette = 3=#d4cf49
+palette = 4=#499ad4
+palette = 5=#c06adc
+palette = 6=#49d4bf
+palette = 7=#cac5c4
+palette = 8=#5b5452
+palette = 9=#dc8c89
+palette = 10=#89dcad
+palette = 11=#dcd989
+palette = 12=#89b9dc
+palette = 13=#c789dc
+palette = 14=#89dccf
+palette = 15=#f0efef

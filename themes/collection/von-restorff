@@ -1,0 +1,26 @@
+# ghostty-config collection · von-restorff
+# Cognition · The one odd item is the one remembered
+
+background = #18181b
+foreground = #d9d9dd
+cursor-color = #f53d99
+cursor-text = #18181b
+selection-background = #3c3d6b
+selection-foreground = #d9d9dd
+
+palette = 0=#2c2c30
+palette = 1=#e84966
+palette = 2=#37e64f
+palette = 3=#e6a737
+palette = 4=#7679ee
+palette = 5=#e637af
+palette = 6=#37b5e6
+palette = 7=#c4c4ca
+palette = 8=#52525b
+palette = 9=#e87d91
+palette = 10=#7de88b
+palette = 11=#e8c17d
+palette = 12=#7d7fe8
+palette = 13=#e87dc6
+palette = 14=#7dcae8
+palette = 15=#efeff0

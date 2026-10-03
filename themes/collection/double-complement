@@ -1,0 +1,26 @@
+# ghostty-config collection · double-complement
+# Harmony · Cool field, warm accent, the pair reversed on paper
+
+background = #f2f6f8
+foreground = #17242b
+cursor-color = #ad4e1f
+cursor-text = #f2f6f8
+selection-background = #a4b7dd
+selection-foreground = #17242b
+
+palette = 0=#44494b
+palette = 1=#b24824
+palette = 2=#2b7f1a
+palette = 3=#90671d
+palette = 4=#244fb2
+palette = 5=#b22485
+palette = 6=#1a787f
+palette = 7=#99a0a3
+palette = 8=#222425
+palette = 9=#813a22
+palette = 10=#2f7920
+palette = 11=#815f22
+palette = 12=#223f81
+palette = 13=#812263
+palette = 14=#227b81
+palette = 15=#6f777b

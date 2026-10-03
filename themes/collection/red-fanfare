@@ -1,0 +1,26 @@
+# ghostty-config collection · red-fanfare
+# Kandinsky · Vital and restless, red at full voice
+
+background = #200e10
+foreground = #e0d6d8
+cursor-color = #e93948
+cursor-text = #200e10
+selection-background = #3f3463
+selection-foreground = #e0d6d8
+
+palette = 0=#302c2c
+palette = 1=#e34552
+palette = 2=#58e23c
+palette = 3=#e2a63c
+palette = 4=#7173ea
+palette = 5=#e23cae
+palette = 6=#3cd7e2
+palette = 7=#cac4c5
+palette = 8=#5b5253
+palette = 9=#e58089
+palette = 10=#91e580
+palette = 11=#e5c080
+palette = 12=#8082e5
+palette = 13=#e580c5
+palette = 14=#80dee5
+palette = 15=#f0efef

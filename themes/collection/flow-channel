@@ -1,0 +1,26 @@
+# ghostty-config collection · flow-channel
+# Cognition · Challenge and skill matched, deep teal and green
+
+background = #0c1a1d
+foreground = #d6dfe0
+cursor-color = #2fdaa1
+cursor-text = #0c1a1d
+selection-background = #224b64
+selection-foreground = #d6dfe0
+
+palette = 0=#2c2f30
+palette = 1=#db524d
+palette = 2=#45d985
+palette = 3=#d9d345
+palette = 4=#459bd9
+palette = 5=#bb56dc
+palette = 6=#45d9c3
+palette = 7=#c4c9ca
+palette = 8=#525a5b
+palette = 9=#df8986
+palette = 10=#86dfad
+palette = 11=#dfdc86
+palette = 12=#86badf
+palette = 13=#c986df
+palette = 14=#86dfd2
+palette = 15=#eff0f0

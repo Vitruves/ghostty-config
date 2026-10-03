@@ -1,0 +1,26 @@
+# ghostty-config collection · cognitive-load
+# Cognition · Chroma held to a minimum so nothing costs attention
+
+background = #ebebeb
+foreground = #212121
+cursor-color = #4f6464
+cursor-text = #ebebeb
+selection-background = #a5bccc
+selection-foreground = #212121
+
+palette = 0=#4b4444
+palette = 1=#a13936
+palette = 2=#277348
+palette = 3=#6c6924
+palette = 4=#336e99
+palette = 5=#8636a1
+palette = 6=#277373
+palette = 7=#a39999
+palette = 8=#252222
+palette = 9=#74322f
+palette = 10=#2f744d
+palette = 11=#6d6a2c
+palette = 12=#2f5774
+palette = 13=#632f74
+palette = 14=#2f7474
+palette = 15=#7b6f6f

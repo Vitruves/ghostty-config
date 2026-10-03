@@ -1,0 +1,26 @@
+# ghostty-config collection · sage-archetype
+# Jung · Knowledge as a calm blue night and a lamp
+
+background = #151728
+foreground = #d6d7e0
+cursor-color = #d8cb79
+cursor-text = #151728
+selection-background = #303f6a
+selection-foreground = #d6d7e0
+
+palette = 0=#2c2c30
+palette = 1=#d26d4b
+palette = 2=#62d24b
+palette = 3=#d2c04b
+palette = 4=#5b81d6
+palette = 5=#d453ac
+palette = 6=#4bd2be
+palette = 7=#c4c5ca
+palette = 8=#52535b
+palette = 9=#da9f8b
+palette = 10=#98da8b
+palette = 11=#dacf8b
+palette = 12=#8ba3da
+palette = 13=#da8bc1
+palette = 14=#8bdace
+palette = 15=#efeff0

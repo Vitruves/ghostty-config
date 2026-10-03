@@ -1,0 +1,26 @@
+# ghostty-config collection · mondrian-yellow
+# Modernism · White ground, one plane of strong yellow
+
+background = #f7f7f7
+foreground = #212121
+cursor-color = #856600
+cursor-text = #f7f7f7
+selection-background = #a4b6e0
+selection-foreground = #212121
+
+palette = 0=#4b4444
+palette = 1=#ba431c
+palette = 2=#257c13
+palette = 3=#856b14
+palette = 4=#1c4bba
+palette = 5=#ba1c88
+palette = 6=#137c6d
+palette = 7=#a39999
+palette = 8=#252222
+palette = 9=#87371c
+palette = 10=#2b7f1a
+palette = 11=#876e1c
+palette = 12=#1c3c87
+palette = 13=#871c66
+palette = 14=#1a7f70
+palette = 15=#7b6f6f

@@ -1,0 +1,26 @@
+# ghostty-config collection · asagi-dawn
+# Wabi-sabi · Pale spring-onion blue, first light
+
+background = #edf7f7
+foreground = #17292b
+cursor-color = #217283
+cursor-text = #edf7f7
+selection-background = #a3c3db
+selection-foreground = #17292b
+
+palette = 0=#444b4b
+palette = 1=#ae2d29
+palette = 2=#1d7c47
+palette = 3=#74711b
+palette = 4=#296eae
+palette = 5=#8d29ae
+palette = 6=#1f7985
+palette = 7=#99a3a3
+palette = 8=#222525
+palette = 9=#7e2826
+palette = 10=#267e4c
+palette = 11=#767224
+palette = 12=#26537e
+palette = 13=#68267e
+palette = 14=#26747e
+palette = 15=#6f7b7b

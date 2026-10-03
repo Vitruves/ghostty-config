@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // openConfirm asks a yes/no question.
@@ -166,16 +166,21 @@ func (m *Model) viewHelp() string {
 		return append(lines, "")
 	}
 	left := concat(
-		group("The palette", "type", "A command, then its argument", "↑ ↓", "Walk the list", "Enter", "Open, or apply the line", "Tab", "Next group, or complete", "Esc", "Back; on an empty prompt, leave", "F2", "Hide the palette to look", "⇧↑ ⇧↓", "Scroll the explanation", "Ctrl+C", "Leave, writing nothing", "F1", "This help"),
+		group("The palette", "type", "A command, then its argument", "↑ ↓", "Walk the list", "Enter", "Open, or apply the line", "Tab", "Next group, or complete", "Esc", "Back; on an empty prompt, leave", "Ctrl+X", "Delete the highlighted theme file", "F2", "Hide the palette to look", "⇧↑ ⇧↓", "Scroll the explanation", "Ctrl+C", "Leave, writing nothing", "F1", "This help"),
 		group("Slot editor", "← →", "Brighten / darken", "⇧← ⇧→", "Rotate hue", "- +", "Saturation", "[ ]", "Lightness", "hex digits", "Type an exact value", "⌫", "Clear an optional slot", "u", "Undo this slot", "↑ ↓", "Next slot", "Esc", "Back to the prompt"),
 	)
 	var right []string
-	for _, g := range groups {
-		right = append(right, c.bold(c.accent).Render(" "+g))
+	right = append(right, c.bold(c.accent).Render(" Commands"), c.mutedS().Render("  type one, then Enter; Tab completes"), "")
+	for i, g := range groups {
+		right = append(right, "  "+c.bold(groupColour(c, i)).Render(g))
+		var names []string
 		for _, cmd := range m.commands() {
 			if cmd.group == g {
-				right = append(right, "  "+c.text(c.warn).Render(pad(truncate(title(cmd.syntax), 24), 25))+c.mutedS().Render(truncate(cmd.desc, 34)))
+				names = append(names, title(cmd.name))
 			}
+		}
+		for _, l := range wrapPlain(strings.Join(names, "  "), 56) {
+			right = append(right, "    "+c.text(c.warn).Render(l))
 		}
 		right = append(right, "")
 	}
@@ -213,16 +218,16 @@ func concat(groups ...[]string) []string {
 func (m *Model) viewWelcome() string {
 	c := m.panelChrome()
 	features := [][3]string{
-		{"Theme rose", "Browse themes", "every match shows behind the palette as you move; Enter applies"},
+		{"Theme rose", "Browse themes", "every match is listed, the highlighted one shown beside its details; Enter applies"},
 		{"edit red", "Tune a colour", "brightness, hue, saturation, lightness, or type a hex"},
 		{"new triadic", "Create a theme", "from a harmony rule; light, dark, or seeded from a colour"},
 		{"font jet", "Pick a font", "only families Ghostty can load; style and size the same way"},
 		{"size 14", "Font size", "half points allowed"},
-		{"titlebar", "Window", "transparent, tabs, hidden, none; opacity, blur, padding, cursor…"},
+		{"preset glass", "Window and more", "presets, title bar, opacity, blur, padding; then Input and Session"},
 		{"save mine", "Keep your edits", "into ~/.config/ghostty/themes, never over a bundled theme"},
 		{"", "", ""},
 		{"↑ ↓ Enter", "The list", "walk it, apply the highlighted line; clicks work too"},
-		{"Esc", "Back", "to the four groups, and from there out; leaving applies nothing"},
+		{"Esc", "Back", "to the groups, and from there out; leaving applies nothing"},
 		{"F1", "All keys", "and the full list of commands"},
 	}
 	var lines []string

@@ -1,0 +1,26 @@
+# ghostty-config collection · green-placid
+# Kandinsky · Passive and self-satisfied, in daylight
+
+background = #ebf4f2
+foreground = #172b26
+cursor-color = #206f62
+cursor-text = #ebf4f2
+selection-background = #a1c2d4
+selection-foreground = #172b26
+
+palette = 0=#444b49
+palette = 1=#ab2f2b
+palette = 2=#1f7a47
+palette = 3=#726f1d
+palette = 4=#2970a3
+palette = 5=#8b2bab
+palette = 6=#1f7a6d
+palette = 7=#99a3a1
+palette = 8=#222525
+palette = 9=#7c2a27
+palette = 10=#277c4c
+palette = 11=#747125
+palette = 12=#27597c
+palette = 13=#67277c
+palette = 14=#257468
+palette = 15=#6f7b79

@@ -1,0 +1,26 @@
+# ghostty-config collection · black-pause
+# Kandinsky · The silence after the last note
+
+background = #000000
+foreground = #dbdbdb
+cursor-color = #acb9ac
+cursor-text = #000000
+selection-background = #223a4b
+selection-foreground = #dbdbdb
+
+palette = 0=#302c2c
+palette = 1=#c57459
+palette = 2=#59c559
+palette = 3=#c5c159
+palette = 4=#5998c5
+palette = 5=#c559c1
+palette = 6=#59c5b4
+palette = 7=#cac4c4
+palette = 8=#5b5252
+palette = 9=#d1a394
+palette = 10=#94d194
+palette = 11=#d1cf94
+palette = 12=#94b7d1
+palette = 13=#d194cf
+palette = 14=#94d1c8
+palette = 15=#f0efef

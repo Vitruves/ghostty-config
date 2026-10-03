@@ -1,0 +1,26 @@
+# ghostty-config collection · fauvist-field
+# Movements · Colour freed from the thing it describes
+
+background = #08211b
+foreground = #d6e0de
+cursor-color = #f53d8a
+cursor-text = #08211b
+selection-background = #32426b
+selection-foreground = #d6e0de
+
+palette = 0=#2c302f
+palette = 1=#e9526e
+palette = 2=#37e64f
+palette = 3=#e6a737
+palette = 4=#7679ee
+palette = 5=#e740b3
+palette = 6=#37dbe6
+palette = 7=#c4cac8
+palette = 8=#525b59
+palette = 9=#e87d91
+palette = 10=#7de88b
+palette = 11=#e8c17d
+palette = 12=#7d7fe8
+palette = 13=#e87dc6
+palette = 14=#7de1e8
+palette = 15=#eff0f0

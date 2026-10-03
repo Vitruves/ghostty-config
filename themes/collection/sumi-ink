@@ -1,0 +1,26 @@
+# ghostty-config collection · sumi-ink
+# Wabi-sabi · Ground ink, black with a trace of blue
+
+background = #0e0f11
+foreground = #d8dadf
+cursor-color = #a89e94
+cursor-text = #0e0f11
+selection-background = #2d3957
+selection-foreground = #d8dadf
+
+palette = 0=#2c2d30
+palette = 1=#c77357
+palette = 2=#6ac757
+palette = 3=#c79e57
+palette = 4=#5f7eca
+palette = 5=#c757a4
+palette = 6=#57bfc7
+palette = 7=#c4c6ca
+palette = 8=#52555b
+palette = 9=#d3a292
+palette = 10=#9dd392
+palette = 11=#d3bb92
+palette = 12=#92a6d3
+palette = 13=#d392be
+palette = 14=#92ced3
+palette = 15=#efeff0

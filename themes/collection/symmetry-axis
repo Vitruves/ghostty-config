@@ -1,0 +1,26 @@
+# ghostty-config collection · symmetry-axis
+# Gestalt · Teal and red held in balance either side of a line
+
+background = #0e1b1b
+foreground = #d6e0e0
+cursor-color = #d65c5c
+cursor-text = #0e1b1b
+selection-background = #363f67
+selection-foreground = #d6e0e0
+
+palette = 0=#2c3030
+palette = 1=#dc5656
+palette = 2=#5ed945
+palette = 3=#d9a345
+palette = 4=#7879e3
+palette = 5=#d945aa
+palette = 6=#45cfd9
+palette = 7=#c4caca
+palette = 8=#525b5b
+palette = 9=#df8686
+palette = 10=#95df86
+palette = 11=#dfbf86
+palette = 12=#8688df
+palette = 13=#df86c3
+palette = 14=#86d9df
+palette = 15=#eff0f0

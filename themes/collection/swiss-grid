@@ -1,0 +1,26 @@
+# ghostty-config collection · swiss-grid
+# Modernism · White, black and one red, set on a grid
+
+background = #fafafa
+foreground = #212121
+cursor-color = #d41125
+cursor-text = #fafafa
+selection-background = #a6a7e2
+selection-foreground = #212121
+
+palette = 0=#4b4444
+palette = 1=#ba1c2c
+palette = 2=#278514
+palette = 3=#976817
+palette = 4=#1c1fba
+palette = 5=#ba1c88
+palette = 6=#147e85
+palette = 7=#a39999
+palette = 8=#252222
+palette = 9=#871c27
+palette = 10=#2b7f1a
+palette = 11=#87601c
+palette = 12=#1c1e87
+palette = 13=#871c66
+palette = 14=#1a787f
+palette = 15=#7b6f6f

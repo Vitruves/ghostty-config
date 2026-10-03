@@ -1,0 +1,26 @@
+# ghostty-config collection · common-region
+# Gestalt · Everything inside one pale boundary belongs together
+
+background = #eaeef5
+foreground = #171e2b
+cursor-color = #2450a8
+cursor-text = #eaeef5
+selection-background = #a0b3db
+selection-foreground = #171e2b
+
+palette = 0=#44464b
+palette = 1=#b02740
+palette = 2=#1a7641
+palette = 3=#7e6a1c
+palette = 4=#2754b0
+palette = 5=#8e27b0
+palette = 6=#206f8f
+palette = 7=#999da3
+palette = 8=#222325
+palette = 9=#7f2435
+palette = 10=#227747
+palette = 11=#776622
+palette = 12=#24427f
+palette = 13=#69247f
+palette = 14=#24657f
+palette = 15=#6f747b

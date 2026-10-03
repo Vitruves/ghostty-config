@@ -1,6 +1,7 @@
 package collection
 
 import (
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,8 +12,8 @@ import (
 )
 
 func TestCollectionSize(t *testing.T) {
-	if len(Collection) != 152 {
-		t.Fatalf("expected 152 themes, got %d", len(Collection))
+	if len(Collection) != 252 {
+		t.Fatalf("expected 252 themes, got %d", len(Collection))
 	}
 	seen := make(map[string]bool)
 	for _, c := range Collection {
@@ -70,7 +71,7 @@ func TestRenderedThemeParsesBack(t *testing.T) {
 func TestInstallNeverOverwritesEditedFiles(t *testing.T) {
 	dir := t.TempDir()
 	written, skipped, err := Install(dir)
-	if err != nil || written != 152 || skipped != 0 {
+	if err != nil || written != 252 || skipped != 0 {
 		t.Fatalf("first install: %d %d %v", written, skipped, err)
 	}
 	edited := filepath.Join(dir, Collection[3].Slug())
@@ -78,7 +79,7 @@ func TestInstallNeverOverwritesEditedFiles(t *testing.T) {
 		t.Fatal(err)
 	}
 	written, skipped, err = Install(dir)
-	if err != nil || written != 151 || skipped != 1 {
+	if err != nil || written != 251 || skipped != 1 {
 		t.Fatalf("second install: %d %d %v", written, skipped, err)
 	}
 	data, _ := os.ReadFile(edited)
@@ -99,4 +100,44 @@ func TestPowerShellHomageUsesCampbell(t *testing.T) {
 		return
 	}
 	t.Fatal("PowerShell theme missing")
+}
+
+// Two themes that differ only by name are noise in a list of 252. Every
+// palette must differ from every other in its background or in the hue of its
+// accent, by enough to see.
+func TestCollectionIsDistinct(t *testing.T) {
+	type key struct {
+		bg   color.RGB
+		hue  float64
+		name string
+	}
+	var keys []key
+	for _, c := range Collection {
+		bg, _ := color.ParseHex(c.Background)
+		ac, _ := color.ParseHex(c.Accent)
+		keys = append(keys, key{bg, ac.ToHSL().H, c.Name})
+	}
+	// The first hundred and fifty-two predate this check and keep their
+	// palettes; every newer one is compared against everything before it.
+	for i := range keys {
+		for j := max(i+1, 152); j < len(keys); j++ {
+			a, b := keys[i], keys[j]
+			dist := math.Abs(float64(a.bg.R-b.bg.R)) + math.Abs(float64(a.bg.G-b.bg.G)) + math.Abs(float64(a.bg.B-b.bg.B))
+			if dist < 6 && color.HueDistance(a.hue, b.hue) < 6 {
+				t.Errorf("%s and %s are the same palette to the eye", a.name, b.name)
+			}
+		}
+	}
+}
+
+func TestFamiliesAreWholeTens(t *testing.T) {
+	counts := map[string]int{}
+	for _, c := range Collection {
+		counts[c.Family]++
+	}
+	for _, f := range []string{"Plutchik", "Harmony", "Gestalt", "Albers", "Modernism", "Wabi-sabi", "Cognition", "Jung", "Kandinsky", "Movements"} {
+		if counts[f] != 10 {
+			t.Errorf("family %s has %d themes, want 10", f, counts[f])
+		}
+	}
 }

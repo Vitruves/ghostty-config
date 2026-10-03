@@ -1,0 +1,26 @@
+# ghostty-config collection · surprise-petal
+# Plutchik · Sky blue struck against a deep field
+
+background = #05162e
+foreground = #d6dae0
+cursor-color = #2ea5fa
+cursor-text = #05162e
+selection-background = #1b4272
+selection-foreground = #d6dae0
+
+palette = 0=#2c2e30
+palette = 1=#e14c47
+palette = 2=#3ee085
+palette = 3=#e0bf3e
+palette = 4=#3e89e0
+palette = 5=#be50e3
+palette = 6=#3ec5e0
+palette = 7=#c4c6ca
+palette = 8=#52565b
+palette = 9=#e38582
+palette = 10=#82e3ac
+palette = 11=#e3d082
+palette = 12=#82afe3
+palette = 13=#cb82e3
+palette = 14=#82d3e3
+palette = 15=#eff0f0

@@ -1,0 +1,26 @@
+# ghostty-config collection · continuity-line
+# Gestalt · A single cool line that carries the eye through
+
+background = #f0f4f5
+foreground = #192629
+cursor-color = #1b729c
+cursor-text = #f0f4f5
+selection-background = #a4bedb
+selection-foreground = #192629
+
+palette = 0=#444a4b
+palette = 1=#b02b27
+palette = 2=#1c7e46
+palette = 3=#7e6a1c
+palette = 4=#2766b0
+palette = 5=#8e27b0
+palette = 6=#1e7586
+palette = 7=#99a1a3
+palette = 8=#222525
+palette = 9=#7f2724
+palette = 10=#227747
+palette = 11=#7f6d24
+palette = 12=#244e7f
+palette = 13=#69247f
+palette = 14=#24707f
+palette = 15=#6f797b

@@ -1,0 +1,26 @@
+# ghostty-config collection · wabi-rust
+# Wabi-sabi · Weathered iron, the beauty of what has aged
+
+background = #231b1a
+foreground = #e0d8d6
+cursor-color = #c07259
+cursor-text = #231b1a
+selection-background = #394261
+selection-foreground = #e0d8d6
+
+palette = 0=#302c2c
+palette = 1=#d06d4e
+palette = 2=#64d04e
+palette = 3=#d0a14e
+palette = 4=#5e82d4
+palette = 5=#d256ab
+palette = 6=#4ec7d0
+palette = 7=#cac5c4
+palette = 8=#5b5352
+palette = 9=#d99f8c
+palette = 10=#99d98c
+palette = 11=#d9bd8c
+palette = 12=#8ca3d9
+palette = 13=#d98cc1
+palette = 14=#8cd4d9
+palette = 15=#f0efef

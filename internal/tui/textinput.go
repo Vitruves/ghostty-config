@@ -1,6 +1,6 @@
 package tui
 
-import "github.com/charmbracelet/bubbles/textinput"
+import "charm.land/bubbles/v2/textinput"
 
 // The dialogs share the bubbles text input under a short alias.
 type textinputModel = textinput.Model

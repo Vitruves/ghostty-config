@@ -1,0 +1,26 @@
+# ghostty-config collection · accented-analogic
+# Harmony · Cool neighbours with one warm note to break them
+
+background = #eef6f4
+foreground = #172b24
+cursor-color = #c33022
+cursor-text = #eef6f4
+selection-background = #a1a7db
+selection-foreground = #172b24
+
+palette = 0=#444b49
+palette = 1=#b23124
+palette = 2=#2b7f1a
+palette = 3=#90671d
+palette = 4=#2427b2
+palette = 5=#b22485
+palette = 6=#1a787f
+palette = 7=#99a3a1
+palette = 8=#222525
+palette = 9=#812b22
+palette = 10=#2f7920
+palette = 11=#815f22
+palette = 12=#222481
+palette = 13=#812263
+palette = 14=#227b81
+palette = 15=#6f7b78

@@ -1,0 +1,26 @@
+# ghostty-config collection · homage-square
+# Albers · Nested squares of one warm family, after his best-known series
+
+background = #281c0b
+foreground = #e0dcd6
+cursor-color = #f4ca25
+cursor-text = #281c0b
+selection-background = #3a435d
+selection-foreground = #e0dcd6
+
+palette = 0=#302e2c
+palette = 1=#e0663e
+palette = 2=#59e03e
+palette = 3=#e0bf3e
+palette = 4=#5882e4
+palette = 5=#e147b1
+palette = 6=#3ee0c7
+palette = 7=#cac7c4
+palette = 8=#5b5752
+palette = 9=#e39a82
+palette = 10=#92e382
+palette = 11=#e3d082
+palette = 12=#829fe3
+palette = 13=#e382c5
+palette = 14=#82e3d5
+palette = 15=#f0f0ef

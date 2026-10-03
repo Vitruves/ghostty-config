@@ -1,0 +1,26 @@
+# ghostty-config collection · biophilia
+# Cognition · The forest floor, the colours the eye evolved on
+
+background = #0e180c
+foreground = #d8e0d6
+cursor-color = #c69653
+cursor-text = #0e180c
+selection-background = #2b4059
+selection-foreground = #d8e0d6
+
+palette = 0=#2c302c
+palette = 1=#d26d4b
+palette = 2=#62d24b
+palette = 3=#d2a14b
+palette = 4=#5b81d6
+palette = 5=#d24ba8
+palette = 6=#4bd2be
+palette = 7=#c5cac4
+palette = 8=#545b52
+palette = 9=#da9f8b
+palette = 10=#98da8b
+palette = 11=#dabd8b
+palette = 12=#8ba3da
+palette = 13=#da8bc1
+palette = 14=#8bdace
+palette = 15=#eff0ef

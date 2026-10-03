@@ -1,0 +1,26 @@
+# ghostty-config collection · colour-subtraction
+# Albers · Hue taken away until a soft green is left
+
+background = #111d17
+foreground = #d6e0db
+cursor-color = #87c5a6
+cursor-text = #111d17
+selection-background = #294c5d
+selection-foreground = #d6e0db
+
+palette = 0=#2c302e
+palette = 1=#ce6f50
+palette = 2=#50ce87
+palette = 3=#cec950
+palette = 4=#5099ce
+palette = 5=#ce50c9
+palette = 6=#50cebb
+palette = 7=#c4cac7
+palette = 8=#525b57
+palette = 9=#d7a08e
+palette = 10=#8ed7ae
+palette = 11=#d7d48e
+palette = 12=#8eb8d7
+palette = 13=#d78ed5
+palette = 14=#8ed7cc
+palette = 15=#eff0f0

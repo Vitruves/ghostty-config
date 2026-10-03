@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/vitruves/ghostty-config/internal/collection"
 	"github.com/vitruves/ghostty-config/internal/color"
@@ -54,7 +54,7 @@ type command struct {
 }
 
 // Groups, in the order the menu shows them.
-var groups = []string{"Themes", "Fonts", "Window", "Tool"}
+var groups = []string{"Themes", "Fonts", "Window", "Input", "Session", "Tool"}
 
 // commands is the registry, built once per model because the closures need
 // platform facts.
@@ -63,7 +63,7 @@ func (m *Model) buildCommands() []*command {
 	add := func(c *command) { cmds = append(cmds, c) }
 
 	// --- Themes -----------------------------------------------------------
-	add(&command{name: "theme", group: "Themes", syntax: "theme <name>", desc: "Browse and apply a theme; moving previews it in this window",
+	add(&command{name: "theme", group: "Themes", syntax: "theme <name>", desc: "Browse themes; moving only looks, Enter applies the highlighted one",
 		filters: true,
 		options: func(m *Model, arg string) []option {
 			var out []option
@@ -235,9 +235,57 @@ func (m *Model) buildCommands() []*command {
 		run:     func(m *Model, arg string, opt *option) tea.Cmd { return m.forkTheme() },
 		preview: previewThemeCurrent,
 	})
-	add(&command{name: "delete", group: "Themes", syntax: "delete", desc: "Delete the theme on screen, if this tool wrote it",
-		run:     func(m *Model, arg string, opt *option) tea.Cmd { m.deleteTheme(); return nil },
-		preview: previewThemeCurrent,
+	add(&command{name: "delete", group: "Themes", syntax: "delete <name>", desc: "Delete a theme file from your themes directory: yours, the collection's, or one someone else put there. Bundled themes are Ghostty's and stay",
+		filters: true,
+		options: func(m *Model, arg string) []option {
+			var out []option
+			installed := 0
+			for _, t := range m.lib.Themes {
+				if t.Source == ghostty.SourceCollection {
+					installed++
+				}
+			}
+			if installed > 0 && (arg == "" || fuzzyMatch("collection", strings.TrimSpace(arg))) {
+				out = append(out, option{label: "collection", detail: fmt.Sprintf("every installed collection theme · %d files", installed), value: "@collection"})
+			}
+			for _, t := range m.lib.Themes {
+				if t.Deletable() {
+					o := m.themeOption(t)
+					o.detail = sourceWord(t)
+					out = append(out, o)
+				}
+			}
+			if len(out) == 0 {
+				out = append(out, option{label: "Nothing to delete", detail: "the themes directory has none of your files", header: true})
+			}
+			return out
+		},
+		onMove: func(m *Model, opt *option) tea.Cmd {
+			if opt != nil && opt.theme != nil {
+				m.previewTheme(opt.theme)
+			}
+			return nil
+		},
+		run: func(m *Model, arg string, opt *option) tea.Cmd {
+			if opt == nil {
+				return nil
+			}
+			if opt.value == "@collection" {
+				var ts []*ghostty.Theme
+				for _, t := range m.lib.Themes {
+					if t.Source == ghostty.SourceCollection {
+						ts = append(ts, t)
+					}
+				}
+				m.deleteThemes(ts)
+				return nil
+			}
+			if opt.theme != nil {
+				m.deleteThemes([]*ghostty.Theme{opt.theme})
+			}
+			return nil
+		},
+		preview: previewThemePanel,
 	})
 
 	// --- Fonts ------------------------------------------------------------
@@ -385,6 +433,8 @@ func (m *Model) buildCommands() []*command {
 		},
 		preview: previewDownloadPanel,
 	})
+
+	add(presetCommand())
 
 	// --- Window and text settings, generated from the setting table -----------
 	for _, s := range m.buildSettings() {
@@ -844,7 +894,46 @@ func (m *Model) buildSettings() []setting {
 		s = append(s, th)
 	}
 	s = append(s, numberSetting("contrast", "minimum-contrast", "Minimum contrast", "Ghostty pushes text towards black or white until it clears this ratio; 1 is off", 1, 1, 7, 0.5, plain))
-	s = append(s, keySetting("cursor", "cursor-style", "Cursor", "Shell integration may still ask for a bar at the prompt", []string{"block", "bar", "underline", "block_hollow"}, "block"))
-	s = append(s, keySetting("blink", "cursor-style-blink", "Cursor blink", "default leaves it to the shell and DEC mode 12", []string{"default", "true", "false"}, "default"))
+	input := func(st setting) { st.group = "Input"; s = append(s, st) }
+	input(numberSetting("cursoropacity", "cursor-opacity", "Cursor opacity", "Below 1 the character under the cursor stays readable", 1, 0.2, 1, 0.1, func(v float64) string { return strconv.FormatFloat(v, 'f', 1, 64) }))
+	s = append(s, numberSetting("splitopacity", "unfocused-split-opacity", "Unfocused split opacity", "How far splits you are not typing in fade back; 1 keeps them as bright as the focused one", 0.7, 0.15, 1, 0.05, func(v float64) string { return strconv.FormatFloat(v, 'f', 2, 64) }))
+	faint := numberSetting("faint", "faint-opacity", "Faint text opacity", "How dim SGR 2 (dim) text is drawn; raise it if dimmed output gets hard to read", 0.5, 0.2, 1, 0.05, func(v float64) string { return strconv.FormatFloat(v, 'f', 2, 64) })
+	faint.group = "Fonts"
+	s = append(s, faint)
+	s = append(s, boolSetting("opaquecells", "background-opacity-cells", "Opacity on coloured cells", "Also make cells with their own background (selections, status lines, TUIs) translucent", false))
+	input(keySetting("cursor", "cursor-style", "Cursor", "Shell integration may still ask for a bar at the prompt", []string{"block", "bar", "underline", "block_hollow"}, "block"))
+	input(keySetting("blink", "cursor-style-blink", "Cursor blink", "default leaves it to the shell and DEC mode 12", []string{"default", "true", "false"}, "default"))
+	cw := numberSetting("cellwidth", "adjust-cell-width", "Letter spacing", "Percent added to each column; negative tightens, positive airs the text out", 0, -20, 50, 2, percent)
+	cw.group = "Fonts"
+	s = append(s, cw)
+	if mac {
+		ts := numberSetting("thickness", "font-thicken-strength", "Thicken strength", "How heavy thickened strokes are, 0 to 255; only matters when thicken is on", 255, 0, 255, 15, plain)
+		ts.group = "Fonts"
+		s = append(s, ts)
+	}
+
+	// --- Input and Session: how the terminal acts rather than how it looks. -----------
+	session := func(st setting) { st.group = "Session"; s = append(s, st) }
+	input(keySetting("copy", "copy-on-select", "Copy on select", "true copies a selection as you make it; clipboard also fills the system clipboard on Linux", []string{"true", "clipboard", "false"}, "true"))
+	input(boolSetting("clearselect", "selection-clear-on-typing", "Clear selection on typing", "Typing drops the selection instead of leaving it highlighted", true))
+	input(boolSetting("trimspaces", "clipboard-trim-trailing-spaces", "Trim copied spaces", "Strip trailing spaces from every copied line", true))
+	input(boolSetting("pasteguard", "clipboard-paste-protection", "Paste protection", "Ask before pasting text that looks like it would run a command", true))
+	input(boolSetting("clicktomove", "cursor-click-to-move", "Click to move the cursor", "Option-click at a shell prompt moves the cursor there", true))
+	input(boolSetting("hidemouse", "mouse-hide-while-typing", "Hide mouse while typing", "The pointer disappears when a key is pressed and returns when it moves", false))
+	input(boolSetting("focusmouse", "focus-follows-mouse", "Focus follows mouse", "Hovering a split focuses it without a click", false))
+	input(keySetting("scrollbar", "scrollbar", "Scrollbar", "system follows the OS setting; never removes the widget but keeps scrolling", []string{"system", "never"}, "system"))
+	session(keySetting("scrollback", "scrollback-limit", "Scrollback size", "Bytes kept per terminal, not lines: roughly 10 MB is a few tens of thousands of lines", []string{"1000000", "10000000", "50000000", "100000000", "500000000"}, "10000000"))
+	session(keySetting("confirmclose", "confirm-close-surface", "Confirm before closing", "true asks only when a process is running; always asks every time", []string{"true", "always", "false"}, "true"))
+	session(keySetting("notify", "notify-on-command-finish", "Notify after a command", "Needs shell integration; unfocused only pings when you are looking elsewhere (Ghostty 1.3)", []string{"never", "unfocused", "always"}, "never"))
+	session(keySetting("resizeoverlay", "resize-overlay", "Resize overlay", "The columns × rows popup shown while a window is being resized", []string{"after-first", "always", "never"}, "after-first"))
+	session(boolSetting("inheritcwd", "window-inherit-working-directory", "Inherit working directory", "New windows, tabs and splits open in the directory of the focused one", true))
+	session(boolSetting("quitlast", "quit-after-last-window-closed", "Quit after last window", "Closing the final window quits Ghostty instead of leaving it in the dock", false))
+	if mac {
+		input(keySetting("optionalt", "macos-option-as-alt", "Option as Alt", "true makes Option behave as Alt (readline, vim, emacs); false keeps accented characters", []string{"default", "true", "left", "right", "false"}, "default"))
+		session(keySetting("savestate", "window-save-state", "Restore windows", "default follows the macOS setting; always restores windows on every launch", []string{"default", "never", "always"}, "default"))
+		session(boolSetting("stepresize", "window-step-resize", "Resize in whole cells", "Window edges snap to the cell grid instead of pixels", false))
+	} else {
+		session(keySetting("tabbar", "window-show-tab-bar", "Tab bar", "auto shows it from two tabs up (GTK)", []string{"auto", "always", "never"}, "auto"))
+	}
 	return s
 }

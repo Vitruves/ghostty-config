@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/vitruves/ghostty-config/internal/color"
 	"github.com/vitruves/ghostty-config/internal/fontdl"
@@ -67,7 +67,16 @@ func (m *Model) recompute() {
 		m.results = nil
 	} else {
 		m.results = m.cmd.options(m, m.arg)
-		if m.cmd.filters && strings.TrimSpace(m.arg) != "" {
+		if fam := familyName(m.arg); m.cmd.filters && fam != "" && themeCommand(m.cmd) {
+			// A family name filters by family, in the order of the list.
+			var kept []option
+			for _, o := range m.results {
+				if o.header || (o.theme != nil && strings.EqualFold(themeFamily(o.theme), fam)) {
+					kept = append(kept, o)
+				}
+			}
+			m.results = kept
+		} else if m.cmd.filters && strings.TrimSpace(m.arg) != "" {
 			needle := strings.TrimSpace(m.arg)
 			var kept []option
 			for _, o := range m.results {
@@ -292,6 +301,7 @@ func (m *Model) run() tea.Cmd {
 		return nil
 	}
 	active := m.cmd
+	seq := m.statusSeq
 	cmd := active.run(m, m.arg, o)
 	// The command may have rewritten the prompt itself (save proposing a
 	// name, saveAs clearing it); only tidy up when it did not.
@@ -304,7 +314,10 @@ func (m *Model) run() tea.Cmd {
 			m.setPromptText(title(active.name) + " ")
 		}
 	}
-	m.renderStatus()
+	if m.statusSeq == seq {
+		// A command that said something keeps its message on screen.
+		m.renderStatus()
+	}
 	return cmd
 }
 
@@ -325,6 +338,18 @@ func (m *Model) updatePrompt(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if m.cmd == nil && strings.TrimSpace(m.prompt.Value()) == "" {
 			m.switchGroup(map[string]int{"tab": 1, "shift+tab": -1}[msg.String()])
 			return m, nil
+		}
+		// A bare command word, as the tool opens on, has nothing to complete:
+		// Tab leaves it for the neighbouring group, as it does on the menu.
+		if m.cmd != nil && strings.EqualFold(strings.TrimSpace(m.prompt.Value()), m.cmd.name) {
+			for i, g := range groups {
+				if g == m.cmd.group {
+					m.group = i
+				}
+			}
+			m.setPromptText("")
+			m.switchGroup(map[string]int{"tab": 1, "shift+tab": -1}[msg.String()])
+			return m, m.afterMove()
 		}
 		m.complete()
 		return m, m.afterMove()
@@ -358,6 +383,12 @@ func (m *Model) updatePrompt(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "f1", "ctrl+_":
 		m.overlay = overlayHelp
 		return m, nil
+	case "ctrl+x":
+		// Delete the highlighted theme file, from any list of themes.
+		if o := m.selected(); m.cmd != nil && o != nil && o.theme != nil {
+			m.deleteThemes([]*ghostty.Theme{o.theme})
+			return m, nil
+		}
 	case "ctrl+u":
 		m.setPromptText("")
 		return m, nil

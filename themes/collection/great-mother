@@ -1,0 +1,26 @@
+# ghostty-config collection · great-mother
+# Jung · Warm cream, nurturing green
+
+background = #f6efea
+foreground = #2b1f17
+cursor-color = #317241
+cursor-text = #f6efea
+selection-background = #a7bfd0
+selection-foreground = #2b1f17
+
+palette = 0=#4b4744
+palette = 1=#ae4a29
+palette = 2=#1d7c34
+palette = 3=#6c6919
+palette = 4=#2770a6
+palette = 5=#ae29a9
+palette = 6=#1b7467
+palette = 7=#a39d99
+palette = 8=#252322
+palette = 9=#7e3c26
+palette = 10=#247637
+palette = 11=#6e6b21
+palette = 12=#26597e
+palette = 13=#7e267b
+palette = 14=#247669
+palette = 15=#7b746f

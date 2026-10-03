@@ -1,0 +1,26 @@
+# ghostty-config collection · ukiyo-wave
+# Movements · Prussian blue with the foam of the print
+
+background = #0c1c31
+foreground = #d6dae0
+cursor-color = #e2cb9c
+cursor-text = #0c1c31
+selection-background = #2d4471
+selection-foreground = #d6dae0
+
+palette = 0=#2c2e30
+palette = 1=#d46c49
+palette = 2=#61d449
+palette = 3=#d4a749
+palette = 4=#6286da
+palette = 5=#d651ad
+palette = 6=#49d4bf
+palette = 7=#c4c7ca
+palette = 8=#52565b
+palette = 9=#dc9e89
+palette = 10=#97dc89
+palette = 11=#dcc189
+palette = 12=#89a2dc
+palette = 13=#dc89c2
+palette = 14=#89dccf
+palette = 15=#eff0f0

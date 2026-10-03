@@ -1,0 +1,26 @@
+# ghostty-config collection · attention-restoration
+# Cognition · Soft fascination of leaves, after Kaplan
+
+background = #ecf4ec
+foreground = #172b17
+cursor-color = #26734d
+cursor-text = #ecf4ec
+selection-background = #a2c2d0
+selection-foreground = #172b17
+
+palette = 0=#444b44
+palette = 1=#ab4b2b
+palette = 2=#1f7a47
+palette = 3=#726f1d
+palette = 4=#2970a3
+palette = 5=#ab2ba7
+palette = 6=#1f7a6d
+palette = 7=#99a399
+palette = 8=#222522
+palette = 9=#7c3c27
+palette = 10=#277c4c
+palette = 11=#747125
+palette = 12=#27597c
+palette = 13=#7c2779
+palette = 14=#257468
+palette = 15=#6f7b6f

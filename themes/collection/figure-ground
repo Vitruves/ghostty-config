@@ -1,0 +1,26 @@
+# ghostty-config collection · figure-ground
+# Gestalt · Warm grey ground, pale figure standing out of it
+
+background = #363430
+foreground = #dddcd9
+cursor-color = #d1cec7
+cursor-text = #363430
+selection-background = #535c70
+selection-foreground = #dddcd9
+
+palette = 0=#302f2c
+palette = 1=#d48b71
+palette = 2=#67cb52
+palette = 3=#cba752
+palette = 4=#819cd9
+palette = 5=#d981bd
+palette = 6=#52cbb9
+palette = 7=#cac8c4
+palette = 8=#5b5852
+palette = 9=#d6a18f
+palette = 10=#9bd68f
+palette = 11=#d6c18f
+palette = 12=#8fa4d6
+palette = 13=#d68fc0
+palette = 14=#8fd6cb
+palette = 15=#f0f0ef

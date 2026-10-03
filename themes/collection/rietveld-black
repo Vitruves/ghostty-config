@@ -1,0 +1,26 @@
+# ghostty-config collection · rietveld-black
+# Modernism · Black frame, yellow ends, as on the Red Blue Chair
+
+background = #121212
+foreground = #dbdbdb
+cursor-color = #f9dc1f
+cursor-text = #121212
+selection-background = #293a62
+selection-foreground = #dbdbdb
+
+palette = 0=#302c2c
+palette = 1=#e2653c
+palette = 2=#58e23c
+palette = 3=#e2cc3c
+palette = 4=#4e7be5
+palette = 5=#e23cae
+palette = 6=#3ce2c9
+palette = 7=#cac4c4
+palette = 8=#5b5252
+palette = 9=#e59980
+palette = 10=#91e580
+palette = 11=#e5d880
+palette = 12=#809ee5
+palette = 13=#e580c5
+palette = 14=#80e5d6
+palette = 15=#f0efef

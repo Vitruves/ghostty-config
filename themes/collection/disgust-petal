@@ -1,0 +1,26 @@
+# ghostty-config collection · disgust-petal
+# Plutchik · Purple turned away, quiet and cool
+
+background = #1c0e20
+foreground = #ded6e0
+cursor-color = #af5ec9
+cursor-text = #1c0e20
+selection-background = #3c3469
+selection-foreground = #ded6e0
+
+palette = 0=#2f2c30
+palette = 1=#d94f68
+palette = 2=#47d75a
+palette = 3=#d7a347
+palette = 4=#7173e0
+palette = 5=#b74fd9
+palette = 6=#47aed7
+palette = 7=#c8c4ca
+palette = 8=#59525b
+palette = 9=#dd8897
+palette = 10=#88dd93
+palette = 11=#ddbe88
+palette = 12=#8889dd
+palette = 13=#c988dd
+palette = 14=#88c5dd
+palette = 15=#f0eff0

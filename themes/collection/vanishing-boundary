@@ -1,0 +1,26 @@
+# ghostty-config collection · vanishing-boundary
+# Albers · Two colours of equal value, the edge between them softening
+
+background = #302217
+foreground = #e0dad6
+cursor-color = #c68353
+cursor-text = #302217
+selection-background = #474b61
+selection-foreground = #e0dad6
+
+palette = 0=#302e2c
+palette = 1=#d47453
+palette = 2=#62d24b
+palette = 3=#d2a14b
+palette = 4=#6c8dda
+palette = 5=#d863b4
+palette = 6=#4bc9d2
+palette = 7=#cac7c4
+palette = 8=#5b5652
+palette = 9=#da9f8b
+palette = 10=#98da8b
+palette = 11=#dabd8b
+palette = 12=#8ba3da
+palette = 13=#da8bc1
+palette = 14=#8bd5da
+palette = 15=#f0f0ef

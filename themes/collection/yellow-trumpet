@@ -1,0 +1,26 @@
+# ghostty-config collection · yellow-trumpet
+# Kandinsky · Sharp, advancing, brass-bright
+
+background = #1f1b0a
+foreground = #e0ded6
+cursor-color = #f9dc1f
+cursor-text = #1f1b0a
+selection-background = #34425e
+selection-foreground = #e0ded6
+
+palette = 0=#302f2c
+palette = 1=#e4643a
+palette = 2=#57e43a
+palette = 3=#e4cd3a
+palette = 4=#5581e8
+palette = 5=#e43aae
+palette = 6=#3ae4ca
+palette = 7=#cac9c4
+palette = 8=#5b5952
+palette = 9=#e7987e
+palette = 10=#90e77e
+palette = 11=#e7d97e
+palette = 12=#7e9ee7
+palette = 13=#e77ec6
+palette = 14=#7ee7d7
+palette = 15=#f0f0ef

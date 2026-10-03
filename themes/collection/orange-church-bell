@@ -1,0 +1,26 @@
+# ghostty-config collection · orange-church-bell
+# Kandinsky · Red brought closer to the yellow, sure of itself
+
+background = #fcf0e3
+foreground = #2b2117
+cursor-color = #af4e09
+cursor-text = #fcf0e3
+selection-background = #a8b2d3
+selection-foreground = #2b2117
+
+palette = 0=#4b4844
+palette = 1=#b8451e
+palette = 2=#257b14
+palette = 3=#8c6117
+palette = 4=#1e4cb8
+palette = 5=#b81e88
+palette = 6=#14747b
+palette = 7=#a39e99
+palette = 8=#252422
+palette = 9=#86371d
+palette = 10=#2c7e1b
+palette = 11=#86601d
+palette = 12=#1d3d86
+palette = 13=#861d65
+palette = 14=#1b777e
+palette = 15=#7b766f

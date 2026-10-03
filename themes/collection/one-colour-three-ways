@@ -1,0 +1,26 @@
+# ghostty-config collection · one-colour-three-ways
+# Albers · A single blue-violet that reads as three on paper
+
+background = #f0eef6
+foreground = #1b172b
+cursor-color = #4736a1
+cursor-text = #f0eef6
+selection-background = #a4a4db
+selection-foreground = #1b172b
+
+palette = 0=#46444b
+palette = 1=#ae2941
+palette = 2=#1d7c47
+palette = 3=#7c691d
+palette = 4=#292bae
+palette = 5=#8d29ae
+palette = 6=#237595
+palette = 7=#9c99a3
+palette = 8=#232225
+palette = 9=#7e2636
+palette = 10=#247647
+palette = 11=#766524
+palette = 12=#26277e
+palette = 13=#68267e
+palette = 14=#26657e
+palette = 15=#726f7b

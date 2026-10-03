@@ -1,0 +1,26 @@
+# ghostty-config collection · split-complement
+# Harmony · The complement's two neighbours, gentler than a direct opposite
+
+background = #0c1d17
+foreground = #d6e0dd
+cursor-color = #d65ca9
+cursor-text = #0c1d17
+selection-background = #344065
+selection-foreground = #d6e0dd
+
+palette = 0=#2c302f
+palette = 1=#de546d
+palette = 2=#43db57
+palette = 3=#dba443
+palette = 4=#7678e5
+palette = 5=#dd4caf
+palette = 6=#43b0db
+palette = 7=#c4cac8
+palette = 8=#525b58
+palette = 9=#e08595
+palette = 10=#85e091
+palette = 11=#e0bf85
+palette = 12=#8586e0
+palette = 13=#e085c3
+palette = 14=#85c6e0
+palette = 15=#eff0f0

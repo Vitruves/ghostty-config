@@ -1,0 +1,26 @@
+# ghostty-config collection · triadic-poise
+# Harmony · Three hues a third of the wheel apart
+
+background = #151122
+foreground = #d9d6e0
+cursor-color = #eb7047
+cursor-text = #151122
+selection-background = #2c3a6a
+selection-foreground = #d9d6e0
+
+palette = 0=#2d2c30
+palette = 1=#dd6840
+palette = 2=#5bdd40
+palette = 3=#dda440
+palette = 4=#517ce0
+palette = 5=#dd40ac
+palette = 6=#40d3dd
+palette = 7=#c5c4ca
+palette = 8=#54525b
+palette = 9=#e29b83
+palette = 10=#93e283
+palette = 11=#e2c083
+palette = 12=#83a0e2
+palette = 13=#e283c4
+palette = 14=#83dce2
+palette = 15=#efeff0

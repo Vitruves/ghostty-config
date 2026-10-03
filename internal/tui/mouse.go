@@ -3,7 +3,7 @@ package tui
 import (
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 // Everything on screen that answers to a click registers a region while it
@@ -64,19 +64,39 @@ func (m *Model) isDouble(r region) bool {
 	return same
 }
 
-// updateMouse routes clicks and wheel movement.
-func (m *Model) updateMouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
-	msg.Y -= m.top
+// mouseEv is a mouse event reduced to what the editor asks of it, with the
+// row counted from the top of the editor rather than of the terminal.
+type mouseEv struct {
+	X, Y                 int
+	Button               tea.MouseButton
+	press, motion, wheel bool
+}
+
+// updateMouse routes clicks, drags, hovering and the wheel.
+func (m *Model) updateMouse(raw tea.MouseMsg) (tea.Model, tea.Cmd) {
+	mo := raw.Mouse()
+	msg := mouseEv{X: mo.X, Y: mo.Y - m.top, Button: mo.Button}
+	switch raw.(type) {
+	case tea.MouseClickMsg:
+		msg.press = true
+	case tea.MouseMotionMsg:
+		msg.motion = true
+	case tea.MouseWheelMsg:
+		msg.wheel = true
+	}
 	if m.peek {
-		if msg.Action == tea.MouseActionPress {
+		if msg.press {
 			m.peek = false
 		}
 		return m, nil
 	}
-	if tea.MouseEvent(msg).IsWheel() {
+	if msg.motion {
+		return m, nil
+	}
+	if msg.wheel {
 		return m.wheel(msg)
 	}
-	if msg.Action != tea.MouseActionPress || msg.Button != tea.MouseButtonLeft {
+	if !msg.press || msg.Button != tea.MouseLeft {
 		return m, nil
 	}
 	r, ok := m.hit(msg.X, msg.Y)
@@ -85,7 +105,7 @@ func (m *Model) updateMouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 			return m.pressButton(r.name)
 		}
 		if m.overlay == overlayWelcome || m.overlay == overlayHelp || m.overlay == overlayMessage {
-			return m.updateOverlay(tea.KeyMsg{Type: tea.KeyEnter})
+			return m.updateOverlay(tea.KeyPressMsg{Code: tea.KeyEnter})
 		}
 		return m, nil
 	}
@@ -149,12 +169,12 @@ func (m *Model) pressButton(name string) (tea.Model, tea.Cmd) {
 }
 
 // wheel scrolls the results, or the panel when the pointer is over it.
-func (m *Model) wheel(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
+func (m *Model) wheel(msg mouseEv) (tea.Model, tea.Cmd) {
 	if m.overlay != overlayNone {
 		return m, nil
 	}
 	delta := 1
-	if msg.Button == tea.MouseButtonWheelUp {
+	if msg.Button == tea.MouseWheelUp {
 		delta = -1
 	}
 	if r, ok := m.hit(msg.X, msg.Y); ok && r.kind == hitPreview {

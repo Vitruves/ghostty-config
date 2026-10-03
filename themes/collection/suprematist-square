@@ -1,0 +1,26 @@
+# ghostty-config collection · suprematist-square
+# Modernism · A red square on a pale field, Malevich's reduction
+
+background = #f0efea
+foreground = #27251b
+cursor-color = #b82214
+cursor-text = #f0efea
+selection-background = #a1a1d6
+selection-foreground = #27251b
+
+palette = 0=#4b4a44
+palette = 1=#b62d20
+palette = 2=#277915
+palette = 3=#8b6118
+palette = 4=#2023b6
+palette = 5=#b62087
+palette = 6=#157379
+palette = 7=#a3a199
+palette = 8=#252522
+palette = 9=#84281f
+palette = 10=#2d7c1d
+palette = 11=#84601f
+palette = 12=#1f2184
+palette = 13=#841f64
+palette = 14=#1d757c
+palette = 15=#7b796f

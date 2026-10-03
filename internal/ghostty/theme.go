@@ -359,10 +359,22 @@ func SaveTheme(paths Paths, t *Theme, name string) (*Theme, error) {
 	return saved, nil
 }
 
-// DeleteTheme removes a theme file this tool wrote.
+// Deletable reports whether the theme is a file in the user's themes
+// directory. Bundled themes belong to Ghostty and are read only.
+func (t *Theme) Deletable() bool {
+	switch t.Source {
+	case SourceOwned, SourceCollection, SourceUser:
+		return t.Path != ""
+	}
+	return false
+}
+
+// DeleteTheme removes a theme file from the user's themes directory. The
+// caller is expected to have asked first when the file was written by
+// someone else.
 func DeleteTheme(t *Theme) error {
-	if t.Source != SourceOwned {
-		return fmt.Errorf("%s was not written by ghostty-config", t.Name)
+	if !t.Deletable() {
+		return fmt.Errorf("%s is bundled with Ghostty and cannot be deleted", t.Name)
 	}
 	return os.Remove(t.Path)
 }

@@ -3,12 +3,14 @@ package tui
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/spinner"
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/spinner"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/vitruves/ghostty-config/internal/ghostty"
 	"github.com/vitruves/ghostty-config/internal/update"
@@ -42,6 +44,13 @@ type Options struct {
 	NoReload bool
 	// Plain keeps to glyphs every terminal and font can draw.
 	Plain bool
+	// Images shows the highlighted theme as a picture through the Kitty
+	// graphics protocol. CellW and CellH override the cell size in pixels,
+	// which is otherwise read from the terminal; ImgOut is where the pictures
+	// are written, os.Stdout by default.
+	Images       bool
+	CellW, CellH float64
+	ImgOut       io.Writer
 	// Version is this build's version, compared with the newest release.
 	Version string
 	// NoUpdateCheck never asks GitHub for a newer release.
@@ -98,6 +107,13 @@ type Model struct {
 	previewMode  int
 	previewScrl  int
 
+	// Pictures of themes, when the terminal can show them, and the size of
+	// a cell in pixels they are drawn for.
+	imgs         *imageStore
+	cellW, cellH float64
+	// applyLive tints the terminal once, in the theme Enter applied.
+	applyLive *ghostty.Live
+
 	// Fonts.
 	families    []ghostty.Family
 	fontsLoaded bool
@@ -121,6 +137,7 @@ type Model struct {
 	// Status line.
 	status     string
 	statusKind statusKind
+	statusSeq  int
 
 	// Debounced writes: only the newest scheduled write survives.
 	writeSeq  int
@@ -143,11 +160,13 @@ func New(paths ghostty.Paths, tree *ghostty.Tree, lib *ghostty.Library, state *g
 		c:     defaultChrome(),
 		caps:  detectTerminal(opts.Plain),
 	}
-	// Retinting the terminal itself only makes sense in Ghostty, where the
-	// colours being previewed are the ones it will end up with. Anywhere
-	// else the screen is painted cell by cell and the terminal is left alone.
-	if m.caps.inGhostty {
-		m.live = ghostty.OpenLive()
+	if opts.Images {
+		out := opts.ImgOut
+		if out == nil {
+			out = os.Stdout
+		}
+		m.imgs = newImageStore(out)
+		m.refreshCell()
 	}
 	m.darkDesktop = ghostty.DarkDesktop()
 	m.spin = spinner.New(spinner.WithSpinner(spinner.MiniDot))
@@ -258,6 +277,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, InlineHeight(msg.Height)
 		m.top = msg.Height - m.height
+		if m.opts.Images {
+			m.refreshCell()
+		}
 		return m, nil
 	case spinner.TickMsg:
 		var cmd tea.Cmd
@@ -322,7 +344,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case tea.MouseMsg:
 		return m.updateMouse(msg)
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+c":
 			return m.abandon()
@@ -349,8 +371,23 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// View draws the frame with any overlay on top.
-func (m *Model) View() string {
+// View hands the frame to Bubble Tea. The editor lives in the bottom rows
+// of the terminal, so it asks for no alternate screen; the mouse is asked
+// for with the view, as Bubble Tea v2 wants.
+func (m *Model) View() tea.View {
+	content := m.render()
+	if m.imgs != nil {
+		// The pictures go out before the frame that shows them.
+		m.imgs.flush()
+	}
+	v := tea.NewView(content)
+	v.MouseMode = tea.MouseModeCellMotion
+	v.WindowTitle = "ghostty-config"
+	return v
+}
+
+// render draws the frame with any overlay on top.
+func (m *Model) render() string {
 	if m.width == 0 || m.height == 0 || m.quitting {
 		return ""
 	}
@@ -393,6 +430,7 @@ const (
 )
 
 func (m *Model) setStatus(kind statusKind, format string, a ...interface{}) {
+	m.statusSeq++
 	m.status = fmt.Sprintf(format, a...)
 	m.statusKind = kind
 }

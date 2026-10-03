@@ -1,0 +1,26 @@
+# ghostty-config collection · common-fate
+# Gestalt · Everything drifting the same way, towards violet
+
+background = #0d0f26
+foreground = #d6d7e0
+cursor-color = #8a75f0
+cursor-text = #0d0f26
+selection-background = #34366f
+selection-foreground = #d6d7e0
+
+palette = 0=#2c2c30
+palette = 1=#df4964
+palette = 2=#40dd85
+palette = 3=#ddbe40
+palette = 4=#7476e6
+palette = 5=#b949df
+palette = 6=#40b1dd
+palette = 7=#c4c5ca
+palette = 8=#52535b
+palette = 9=#e28394
+palette = 10=#83e2ac
+palette = 11=#e2cf83
+palette = 12=#8385e2
+palette = 13=#ca83e2
+palette = 14=#83c7e2
+palette = 15=#efeff0

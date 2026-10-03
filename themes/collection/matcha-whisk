@@ -1,0 +1,26 @@
+# ghostty-config collection · matcha-whisk
+# Wabi-sabi · Powdered tea green, bitter and bright
+
+background = #1a1f0f
+foreground = #dde0d6
+cursor-color = #97cb4d
+cursor-text = #1a1f0f
+selection-background = #2b4e5b
+selection-foreground = #dde0d6
+
+palette = 0=#2f302c
+palette = 1=#d76b47
+palette = 2=#5fd747
+palette = 3=#d7d147
+palette = 4=#479bd7
+palette = 5=#d94fad
+palette = 6=#47d7c1
+palette = 7=#c8cac4
+palette = 8=#585b52
+palette = 9=#dd9d88
+palette = 10=#96dd88
+palette = 11=#ddda88
+palette = 12=#88b9dd
+palette = 13=#dd88c2
+palette = 14=#88ddd0
+palette = 15=#f0f0ef

@@ -5,8 +5,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
+	"github.com/vitruves/ghostty-config/internal/collection"
 	"github.com/vitruves/ghostty-config/internal/color"
 	"github.com/vitruves/ghostty-config/internal/ghostty"
 )
@@ -52,7 +54,12 @@ func (m *Model) layout() layout {
 	}
 	// The explanation gets what it asks for, up to a point; the list takes
 	// everything else, so a long list shows as many rows as the window allows.
-	wanted := clampInt(m.detailWanted(w-6), minDetailRows, 7)
+	maxDetail := 7
+	if m.imagesOn() {
+		// Room for the picture of the theme beside its details.
+		maxDetail = 9
+	}
+	wanted := clampInt(m.detailWanted(w-6), minDetailRows, maxDetail)
 	maxList := avail - wanted
 	if maxList < minListRows {
 		maxList = minListRows
@@ -77,18 +84,18 @@ func (m *Model) detailWanted(width int) int {
 }
 
 // Interfaces are the colour schemes the editor's own chrome can wear. The
-// default, clear, paints no background at all: the palette sits on the
-// terminal's own, which in Ghostty is the theme being browsed, inside a thin
-// rounded frame. A cell has one background, so the frame can only be round
-// where the card and what surrounds it share it, and here they always do.
-// The others are cards of their own colour.
-var interfaceNames = []string{"clear", "paper", "graphite", "theme"}
+// default, midnight, is a near-black card whose colours are its own: it
+// looks the same whatever the terminal's theme is and whatever theme is being
+// browsed. clear paints no background and takes the terminal's own, in a thin
+// rounded frame; the others are cards of another colour.
+var interfaceNames = []string{"midnight", "graphite", "paper", "theme", "clear"}
 
 var interfaceNotes = map[string]string{
-	"clear":    "the terminal's own background, in a rounded frame",
-	"paper":    "light, whatever the theme",
+	"midnight": "near-black, with vivid accents, whatever the theme",
 	"graphite": "dark grey, whatever the theme",
-	"theme":    "a lighter shade of the theme being shown",
+	"paper":    "light, whatever the theme",
+	"theme":    "follows the theme being shown",
+	"clear":    "the terminal's own background, in a rounded frame",
 }
 
 // interfaceName is the scheme in effect.
@@ -98,7 +105,7 @@ func (m *Model) interfaceName() string {
 			return n
 		}
 	}
-	return "clear"
+	return "midnight"
 }
 
 // clearChrome is the theme's chrome painting no background, for the rows
@@ -114,6 +121,14 @@ func (m *Model) clearChrome() chrome {
 // whether that is dark or light.
 func (m *Model) panelChrome() chrome {
 	switch m.interfaceName() {
+	case "midnight":
+		p := buildChrome("#0a0a0f", "#d9dbe3", "#7aa2f7", "#6fd3e8", "#e6b450", "#f7768e", "#8fdc7b")
+		p.faint = "#2c2c3a"
+		p.muted = "#8a8da0"
+		p.selBg = "#2a3358"
+		p.selFg = "#f2f4fb"
+		p.border = "#6a8ee0"
+		return p
 	case "clear":
 		// The colours are worked out against the theme's background, which
 		// is what the terminal shows while the theme is previewed.
@@ -420,11 +435,18 @@ func (m *Model) viewPromptLine(p chrome, width int, l layout) string {
 		}
 		left = p.base().Render("   ") + p.bold(p.accent).Render("✎ "+ghostty.Label(m.editKey)) + p.base().Render("  ") + p.swatch(v, 3) + p.base().Render(" "+v) + typed
 	} else {
-		m.prompt.PromptStyle = p.bold(p.warn)
-		m.prompt.TextStyle = p.bold(p.fg)
-		m.prompt.PlaceholderStyle = p.mutedS()
-		m.prompt.Cursor.Style = on(p.bg, p.warn)
-		m.prompt.Cursor.TextStyle = p.mutedS()
+		st := m.prompt.Styles()
+		st.Focused.Prompt = p.bold(p.warn)
+		st.Focused.Text = p.bold(p.fg)
+		st.Focused.Placeholder = p.mutedS()
+		st.Cursor.Color = lipgloss.Color(p.warn)
+		st.Cursor.Shape = tea.CursorBar
+		st.Cursor.Blink = false
+		m.prompt.SetStyles(st)
+		m.prompt.SetVirtualCursor(true)
+		// v2 shows a placeholder only as wide as the input is: give it the room
+		// the row has, minus the margin, the prompt and the count on the right.
+		m.prompt.SetWidth(maxInt(width-30, 12))
 		m.prompt.Placeholder = "type a command, or pick one below"
 		left = p.base().Render("   ") + m.prompt.View()
 	}
@@ -462,7 +484,7 @@ func (m *Model) countWord() string {
 	return fmt.Sprintf("%d matches", n)
 }
 
-// viewGroups draws the four groups as pills, the active one filled. They
+// viewGroups draws the groups as pills, the active one filled. They
 // are the way to everything: Tab walks them, a click opens one.
 func (m *Model) viewGroups(p chrome, width int, l layout) string {
 	var b strings.Builder
@@ -471,10 +493,11 @@ func (m *Model) viewGroups(p chrome, width int, l layout) string {
 	y := l.y + 1 + l.gap
 	searching := m.cmd == nil && strings.TrimSpace(m.prompt.Value()) != ""
 	for i, g := range groups {
+		gc := groupColour(p, i)
 		if i == m.group && !searching {
-			b.WriteString(m.capL(p.accent, p.paint()) + on(p.bg, p.accent).Bold(true).Render(" "+g+" ") + m.capR(p.accent, p.paint()))
+			b.WriteString(m.capL(gc, p.paint()) + on(p.bg, gc).Bold(true).Render(" "+g+" ") + m.capR(gc, p.paint()))
 		} else {
-			b.WriteString(p.base().Render(" ") + p.mutedS().Render(" "+g+" ") + p.base().Render(" "))
+			b.WriteString(p.base().Render(" ") + p.text(gc).Render(" "+g+" ") + p.base().Render(" "))
 		}
 		chip := len([]rune(g)) + 4
 		m.addRegion(l.x+x, y, chip, 1, hitGroup, i, g)
@@ -486,7 +509,7 @@ func (m *Model) viewGroups(p chrome, width int, l layout) string {
 	case m.cmd != nil:
 		right = p.mutedS().Render(title(m.cmd.syntax) + "   ")
 	case searching:
-		right = p.mutedS().Render("searching every group   ")
+		right = p.mutedS().Render("all groups  ")
 	}
 	gap := width - lipgloss.Width(left) - lipgloss.Width(right)
 	if gap < 1 {
@@ -575,7 +598,9 @@ func (m *Model) renderOption(p chrome, o option, selected bool, width int) strin
 	bg := p.paint()
 	text, note := p.base(), p.mutedS()
 	if o.cmd != nil && m.cmd == nil && strings.TrimSpace(m.prompt.Value()) == "" {
-		note = p.text(p.accent2)
+		note = valueStyle(p, o.detail)
+	} else if m.cmd != nil && o.detail == "current" {
+		note = p.text(p.ok)
 	}
 	mark := p.accentS()
 	if selected {
@@ -601,8 +626,8 @@ func (m *Model) renderOption(p chrome, o option, selected bool, width int) strin
 		prefixW = 3
 	}
 	ramp, rampW := "", 0
-	if o.theme != nil && inner >= 44 {
-		ramp, rampW = miniRampOn(o.theme, 2, bg), 17
+	if o.theme != nil && inner >= 48 {
+		ramp, rampW = miniRampOn(o.theme, 2, bg), 20
 	}
 	if o.theme != nil && o.cmd == nil {
 		// A fixed column, so the ramps line up whatever the note says.
@@ -632,6 +657,11 @@ func (m *Model) renderOption(p chrome, o option, selected bool, width int) strin
 // miniRampOn draws a theme's eight normal colours on a given background.
 func miniRampOn(t *ghostty.Theme, cell int, bg string) string {
 	var b strings.Builder
+	b.WriteString(on(bg, bg).Render(" "))
+	// First, the theme's own ground and text as a two-cell sample: palette
+	// slot 0 is ANSI black, which is rarely the background, and a bare swatch
+	// of the background vanishes on a window of the same colour.
+	b.WriteString(on(t.Background(), t.Foreground()).Bold(true).Render("Aa"))
 	b.WriteString(on(bg, bg).Render(" "))
 	for i := 0; i < 8; i++ {
 		v := t.Get(paletteKey(i))
@@ -667,6 +697,9 @@ func (m *Model) keyLine(p chrome, width int) string {
 		pairs = []string{"Enter", "run", "Esc", "back", "F2", "peek", "F1", "help"}
 	default:
 		pairs = []string{"↑↓", "move", "Enter", "apply", "Esc", "back", "Tab", "complete", "F2", "peek", "F1", "help"}
+		if o := m.selected(); o != nil && o.theme != nil && o.theme.Deletable() {
+			pairs = append([]string{"↑↓", "move", "Enter", "apply", "^X", "delete", "Esc", "back"}, pairs[6:]...)
+		}
 	}
 	return p.keyHintFitSep(width, "  ", pairs...)
 }
@@ -743,7 +776,7 @@ func (m *Model) currentValueOf(cmd *command) string {
 		}
 		return fmt.Sprintf("%d in your config", len(m.overrides))
 	case "collection":
-		return "152 themes"
+		return fmt.Sprintf("%d themes", len(collection.Collection))
 	case "save", "undo":
 		if m.dirty {
 			return "unsaved edits"
@@ -835,9 +868,23 @@ func previewThemePanel(m *Model, opt *option, width int) []string {
 			}
 		}
 	}
-	lines := []string{truncate(c.bold(c.fg).Render(t.Name)+c.mutedS().Render("  "+sourceWord(t)), width)}
-	lines = append(lines, m.swatchLine(t, "normal", 0)+c.base().Render("   ")+c.swatch(t.Background(), 4)+c.mutedS().Render(" "+t.Background()))
-	lines = append(lines, m.swatchLine(t, "bright", 8)+c.base().Render("   ")+c.swatch(t.Foreground(), 4)+c.mutedS().Render(" "+t.Foreground()))
+	pictured := m.imagesOn() && width >= 66
+	textW := width
+	var lines []string
+	if pictured {
+		// The picture is the card of the theme; the words go beside it.
+		textW = width - pictureW - 2
+		lines = append(lines, c.bold(c.fg).Render(truncate(t.Name, textW)))
+		lines = append(lines, c.mutedS().Render(truncate(sourceWord(t), textW)))
+		lines = append(lines, "")
+		lines = append(lines, c.mutedS().Render("bg ")+framedSwatch(c, t.Background(), 3)+c.mutedS().Render(" "+t.Background()))
+		lines = append(lines, c.mutedS().Render("fg ")+framedSwatch(c, t.Foreground(), 3)+c.mutedS().Render(" "+t.Foreground()))
+		width = textW
+	} else {
+		lines = []string{truncate(c.bold(c.fg).Render(t.Name)+c.mutedS().Render("  "+sourceWord(t)), width)}
+		lines = append(lines, m.swatchLine(t, "normal", 0)+c.base().Render("   ")+c.mutedS().Render("bg ")+framedSwatch(c, t.Background(), 4)+c.mutedS().Render(" "+t.Background()))
+		lines = append(lines, m.swatchLine(t, "bright", 8)+c.base().Render("   ")+c.mutedS().Render("fg ")+framedSwatch(c, t.Foreground(), 4)+c.mutedS().Render(" "+t.Foreground()))
+	}
 	lines = append(lines, truncate(c.mutedS().Render("text ")+c.text(c.grade(fgRatio)).Render(fmt.Sprintf("%.1f:1 %s", fgRatio, color.Grade(fgRatio)))+c.mutedS().Render("   weakest "+worstName+" ")+c.text(c.grade(worst)).Render(fmt.Sprintf("%.1f:1", worst)), width))
 	switch {
 	case m.cur != nil && t.Name == m.cur.Name && t.Name == m.applied:
@@ -845,11 +892,24 @@ func previewThemePanel(m *Model, opt *option, width int) []string {
 	case m.cur != nil && t.Name == m.cur.Name:
 		lines = append(lines, m.entry("Enter", "writes theme = "+t.Name+" and reloads Ghostty", 7, width, c.base())...)
 	}
+	if t.Deletable() {
+		lines = append(lines, m.entry("Ctrl+X", "deletes this theme file, after asking", 7, width, c.text(c.danger))...)
+	}
 	if t.Note != "" {
 		lines = append(lines, para(c.mutedS(), t.Note, width)...)
 	}
+	if pictured {
+		pic := m.themePicture(t, pictureW, pictureH, t.Name == m.applied, m.state.IsFavorite(t.Name), c.bg)
+		return sideBySide(c, pic, pictureW, lines, 2)
+	}
 	return lines
 }
+
+// The picture of a theme in the details: its size in cells.
+const (
+	pictureW = 36
+	pictureH = 8
+)
 
 // previewThemeCurrent is for the commands that act on the theme on screen.
 func previewThemeCurrent(m *Model, opt *option, width int) []string {
@@ -946,8 +1006,12 @@ func previewSettingPanel(m *Model, s setting, opt *option, width int) []string {
 	c := m.c
 	current := s.get(m)
 	lines := []string{truncate(c.bold(c.fg).Render(s.label)+c.mutedS().Render("  "+s.key+"  now ")+c.text(c.accent2).Render(current), width)}
-	if s.explain != nil && opt != nil && s.explain[opt.value] != "" {
-		lines = append(lines, m.entry(opt.value, s.explain[opt.value]+".", len([]rune(opt.value))+2, width, c.base())...)
+	explain := s.explain
+	if explain == nil {
+		explain = valueNotes[s.cmd]
+	}
+	if explain != nil && opt != nil && explain[opt.value] != "" {
+		lines = append(lines, m.entry(opt.value, explain[opt.value]+".", len([]rune(opt.value))+2, width, c.base())...)
 	} else {
 		lines = append(lines, para(c.mutedS(), s.detail+".", width)...)
 	}
@@ -1054,4 +1118,42 @@ func clampInt(v, lo, hi int) int {
 		return hi
 	}
 	return v
+}
+
+// groupColour gives each group of the menu its own hue, taken from the
+// theme on screen so the pills always belong to it.
+func groupColour(p chrome, i int) string {
+	switch i % 6 {
+	case 0:
+		return p.accent
+	case 1:
+		return p.warn
+	case 2:
+		return p.accent2
+	case 3:
+		return p.ok
+	case 4:
+		return color.Blend(p.accent, p.ok, 0.5)
+	}
+	return color.Blend(p.accent2, p.warn, 0.5)
+}
+
+// valueStyle colours a setting's current value by what kind of value it is:
+// on is green, off is quiet, anything else the second accent.
+func valueStyle(p chrome, v string) lipgloss.Style {
+	switch strings.ToLower(strings.TrimSpace(v)) {
+	case "on", "true", "always":
+		return p.text(p.ok)
+	case "off", "false", "never", "none":
+		return p.mutedS()
+	case "default", "auto", "system":
+		return p.text(p.accent)
+	}
+	return p.text(p.accent2)
+}
+
+// framedSwatch draws a swatch with a thin edge in the muted colour, so a
+// background the same colour as the window around it can still be seen.
+func framedSwatch(c chrome, hex string, w int) string {
+	return c.text(c.muted).Render("▐") + c.swatch(hex, w) + c.text(c.muted).Render("▌")
 }

@@ -1,0 +1,26 @@
+# ghostty-config collection · miller-seven
+# Cognition · Seven, plus or minus two, distinct colours at most
+
+background = #18141f
+foreground = #dad6e0
+cursor-color = #d6d65c
+cursor-text = #18141f
+selection-background = #313d65
+selection-foreground = #dad6e0
+
+palette = 0=#2d2c30
+palette = 1=#d46c49
+palette = 2=#61d449
+palette = 3=#d4cf49
+palette = 4=#5a80d8
+palette = 5=#d449a9
+palette = 6=#49d4bf
+palette = 7=#c6c4ca
+palette = 8=#56525b
+palette = 9=#dc9e89
+palette = 10=#97dc89
+palette = 11=#dcd989
+palette = 12=#89a2dc
+palette = 13=#dc89c2
+palette = 14=#89dccf
+palette = 15=#efeff0

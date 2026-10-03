@@ -1,0 +1,26 @@
+# ghostty-config collection · animus
+# Jung · The inner masculine, steel and level
+
+background = #18171c
+foreground = #d8d7e0
+cursor-color = #8f9ebc
+cursor-text = #18171c
+selection-background = #323f5f
+selection-foreground = #d8d7e0
+
+palette = 0=#2d2c30
+palette = 1=#cb5c71
+palette = 2=#54c987
+palette = 3=#c9b254
+palette = 4=#5c81cb
+palette = 5=#b464ce
+palette = 6=#54a8c9
+palette = 7=#c5c4ca
+palette = 8=#54525b
+palette = 9=#d4919d
+palette = 10=#91d4ae
+palette = 11=#d4c791
+palette = 12=#91a7d4
+palette = 13=#c391d4
+palette = 14=#91c1d4
+palette = 15=#efeff0

@@ -1,0 +1,26 @@
+# ghostty-config collection · brutalist-slab
+# Movements · Raw concrete grey, nothing applied
+
+background = #d1d1d1
+foreground = #212121
+cursor-color = #333333
+cursor-text = #d1d1d1
+selection-background = #9697bf
+selection-foreground = #212121
+
+palette = 0=#4b4444
+palette = 1=#993333
+palette = 2=#2d6422
+palette = 3=#6c5124
+palette = 4=#3638a1
+palette = 5=#923173
+palette = 6=#226064
+palette = 7=#a39999
+palette = 8=#252222
+palette = 9=#742f2f
+palette = 10=#346529
+palette = 11=#6d552c
+palette = 12=#2f3174
+palette = 13=#742f5e
+palette = 14=#296165
+palette = 15=#7b6f6f

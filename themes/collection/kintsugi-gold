@@ -1,0 +1,26 @@
+# ghostty-config collection · kintsugi-gold
+# Wabi-sabi · The gold that mends the break, on dark ceramic
+
+background = #161412
+foreground = #e0dbd7
+cursor-color = #e2b236
+cursor-text = #161412
+selection-background = #2e3c5f
+selection-foreground = #e0dbd7
+
+palette = 0=#302e2c
+palette = 1=#d96a45
+palette = 2=#5ed945
+palette = 3=#d9b045
+palette = 4=#567edc
+palette = 5=#d945aa
+palette = 6=#45d9c3
+palette = 7=#cac7c4
+palette = 8=#5b5752
+palette = 9=#df9c86
+palette = 10=#95df86
+palette = 11=#dfc686
+palette = 12=#86a1df
+palette = 13=#df86c3
+palette = 14=#86dfd2
+palette = 15=#f0f0ef

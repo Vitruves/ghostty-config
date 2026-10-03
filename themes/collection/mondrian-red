@@ -1,0 +1,26 @@
+# ghostty-config collection · mondrian-red
+# Modernism · Off-white ground, one plane of red
+
+background = #f6f5f4
+foreground = #25231d
+cursor-color = #c61610
+cursor-text = #f6f5f4
+selection-background = #a2a3df
+selection-foreground = #25231d
+
+palette = 0=#4b4744
+palette = 1=#bc1f1a
+palette = 2=#237d11
+palette = 3=#8f6214
+palette = 4=#1a1dbc
+palette = 5=#bc1a89
+palette = 6=#11777d
+palette = 7=#a39e99
+palette = 8=#252422
+palette = 9=#891e1a
+palette = 10=#2a8018
+palette = 11=#89611a
+palette = 12=#1a1c89
+palette = 13=#891a66
+palette = 14=#187a80
+palette = 15=#7b756f

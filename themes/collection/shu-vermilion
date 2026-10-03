@@ -1,0 +1,26 @@
+# ghostty-config collection · shu-vermilion
+# Wabi-sabi · Seal-red against lacquer dark
+
+background = #160d10
+foreground = #e0d6d9
+cursor-color = #ec5b13
+cursor-text = #160d10
+selection-background = #2c3760
+selection-foreground = #e0d6d9
+
+palette = 0=#302c2d
+palette = 1=#e0663e
+palette = 2=#59e03e
+palette = 3=#e0a53e
+palette = 4=#507be3
+palette = 5=#e03ead
+palette = 6=#3ed5e0
+palette = 7=#cac4c6
+palette = 8=#5b5255
+palette = 9=#e39a82
+palette = 10=#92e382
+palette = 11=#e3c082
+palette = 12=#829fe3
+palette = 13=#e382c5
+palette = 14=#82dde3
+palette = 15=#f0efef

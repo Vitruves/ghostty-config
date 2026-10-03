@@ -1,0 +1,26 @@
+# ghostty-config collection · persona-mask
+# Jung · The face shown in public, polished and neutral
+
+background = #f3efe7
+foreground = #2b2417
+cursor-color = #86612d
+cursor-text = #f3efe7
+selection-background = #a8b3cf
+selection-foreground = #2b2417
+
+palette = 0=#4b4944
+palette = 1=#a94c2d
+palette = 2=#2f7920
+palette = 3=#896424
+palette = 4=#2d52a9
+palette = 5=#a92d82
+palette = 6=#20796c
+palette = 7=#a3a099
+palette = 8=#252422
+palette = 9=#7a3d29
+palette = 10=#377a29
+palette = 11=#7a5d29
+palette = 12=#29417a
+palette = 13=#7a2961
+palette = 14=#267267
+palette = 15=#7b776f

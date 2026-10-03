@@ -1,0 +1,26 @@
+# ghostty-config collection · stroop-interference
+# Cognition · Ink and word agreeing, because here they do
+
+background = #141414
+foreground = #dbdbdb
+cursor-color = #3cdd57
+cursor-text = #141414
+selection-background = #264760
+selection-foreground = #dbdbdb
+
+palette = 0=#302c2c
+palette = 1=#db6943
+palette = 2=#43db5c
+palette = 3=#dbd543
+palette = 4=#439bdb
+palette = 5=#db43d6
+palette = 6=#43dbc4
+palette = 7=#cac4c4
+palette = 8=#5b5252
+palette = 9=#e09c85
+palette = 10=#85e094
+palette = 11=#e0dd85
+palette = 12=#85bae0
+palette = 13=#e085dd
+palette = 14=#85e0d3
+palette = 15=#f0efef

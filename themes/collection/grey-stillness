@@ -1,0 +1,26 @@
+# ghostty-config collection · grey-stillness
+# Kandinsky · Hopeless, immobile, between the two silences
+
+background = #252726
+foreground = #dadddb
+cursor-color = #969c99
+cursor-text = #252726
+selection-background = #3a5261
+selection-foreground = #dadddb
+
+palette = 0=#2c302e
+palette = 1=#c57b62
+palette = 2=#5bc288
+palette = 3=#c2bf5b
+palette = 4=#5b97c2
+palette = 5=#c86ac5
+palette = 6=#5bc2b3
+palette = 7=#c4cac7
+palette = 8=#525b57
+palette = 9=#d0a495
+palette = 10=#95d0af
+palette = 11=#d0cd95
+palette = 12=#95b7d0
+palette = 13=#d095ce
+palette = 14=#95d0c7
+palette = 15=#eff0f0

@@ -1,0 +1,26 @@
+# ghostty-config collection · magician-archetype
+# Jung · Transformation in purples and a bright orchid
+
+background = #1c0b28
+foreground = #dcd6e0
+cursor-color = #d55eed
+cursor-text = #1c0b28
+selection-background = #3d3371
+selection-foreground = #dcd6e0
+
+palette = 0=#2e2c30
+palette = 1=#e14763
+palette = 2=#3ee054
+palette = 3=#e0a53e
+palette = 4=#7375e8
+palette = 5=#c43ee0
+palette = 6=#3eb2e0
+palette = 7=#c7c4ca
+palette = 8=#57525b
+palette = 9=#e38293
+palette = 10=#82e38f
+palette = 11=#e3c082
+palette = 12=#8283e3
+palette = 13=#d382e3
+palette = 14=#82c8e3
+palette = 15=#f0eff0

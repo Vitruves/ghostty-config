@@ -1,0 +1,26 @@
+# ghostty-config collection · proximity-group
+# Gestalt · Near things read as one, so the hues stay near
+
+background = #161b1d
+foreground = #d6dde0
+cursor-color = #66bbcc
+cursor-text = #161b1d
+selection-background = #2a4862
+selection-foreground = #d6dde0
+
+palette = 0=#2c2f30
+palette = 1=#d6605b
+palette = 2=#4bd286
+palette = 3=#d2cd4b
+palette = 4=#4b92d2
+palette = 5=#b85bd6
+palette = 6=#4bc3d2
+palette = 7=#c4c8ca
+palette = 8=#52595b
+palette = 9=#da8d8b
+palette = 10=#8bdaad
+palette = 11=#dad78b
+palette = 12=#8bb4da
+palette = 13=#c78bda
+palette = 14=#8bd2da
+palette = 15=#eff0f0

@@ -1,0 +1,26 @@
+# ghostty-config collection · anticipation-petal
+# Plutchik · Orange leaning forward, warm and ready
+
+background = #231306
+foreground = #e0dbd6
+cursor-color = #f48c25
+cursor-text = #231306
+selection-background = #333b5b
+selection-foreground = #e0dbd6
+
+palette = 0=#302e2c
+palette = 1=#e2653c
+palette = 2=#58e23c
+palette = 3=#e2a63c
+palette = 4=#4e7be5
+palette = 5=#e23cae
+palette = 6=#3cd7e2
+palette = 7=#cac7c4
+palette = 8=#5b5652
+palette = 9=#e59980
+palette = 10=#91e580
+palette = 11=#e5c080
+palette = 12=#809ee5
+palette = 13=#e580c5
+palette = 14=#80dee5
+palette = 15=#f0f0ef

@@ -1,0 +1,26 @@
+# ghostty-config collection · connected-whole
+# Gestalt · Orchid joined end to end by one running hue
+
+background = #201320
+foreground = #e0d6e0
+cursor-color = #d279c3
+cursor-text = #201320
+selection-background = #423b6a
+selection-foreground = #e0d6e0
+
+palette = 0=#302c30
+palette = 1=#db586f
+palette = 2=#47d75a
+palette = 3=#d7a347
+palette = 4=#797be2
+palette = 5=#d747be
+palette = 6=#47aed7
+palette = 7=#cac4ca
+palette = 8=#5b525b
+palette = 9=#dd8897
+palette = 10=#88dd93
+palette = 11=#ddbe88
+palette = 12=#8889dd
+palette = 13=#dd88cf
+palette = 14=#88c5dd
+palette = 15=#f0eff0

@@ -1,0 +1,26 @@
+# ghostty-config collection · white-silence
+# Kandinsky · A silence full of possibilities, pale and still
+
+background = #fdfdfc
+foreground = #25251d
+cursor-color = #454a54
+cursor-text = #fdfdfc
+selection-background = #b2bfd9
+selection-foreground = #25251d
+
+palette = 0=#4b4b44
+palette = 1=#9f384b
+palette = 2=#2d8152
+palette = 3=#81702d
+palette = 4=#385a9f
+palette = 5=#85389f
+palette = 6=#357b97
+palette = 7=#a3a399
+palette = 8=#252522
+palette = 9=#72313d
+palette = 10=#31724d
+palette = 11=#726531
+palette = 12=#314772
+palette = 13=#623172
+palette = 14=#316072
+palette = 15=#7b7b6f

@@ -1,0 +1,26 @@
+# ghostty-config collection · square-scheme
+# Harmony · Four hues at right angles, the most demanding rule
+
+background = #171b0e
+foreground = #dee0d6
+cursor-color = #dc5678
+cursor-text = #171b0e
+selection-background = #3b3e60
+selection-foreground = #dee0d6
+
+palette = 0=#2f302c
+palette = 1=#de546d
+palette = 2=#5cdb43
+palette = 3=#dba443
+palette = 4=#7678e5
+palette = 5=#db43ab
+palette = 6=#43d1db
+palette = 7=#c8cac4
+palette = 8=#585b52
+palette = 9=#e08595
+palette = 10=#94e085
+palette = 11=#e0bf85
+palette = 12=#8586e0
+palette = 13=#e085c3
+palette = 14=#85dae0
+palette = 15=#f0f0ef

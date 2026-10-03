@@ -1,0 +1,26 @@
+# ghostty-config collection · dusk-synth
+# Movements · Neon magenta on a purple evening
+
+background = #170a29
+foreground = #dad6e0
+cursor-color = #f04cac
+cursor-text = #170a29
+selection-background = #393273
+selection-foreground = #dad6e0
+
+palette = 0=#2e2c30
+palette = 1=#e43a59
+palette = 2=#3ae450
+palette = 3=#e4a63a
+palette = 4=#7072eb
+palette = 5=#e43aae
+palette = 6=#3ab4e4
+palette = 7=#c6c4ca
+palette = 8=#56525b
+palette = 9=#e77e92
+palette = 10=#7ee78c
+palette = 11=#e7c17e
+palette = 12=#7e80e7
+palette = 13=#e77ec6
+palette = 14=#7ec9e7
+palette = 15=#f0eff0

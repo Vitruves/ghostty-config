@@ -1,0 +1,26 @@
+# ghostty-config collection · bauhaus-primary
+# Modernism · Warm black, cool blue, the workshop's primaries
+
+background = #221f1c
+foreground = #e0dbd7
+cursor-color = #428bf0
+cursor-text = #221f1c
+selection-background = #334768
+selection-foreground = #e0dbd7
+
+palette = 0=#302e2c
+palette = 1=#e45872
+palette = 2=#3ee085
+palette = 3=#e0bf3e
+palette = 4=#5088e3
+palette = 5=#c158e4
+palette = 6=#3eb7e0
+palette = 7=#cac7c4
+palette = 8=#5b5752
+palette = 9=#e38293
+palette = 10=#82e3ac
+palette = 11=#e3d082
+palette = 12=#82a7e3
+palette = 13=#cb82e3
+palette = 14=#82cbe3
+palette = 15=#f0f0ef

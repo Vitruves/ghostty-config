@@ -1,4 +1,4 @@
-// Package collection is the curated set: one hundred and fifty-two palettes
+// Package collection is the curated set: two hundred and fifty-two palettes
 // that ship inside the binary and install into the user's themes directory.
 //
 // The first fifty-two are grouped by the mood their dominant hue is
@@ -6,7 +6,10 @@
 // already know. The hundred that follow are grouped by the named account of
 // colour their structure comes from — Goethe, Itten, Hering, Kobayashi,
 // Valdez and Mehrabian, Birren, scotopic vision, circadian light, Luscher,
-// and the colour order systems of Munsell and Chevreul.
+// and the colour order systems of Munsell and Chevreul. A third hundred
+// reaches for Plutchik, the harmony rules of design schools, Gestalt,
+// Albers, Dutch and Swiss modernism, Japanese aesthetics, cognitive
+// psychology, Jung, Kandinsky and the art movements.
 //
 // A word on what this is and is not. Colour–mood links are mostly cultural
 // convention, and the experimental literature on them is thin. Two effects
@@ -395,4 +398,155 @@ var Collection = []Curated{
 	{"Balanced Neutral", "Colour Order", "Equidistant from every hue", true, "#121416", "#d0d4d6", "#869098", 0.34},
 	{"Ordered System", "Colour Order", "Colour given three coordinates", true, "#0e1012", "#ced2d4", "#6e8894", 0.40},
 	{"Colour Solid", "Colour Order", "The whole arrangement, in three dimensions", true, "#0c0e12", "#ccd0d8", "#5c7ea8", 0.46},
+
+	// ---------------------------------------------------------------------
+	// The hundred below come from a second pass over the same ground: emotion
+	// models, the harmony rules of design schools, perception and cognition,
+	// archetypes, Kandinsky's colour-as-sound, Albers, modernist and
+	// Japanese design, and art movements. The caution above applies
+	// unchanged: each names where a palette's logic comes from.
+	// --- Plutchik's wheel of emotions (1980): eight primary emotions arranged as
+	// opposed pairs, with dyads between them. Which colour belongs to which
+	// emotion is Plutchik's own mapping and, like every colour-mood link here,
+	// a convention rather than a finding.
+	{"Joy Petal", "Plutchik", "Yellow, the wheel's joy, on a bright field", false, "#fefae7", "#2b2817", "#bd8f05", 0.70},
+	{"Trust Petal", "Plutchik", "Soft green on pale green, the calm side of the wheel", false, "#eef7ef", "#172b1b", "#297a44", 0.50},
+	{"Fear Petal", "Plutchik", "Dark green, apprehension at low light", true, "#091b0f", "#d6e0da", "#6abf40", 0.50},
+	{"Surprise Petal", "Plutchik", "Sky blue struck against a deep field", true, "#05162e", "#d6dae0", "#2ea5fa", 0.75},
+	{"Sadness Petal", "Plutchik", "Blue sunk low, heavy and slow", true, "#090f25", "#d6d8e0", "#5c7ad6", 0.50},
+	{"Disgust Petal", "Plutchik", "Purple turned away, quiet and cool", true, "#1c0e20", "#ded6e0", "#af5ec9", 0.55},
+	{"Anger Petal", "Plutchik", "Red at the wheel's hot edge, kept an accent", true, "#250909", "#e0d6d6", "#f44d34", 0.90},
+	{"Anticipation Petal", "Plutchik", "Orange leaning forward, warm and ready", true, "#231306", "#e0dbd6", "#f48c25", 0.80},
+	{"Optimism Dyad", "Plutchik", "Joy and anticipation mixed, peach on cream", false, "#fef3e7", "#2b2217", "#b85814", 0.65},
+	{"Love Dyad", "Plutchik", "Joy and trust mixed, a fresh yellow-green", false, "#f1f7e8", "#232b17", "#678627", 0.55},
+
+	// --- The colour-harmony rules taught in design schools since Itten: schemes
+	// defined by how far apart hues sit on the wheel. Background and accent
+	// here are placed by the rule, so the angle between them is the point.
+	{"Analogous Run", "Harmony", "Neighbours on the wheel, blue sliding into teal", true, "#0d1521", "#d6dae0", "#33ccb8", 0.55},
+	{"Triadic Poise", "Harmony", "Three hues a third of the wheel apart", true, "#151122", "#d9d6e0", "#eb7047", 0.70},
+	{"Split Complement", "Harmony", "The complement's two neighbours, gentler than a direct opposite", true, "#0c1d17", "#d6e0dd", "#d65ca9", 0.65},
+	{"Tetradic Table", "Harmony", "Two complementary pairs, one hue doing the talking", true, "#1d1711", "#e0dbd6", "#5c99d6", 0.60},
+	{"Monochrome Study", "Harmony", "One hue, walked through tints and shades", true, "#1b0e13", "#e0d6da", "#ce7e9f", 0.40},
+	{"Double Complement", "Harmony", "Cool field, warm accent, the pair reversed on paper", false, "#f2f6f8", "#17242b", "#ad4e1f", 0.60},
+	{"Sixty Thirty Ten", "Harmony", "Sixty parts neutral, thirty supporting, ten accent", true, "#16191d", "#d6dbe0", "#f49d25", 0.70},
+	{"Square Scheme", "Harmony", "Four hues at right angles, the most demanding rule", true, "#171b0e", "#dee0d6", "#da4e71", 0.65},
+	{"Accented Analogic", "Harmony", "Cool neighbours with one warm note to break them", false, "#eef6f4", "#172b24", "#c33022", 0.60},
+	{"Neutral Pop", "Harmony", "Near-white everywhere, one saturated magenta", false, "#f7f7f7", "#212121", "#d411b4", 0.80},
+
+	// --- Wertheimer, Koffka and Köhler's laws of perceptual grouping (1923): the
+	// eye organises a field by proximity, similarity, closure and the rest.
+	// These palettes keep the parts close enough in hue and value to be seen
+	// as one thing.
+	{"Proximity Group", "Gestalt", "Near things read as one, so the hues stay near", true, "#161b1d", "#d6dde0", "#66bbcc", 0.45},
+	{"Similarity Run", "Gestalt", "One hue family repeated until it reads as a set", true, "#151c12", "#dae0d6", "#88cc66", 0.50},
+	{"Closure Gap", "Gestalt", "Violet ground, amber gap the eye fills in", true, "#19141f", "#dbd6e0", "#e0b152", 0.60},
+	{"Continuity Line", "Gestalt", "A single cool line that carries the eye through", false, "#f0f4f5", "#192629", "#1d78a5", 0.55},
+	{"Figure Ground", "Gestalt", "Warm grey ground, pale figure standing out of it", true, "#363430", "#dddcd9", "#d1cec7", 0.30},
+	{"Common Fate", "Gestalt", "Everything drifting the same way, towards violet", true, "#0d0f26", "#d6d7e0", "#8a75f0", 0.70},
+	{"Pragnanz Law", "Gestalt", "The simplest form the field allows", false, "#f6f4ee", "#2b2617", "#6b522e", 0.40},
+	{"Symmetry Axis", "Gestalt", "Teal and red held in balance either side of a line", true, "#0e1b1b", "#d6e0e0", "#d65c5c", 0.60},
+	{"Common Region", "Gestalt", "Everything inside one pale boundary belongs together", false, "#eaeef5", "#171e2b", "#2450a8", 0.55},
+	{"Connected Whole", "Gestalt", "Orchid joined end to end by one running hue", true, "#201320", "#e0d6e0", "#d279c3", 0.55},
+
+	// --- Josef Albers, Interaction of Color (1963): a colour is never seen alone,
+	// and the same one looks like two on different grounds. Each palette sets
+	// up one of his exercises.
+	{"Vanishing Boundary", "Albers", "Two colours of equal value, the edge between them softening", true, "#302217", "#e0dad6", "#c68353", 0.45},
+	{"Reversing Ground", "Albers", "Blue on yellow, the figure and ground trading places", false, "#f2f0d9", "#2b2917", "#293da3", 0.60},
+	{"Transparency Illusion", "Albers", "Overlap that seems to let one colour through another", true, "#221122", "#e0d6e0", "#5cc2d6", 0.55},
+	{"Colour Subtraction", "Albers", "Hue taken away until a soft green is left", true, "#111d17", "#d6e0db", "#87c5a6", 0.35},
+	{"Weight Of Colour", "Albers", "Yellow reads lighter than its value says", true, "#101014", "#d7d7e0", "#f4e225", 0.70},
+	{"Equal Light", "Albers", "Red and green at one luminance, vibrating at the edge", true, "#35211d", "#e0d8d6", "#53c6b3", 0.50},
+	{"Bezold Effect", "Albers", "One colour that changes with what it sits beside", false, "#f5f1ef", "#2b1c17", "#ad421f", 0.55},
+	{"Homage Square", "Albers", "Nested squares of one warm family, after his best-known series", true, "#281c0b", "#e0dcd6", "#f4ca25", 0.75},
+	{"Colour Intervals", "Albers", "Teal and coral at a measured distance", true, "#0f2422", "#d6e0df", "#eb8b47", 0.60},
+	{"One Colour Three Ways", "Albers", "A single blue-violet that reads as three on paper", false, "#f0eef6", "#1b172b", "#4736a1", 0.50},
+
+	// --- De Stijl, Constructivism and the Swiss style: primary colour used flat
+	// and in few places, on grounds of white and black. The reductive end of
+	// twentieth-century design, which suits a terminal.
+	{"Mondrian Red", "Modernism", "Off-white ground, one plane of red", false, "#f6f5f4", "#25231d", "#c61610", 0.85},
+	{"Mondrian Blue", "Modernism", "Off-white ground, one plane of ultramarine", false, "#f4f3f1", "#26231c", "#0939aa", 0.80},
+	{"Mondrian Yellow", "Modernism", "White ground, one plane of strong yellow", false, "#f7f7f7", "#212121", "#c29500", 0.80},
+	{"Rietveld Black", "Modernism", "Black frame, yellow ends, as on the Red Blue Chair", true, "#121212", "#dbdbdb", "#f9dc1f", 0.80},
+	{"Suprematist Square", "Modernism", "A red square on a pale field, Malevich's reduction", false, "#f0efea", "#27251b", "#b82214", 0.70},
+	{"Constructivist Red", "Modernism", "Black and a single hard red, for the poster era", true, "#1a1a1a", "#dbdbdb", "#f44725", 0.90},
+	{"Swiss Grid", "Modernism", "White, black and one red, set on a grid", false, "#fafafa", "#212121", "#d41125", 0.80},
+	{"Neue Grafik", "Modernism", "Cool white page with a cobalt rule", false, "#f1f2f4", "#1d2125", "#0a66c2", 0.70},
+	{"Bauhaus Primary", "Modernism", "Warm black, cool blue, the workshop's primaries", true, "#221f1c", "#e0dbd7", "#428bf0", 0.75},
+	{"Vkhutemas Black", "Modernism", "Pure black with one orange-gold signal", true, "#080808", "#dbdbdb", "#f49d25", 0.75},
+
+	// --- Japanese aesthetics of the imperfect and the quiet: ink, lacquer, indigo
+	// and aged paper. The colour names are traditional ones; the palettes are
+	// a designer's reading, not a reconstruction.
+	{"Sumi Ink", "Wabi-sabi", "Ground ink, black with a trace of blue", true, "#0e0f11", "#d8dadf", "#a89e94", 0.20},
+	{"Shu Vermilion", "Wabi-sabi", "Seal-red against lacquer dark", true, "#160d10", "#e0d6d9", "#ec5b13", 0.75},
+	{"Ai Indigo", "Wabi-sabi", "Plant-dyed indigo, the working blue of old Japan", true, "#0d142b", "#d6d9e0", "#5e82c9", 0.50},
+	{"Matcha Whisk", "Wabi-sabi", "Powdered tea green, bitter and bright", true, "#1a1f0f", "#dde0d6", "#97cb4d", 0.55},
+	{"Sakura Fade", "Wabi-sabi", "Cherry blossom at the end of its week", false, "#faf0f2", "#2b171c", "#b9466c", 0.45},
+	{"Kintsugi Gold", "Wabi-sabi", "The gold that mends the break, on dark ceramic", true, "#161412", "#e0dbd7", "#e2b236", 0.60},
+	{"Asagi Dawn", "Wabi-sabi", "Pale spring-onion blue, first light", false, "#edf7f7", "#17292b", "#217283", 0.50},
+	{"Kaki Persimmon", "Wabi-sabi", "Ripe persimmon on a bare branch", true, "#20140e", "#e0dad6", "#e87430", 0.70},
+	{"Shironeri White", "Wabi-sabi", "Kneaded white, silk undyed", false, "#f9f8f6", "#292419", "#6b5947", 0.30},
+	{"Wabi Rust", "Wabi-sabi", "Weathered iron, the beauty of what has aged", true, "#231b1a", "#e0d8d6", "#c07259", 0.40},
+
+	// --- Findings from cognitive psychology, used as design briefs rather than as
+	// claims about colour: the Stroop effect, the Yerkes-Dodson curve,
+	// Csikszentmihalyi's flow, the Von Restorff isolation effect, cognitive
+	// load, and Kaplan's attention restoration.
+	{"Stroop Interference", "Cognition", "Ink and word agreeing, because here they do", true, "#141414", "#dbdbdb", "#3cdd57", 0.65},
+	{"Yerkes Dodson", "Cognition", "Arousal in the middle of the curve, where performance peaks", true, "#131820", "#d6dae0", "#e8ba30", 0.60},
+	{"Flow Channel", "Cognition", "Challenge and skill matched, deep teal and green", true, "#0c1a1d", "#d6dfe0", "#2fdaa1", 0.60},
+	{"Von Restorff", "Cognition", "The one odd item is the one remembered", true, "#18181b", "#d9d9dd", "#f53d99", 0.90},
+	{"Cognitive Load", "Cognition", "Chroma held to a minimum so nothing costs attention", false, "#ebebeb", "#212121", "#4f6464", 0.20},
+	{"Miller Seven", "Cognition", "Seven, plus or minus two, distinct colours at most", true, "#18141f", "#dad6e0", "#d6d65c", 0.50},
+	{"Hick Law", "Cognition", "Fewer choices, faster decisions: one accent, no rivals", true, "#1c1712", "#e0dbd6", "#52b1e0", 0.50},
+	{"Attention Restoration", "Cognition", "Soft fascination of leaves, after Kaplan", false, "#ecf4ec", "#172b17", "#26734d", 0.45},
+	{"Biophilia", "Cognition", "The forest floor, the colours the eye evolved on", true, "#0e180c", "#d8e0d6", "#c69653", 0.45},
+	{"Zeigarnik Open", "Cognition", "An unfinished task nags: violet ground, orange prompt", true, "#1a0e20", "#ddd6e0", "#f07c42", 0.70},
+
+	// --- Jung's archetypes and the shadow, as later read by designers building
+	// brand and character palettes. The mapping from archetype to colour is a
+	// modern convention; Jung wrote about images, not hex values.
+	{"Shadow Self", "Jung", "What the day leaves out, near-black violet", true, "#09090c", "#d8d6e0", "#7853ac", 0.35},
+	{"Anima", "Jung", "The inner feminine, rose and soft", true, "#1f0f17", "#e0d6db", "#d2799e", 0.55},
+	{"Animus", "Jung", "The inner masculine, steel and level", true, "#18171c", "#d8d7e0", "#8f9ebc", 0.25},
+	{"Persona Mask", "Jung", "The face shown in public, polished and neutral", false, "#f3efe7", "#2b2417", "#86612d", 0.40},
+	{"Hero Journey", "Jung", "Ember dark, a gold that has been earned", true, "#1d100c", "#e0d9d6", "#f4af25", 0.80},
+	{"Sage Archetype", "Jung", "Knowledge as a calm blue night and a lamp", true, "#151728", "#d6d7e0", "#d8cb79", 0.45},
+	{"Magician Archetype", "Jung", "Transformation in purples and a bright orchid", true, "#1c0b28", "#dcd6e0", "#d55eed", 0.75},
+	{"Trickster", "Jung", "Chaos in dark teal and a lime that will not sit still", true, "#0c1715", "#d6e0de", "#9df425", 0.85},
+	{"Great Mother", "Jung", "Warm cream, nurturing green", false, "#f6efea", "#2b1f17", "#317241", 0.50},
+	{"Individuation", "Jung", "Opposites integrated, sea green on blue-black", true, "#121216", "#d7d7e0", "#6bc799", 0.50},
+
+	// --- Wassily Kandinsky, Concerning the Spiritual in Art (1911): colour as
+	// sound, yellow a trumpet, blue an organ. He held that yellow suits the
+	// triangle, blue the circle and red the square. A synaesthete's account,
+	// offered as poetry and used as such.
+	{"Yellow Trumpet", "Kandinsky", "Sharp, advancing, brass-bright", true, "#1f1b0a", "#e0ded6", "#f9dc1f", 0.85},
+	{"Blue Organ", "Kandinsky", "Deepening blue, an organ's long note", true, "#070c27", "#d6d8e0", "#4770eb", 0.60},
+	{"Red Fanfare", "Kandinsky", "Vital and restless, red at full voice", true, "#200e10", "#e0d6d8", "#e83040", 0.80},
+	{"Green Placid", "Kandinsky", "Passive and self-satisfied, in daylight", false, "#ebf4f2", "#172b26", "#206f62", 0.45},
+	{"White Silence", "Kandinsky", "A silence full of possibilities, pale and still", false, "#fdfdfc", "#25251d", "#454a54", 0.15},
+	{"Black Pause", "Kandinsky", "The silence after the last note", true, "#000000", "#dbdbdb", "#acb9ac", 0.15},
+	{"Orange Church Bell", "Kandinsky", "Red brought closer to the yellow, sure of itself", false, "#fcf0e3", "#2b2117", "#c2570a", 0.75},
+	{"Violet Bassoon", "Kandinsky", "A cooled red, slightly sick and sad", false, "#f3edf7", "#23172b", "#6f2e9e", 0.55},
+	{"Grey Stillness", "Kandinsky", "Hopeless, immobile, between the two silences", true, "#252726", "#dadddb", "#969c99", 0.10},
+	{"Brown Hum", "Kandinsky", "Red hardened, a dull thick sound", true, "#2c1911", "#e0d9d6", "#dd9a3c", 0.50},
+
+	// --- Art movements known for what they did with colour: Fauvism's unmixed
+	// paint, Impressionism's light, Seurat's optical mixing, Rothko's fields,
+	// Art Deco gilt, Hokusai's Prussian blue. Each palette borrows the move,
+	// not a particular painting.
+	{"Fauvist Field", "Movements", "Colour freed from the thing it describes", true, "#08211b", "#d6e0de", "#f53d8a", 0.90},
+	{"Impression Sunrise", "Movements", "A small orange sun over blue-grey water", false, "#e8eff3", "#17242b", "#ec5413", 0.65},
+	{"Pointillist Mix", "Movements", "Dots that mix in the eye, cream with a teal point", false, "#f4f4f0", "#27271b", "#1b8398", 0.60},
+	{"Rothko Field", "Movements", "Soft-edged blocks of dark red and orange", true, "#371310", "#e0d7d6", "#eb8b47", 0.70},
+	{"Art Deco Gilt", "Movements", "Black-green lacquer, brass inlay", true, "#0b1917", "#d6e0df", "#ddb43c", 0.60},
+	{"Memphis Pop", "Movements", "Loud yellow, pink and bad manners", false, "#fdfad8", "#2b2917", "#cb0b8b", 0.90},
+	{"Brutalist Slab", "Movements", "Raw concrete grey, nothing applied", false, "#d1d1d1", "#212121", "#333333", 0.20},
+	{"Ukiyo Wave", "Movements", "Prussian blue with the foam of the print", true, "#0c1c31", "#d6dae0", "#e2cb9c", 0.50},
+	{"Nouveau Vine", "Movements", "Pale green paper, a curling amber line", false, "#edefe7", "#252919", "#a06122", 0.55},
+	{"Dusk Synth", "Movements", "Neon magenta on a purple evening", true, "#170a29", "#dad6e0", "#f04cac", 0.85},
 }

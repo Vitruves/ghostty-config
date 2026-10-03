@@ -1,0 +1,26 @@
+# ghostty-config collection · trust-petal
+# Plutchik · Soft green on pale green, the calm side of the wheel
+
+background = #eef7ef
+foreground = #172b1b
+cursor-color = #297a44
+cursor-text = #eef7ef
+selection-background = #a2c4d3
+selection-foreground = #172b1b
+
+palette = 0=#444b45
+palette = 1=#ae4a29
+palette = 2=#1d7c3d
+palette = 3=#74711b
+palette = 4=#2770a6
+palette = 5=#ae29a9
+palette = 6=#1d7c6e
+palette = 7=#99a39a
+palette = 8=#222522
+palette = 9=#7e3c26
+palette = 10=#267e43
+palette = 11=#767224
+palette = 12=#26597e
+palette = 13=#7e267b
+palette = 14=#247669
+palette = 15=#6f7b71

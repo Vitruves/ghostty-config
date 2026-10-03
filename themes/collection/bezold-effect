@@ -1,0 +1,26 @@
+# ghostty-config collection · bezold-effect
+# Albers · One colour that changes with what it sits beside
+
+background = #f5f1ef
+foreground = #2b1c17
+cursor-color = #ad421f
+cursor-text = #f5f1ef
+selection-background = #a7b4d7
+selection-foreground = #2b1c17
+
+palette = 0=#4b4644
+palette = 1=#b04827
+palette = 2=#2c7e1c
+palette = 3=#8f6620
+palette = 4=#2750b0
+palette = 5=#b02784
+palette = 6=#1c777e
+palette = 7=#a39c99
+palette = 8=#252322
+palette = 9=#7f3a24
+palette = 10=#307722
+palette = 11=#7f5e24
+palette = 12=#243f7f
+palette = 13=#7f2463
+palette = 14=#24797f
+palette = 15=#7b736f

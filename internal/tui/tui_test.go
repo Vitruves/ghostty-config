@@ -9,11 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/charmbracelet/bubbles/cursor"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
-	"github.com/muesli/termenv"
 
 	"github.com/vitruves/ghostty-config/internal/collection"
 	"github.com/vitruves/ghostty-config/internal/color"
@@ -30,6 +27,11 @@ type harness struct {
 }
 
 func newHarness(t *testing.T, config string) *harness {
+	t.Helper()
+	return newHarnessWith(t, config, Options{NoReload: true})
+}
+
+func newHarnessWith(t *testing.T, config string, opts Options) *harness {
 	t.Helper()
 	dir := t.TempDir()
 	builtin := filepath.Join(dir, "resources", "themes")
@@ -58,18 +60,20 @@ func newHarness(t *testing.T, config string) *harness {
 	lib := ghostty.LoadLibrary(paths)
 	state := ghostty.LoadState(paths)
 	state.Welcomed = true
+	// Most tests were written for the clear interface, whose rounded frame
+	// and unpainted ground they look for; midnight has its own tests.
+	state.Interface = "clear"
 	writeDebounce = time.Millisecond
 	// Tests have no terminal to detect: draw in full colour, rounded.
-	lipgloss.SetColorProfile(termenv.TrueColor)
 	t.Setenv("GHOSTTY_CONFIG_GLYPHS", "round")
-	m := New(paths, tree, lib, state, Options{NoReload: true})
+	m := New(paths, tree, lib, state, opts)
 	m.live = nil
 	// Tests start from the menu; opening on the themes has its own test.
 	m.setPromptText("")
 	m.lastText = ""
 	// A blinking cursor returns a timer on every keystroke, which the
 	// harness would sit through.
-	m.prompt.Cursor.SetMode(cursor.CursorStatic)
+	m.prompt.SetVirtualCursor(false)
 	// A fixed font catalog so tests never scan the machine.
 	m.families = []ghostty.Family{
 		{Name: "Hack", Styles: []string{"Regular", "Bold"}, Mono: true},
@@ -109,32 +113,49 @@ func (h *harness) send(msg tea.Msg) {
 	}
 }
 
+// keyPress turns a key name ("up", "ctrl+x", "shift+tab", "a") into the
+// message the terminal would send.
+func keyPress(k string) tea.KeyPressMsg {
+	var mod tea.KeyMod
+	for {
+		switch {
+		case strings.HasPrefix(k, "ctrl+") && len(k) > 5:
+			mod |= tea.ModCtrl
+			k = k[5:]
+			continue
+		case strings.HasPrefix(k, "shift+") && len(k) > 6:
+			mod |= tea.ModShift
+			k = k[6:]
+			continue
+		case strings.HasPrefix(k, "alt+") && len(k) > 4:
+			mod |= tea.ModAlt
+			k = k[4:]
+			continue
+		}
+		break
+	}
+	named := map[string]rune{
+		"up": tea.KeyUp, "down": tea.KeyDown, "left": tea.KeyLeft, "right": tea.KeyRight,
+		"tab": tea.KeyTab, "enter": tea.KeyEnter, "esc": tea.KeyEscape, "backspace": tea.KeyBackspace,
+		"pgup": tea.KeyPgUp, "pgdown": tea.KeyPgDown, "home": tea.KeyHome, "end": tea.KeyEnd,
+		"f1": tea.KeyF1, "f2": tea.KeyF2, "delete": tea.KeyDelete,
+	}
+	if code, ok := named[k]; ok {
+		return tea.KeyPressMsg{Code: code, Mod: mod}
+	}
+	if k == "space" {
+		return tea.KeyPressMsg{Code: tea.KeySpace, Text: " "}
+	}
+	r := []rune(k)[0]
+	if mod&tea.ModCtrl != 0 {
+		return tea.KeyPressMsg{Code: r, Mod: mod}
+	}
+	return tea.KeyPressMsg{Code: r, Text: k, Mod: mod}
+}
+
 func (h *harness) key(keys ...string) {
 	for _, k := range keys {
-		var msg tea.KeyMsg
-		switch k {
-		case "up":
-			msg = tea.KeyMsg{Type: tea.KeyUp}
-		case "down":
-			msg = tea.KeyMsg{Type: tea.KeyDown}
-		case "left":
-			msg = tea.KeyMsg{Type: tea.KeyLeft}
-		case "right":
-			msg = tea.KeyMsg{Type: tea.KeyRight}
-		case "tab":
-			msg = tea.KeyMsg{Type: tea.KeyTab}
-		case "enter":
-			msg = tea.KeyMsg{Type: tea.KeyEnter}
-		case "esc":
-			msg = tea.KeyMsg{Type: tea.KeyEscape}
-		case "backspace":
-			msg = tea.KeyMsg{Type: tea.KeyBackspace}
-		case "space":
-			msg = tea.KeyMsg{Type: tea.KeySpace, Runes: []rune(" ")}
-		default:
-			msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(k)}
-		}
-		h.send(msg)
+		h.send(keyPress(k))
 	}
 }
 
@@ -149,7 +170,7 @@ func (h *harness) typeText(s string) {
 	}
 }
 
-func (h *harness) view() string { return ansi.Strip(h.m.View()) }
+func (h *harness) view() string { return ansi.Strip(h.m.render()) }
 
 func (h *harness) dump(name string) {
 	dir := os.Getenv("GHOSTTY_CONFIG_DUMP")
@@ -158,6 +179,7 @@ func (h *harness) dump(name string) {
 	}
 	os.MkdirAll(dir, 0o755)
 	os.WriteFile(filepath.Join(dir, name+".txt"), []byte(h.view()), 0o644)
+	os.WriteFile(filepath.Join(dir, name+".ansi"), []byte(h.m.render()), 0o644)
 }
 
 func (h *harness) config() string {
@@ -168,11 +190,11 @@ func (h *harness) config() string {
 // click presses at a cell of the editor; the terminal reports it counted
 // from the top of the screen, and the editor sits in the bottom rows.
 func (h *harness) click(x, y int) {
-	h.send(tea.MouseMsg{X: x, Y: y + h.m.top, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft})
+	h.send(tea.MouseClickMsg{X: x, Y: y + h.m.top, Button: tea.MouseLeft})
 }
 
 func (h *harness) find(kind hitKind, index int, name string) (region, bool) {
-	h.m.View()
+	h.m.render()
 	for _, r := range h.m.regions {
 		if r.kind == kind && (index < 0 || r.index == index) && (name == "" || r.name == name) {
 			return r, true
@@ -192,7 +214,7 @@ func TestPaletteReachesEveryCommandAtTheUsersWindowSize(t *testing.T) {
 		}
 	}
 	// The highlighted command is described in full, never cut.
-	if !strings.Contains(v, "Theme <name>") || !strings.Contains(v, "moving previews it in this window.") {
+	if !strings.Contains(v, "Theme <name>") || !strings.Contains(v, "Enter applies the highlighted one.") {
 		t.Fatalf("the highlighted command should be described in full:\n%s", v)
 	}
 	// Around the palette is the user's own terminal: nothing is drawn there.
@@ -251,14 +273,14 @@ func TestPaletteReachesEveryCommandAtTheUsersWindowSize(t *testing.T) {
 		t.Fatal("pad is ambiguous and should keep the menu")
 	}
 	v = h.view()
-	if !strings.Contains(v, "Paddingx") || !strings.Contains(v, "Paddingcolor") || !strings.Contains(v, "searching every group") || strings.Contains(v, "Autoreload") {
+	if !strings.Contains(v, "Paddingx") || !strings.Contains(v, "Paddingcolor") || !strings.Contains(v, "all groups") || strings.Contains(v, "Autoreload") {
 		t.Fatalf("typing should search the commands:\n%s", v)
 	}
 	h.dump("03-search")
 	h.key("esc")
 
 	// F2 hides the palette to look at the terminal alone.
-	h.send(tea.KeyMsg{Type: tea.KeyF2})
+	h.send(keyPress("f2"))
 	if strings.Contains(h.view(), "╭") || !strings.Contains(h.view(), "brings the palette back") {
 		t.Fatalf("F2 should leave only the terminal:\n%s", h.view())
 	}
@@ -492,7 +514,7 @@ func TestMouseSelectsRunsAndJumpsToCommands(t *testing.T) {
 		t.Fatalf("clicking Window should show that group, prompt %q group %d", h.m.prompt.Value(), h.m.group)
 	}
 	before := h.m.sel.cursor
-	h.send(tea.MouseMsg{X: group.x, Y: group.y + 4, Action: tea.MouseActionPress, Button: tea.MouseButtonWheelDown})
+	h.send(tea.MouseWheelMsg{X: group.x, Y: group.y + 4, Button: tea.MouseWheelDown})
 	if h.m.sel.cursor != before+1 {
 		t.Fatalf("wheel should move the highlight: %d → %d", before, h.m.sel.cursor)
 	}
@@ -586,20 +608,20 @@ func TestInterfaceHasItsOwnColoursAndRampsLineUp(t *testing.T) {
 	// By default nothing paints a background: the palette sits on the
 	// terminal's own, so the frame around it can be round.
 	painted := regexp.MustCompile(`[\[;]48;`)
-	if painted.MatchString(strings.Split(h.m.View(), "\n")[1]) || h.m.panelChrome().paint() != "" || !strings.Contains(h.view(), "╭") || !strings.Contains(h.view(), "╯") {
+	if painted.MatchString(strings.Split(h.m.render(), "\n")[1]) || h.m.panelChrome().paint() != "" || !strings.Contains(h.view(), "╭") || !strings.Contains(h.view(), "╯") {
 		t.Fatalf("the clear palette paints no background and has a rounded frame:\n%s", h.view())
 	}
-	if len(strings.Split(h.m.View(), "\n")) != InlineHeight(28) || h.m.top != 28-InlineHeight(28) {
+	if len(strings.Split(h.m.render(), "\n")) != InlineHeight(28) || h.m.top != 28-InlineHeight(28) {
 		t.Fatal("the editor draws in the bottom rows only")
 	}
-	h.send(tea.KeyMsg{Type: tea.KeyF2})
+	h.send(keyPress("f2"))
 	h.key("x")
 	h.key("esc")
 	h.typeText("interface paper")
 	h.key("enter")
 	h.key("esc")
 	h.typeText("theme ")
-	if !strings.Contains(h.m.View(), paper) {
+	if !strings.Contains(h.m.render(), paper) {
 		t.Fatal("interface paper draws a light palette")
 	}
 	if !color.IsDark(h.m.cur.Background()) || color.IsDark(h.m.panelChrome().bg) {
@@ -634,7 +656,7 @@ func TestInterfaceHasItsOwnColoursAndRampsLineUp(t *testing.T) {
 	h.key("esc")
 	h.typeText("interface theme")
 	h.key("enter")
-	if strings.Contains(h.m.View(), paper) || h.m.state.Interface != "theme" {
+	if strings.Contains(h.m.render(), paper) || h.m.state.Interface != "theme" {
 		t.Fatal("interface theme should follow the theme being shown")
 	}
 	h.key("esc")
@@ -646,8 +668,8 @@ func TestInterfaceHasItsOwnColoursAndRampsLineUp(t *testing.T) {
 
 func TestHelpWelcomeAndNarrow(t *testing.T) {
 	h := newHarness(t, "theme = Dracula\n")
-	h.send(tea.KeyMsg{Type: tea.KeyF1})
-	if !strings.Contains(h.view(), "Keys and commands") || !strings.Contains(h.view(), "Theme <name>") {
+	h.send(keyPress("f1"))
+	if !strings.Contains(h.view(), "Keys and commands") || !strings.Contains(h.view(), "Theme Favs") {
 		t.Fatalf("help should list keys and commands:\n%s", h.view())
 	}
 	h.dump("08-help")
@@ -677,7 +699,7 @@ func TestRunsInAnyTerminal(t *testing.T) {
 	h.m.live = nil
 	h.send(tea.WindowSizeMsg{Width: 105, Height: 28})
 	h.typeText("theme ")
-	raw := h.m.View()
+	raw := h.m.render()
 	if strings.ContainsAny(raw, "\ue0b6\ue0b4"+cornerTL+cornerTR+cornerBL+cornerBR+bandTop+bandBot) {
 		t.Fatal("glyphs the terminal may not have must not be drawn")
 	}
@@ -709,4 +731,123 @@ func TestRunsInAnyTerminal(t *testing.T) {
 		t.Fatal("reload must not be attempted outside Ghostty")
 	}
 	h.dump("11-plain-terminal")
+}
+
+// The tool opens on "Theme "; the first Tab must leave it for the next group
+// rather than complete a theme name nobody asked for.
+func TestFirstTabChangesGroup(t *testing.T) {
+	h := newHarness(t, "theme = Dracula\n")
+	h.key("tab")
+	if groups[h.m.group] != "Fonts" || h.m.cmd != nil || h.m.prompt.Value() != "" {
+		t.Fatalf("first Tab should show Fonts on the menu, on %s cmd=%v prompt=%q", groups[h.m.group], h.m.cmd, h.m.prompt.Value())
+	}
+	h.key("shift+tab", "shift+tab")
+	if groups[h.m.group] != "Tool" {
+		t.Fatalf("Shift+Tab twice should wrap to Tool, on %s", groups[h.m.group])
+	}
+	if got := h.config(); got != "theme = Dracula\n" {
+		t.Fatalf("Tab must not write anything:\n%s", got)
+	}
+}
+
+func TestPresetWritesItsSettings(t *testing.T) {
+	h := newHarness(t, "theme = Dracula\n")
+	h.key("esc")
+	h.typeText("preset focus")
+	h.key("enter")
+	cfg := h.config()
+	for _, want := range []string{"window-padding-x = 28", "window-padding-y = 22", "cursor-style = bar", "scrollbar = never", "adjust-cell-height = 10%"} {
+		if !strings.Contains(cfg, want) {
+			t.Errorf("preset focus should write %q:\n%s", want, cfg)
+		}
+	}
+	h.key("esc")
+	h.typeText("preset default")
+	h.key("enter")
+	if cfg := h.config(); strings.Contains(cfg, "\nwindow-padding-x = 28") || strings.Contains(cfg, "\nscrollbar = never") {
+		t.Fatalf("preset default should undo it:\n%s", cfg)
+	}
+}
+
+func TestDeleteOneThemeThenTheCollection(t *testing.T) {
+	h := newHarness(t, "theme = Dracula\n")
+	path := filepath.Join(h.paths.ThemesDir, "swiss-grid")
+	if _, err := os.Stat(path); err != nil {
+		t.Fatal("collection should be installed")
+	}
+	h.typeText("delete swiss-grid")
+	h.key("enter")
+	if h.m.overlay != overlayConfirm || !strings.Contains(h.m.confirmText, "swiss-grid") {
+		t.Fatalf("delete should ask first, overlay %v %q", h.m.overlay, h.m.confirmText)
+	}
+	h.key("n")
+	if _, err := os.Stat(path); err != nil {
+		t.Fatal("declining must keep the file")
+	}
+	h.key("esc")
+	h.typeText("delete swiss-grid")
+	h.key("enter", "y")
+	if _, err := os.Stat(path); err == nil {
+		t.Fatal("confirming should delete the file")
+	}
+	h.key("esc")
+	h.typeText("delete collection")
+	h.key("enter", "y")
+	entries, _ := os.ReadDir(h.paths.ThemesDir)
+	if len(entries) != 0 {
+		t.Fatalf("collection should be gone, %d files left", len(entries))
+	}
+	if _, err := os.Stat(filepath.Join(h.dir, "resources", "themes", "Dracula")); err != nil {
+		t.Fatal("bundled themes must never be touched")
+	}
+}
+
+func TestCtrlXDeletesTheHighlightedTheme(t *testing.T) {
+	h := newHarness(t, "theme = Dracula\n")
+	path := filepath.Join(h.paths.ThemesDir, "swiss-grid")
+	h.typeText("theme swiss-grid")
+	if v := h.view(); !strings.Contains(v, "^X") || !strings.Contains(v, "Ctrl+X") {
+		t.Fatalf("the delete key should be shown for a deletable theme:\n%s", v)
+	}
+	h.key("ctrl+x")
+	if h.m.overlay != overlayConfirm {
+		t.Fatalf("Ctrl+X should ask, overlay %v", h.m.overlay)
+	}
+	h.key("y")
+	if _, err := os.Stat(path); err == nil {
+		t.Fatal("file should be gone")
+	}
+	h.typeText("")
+	h.key("esc")
+	h.typeText("theme Dracula")
+	h.key("ctrl+x")
+	if h.m.overlay == overlayConfirm {
+		t.Fatal("a bundled theme must not offer deletion")
+	}
+}
+
+// The default interface is a card of its own colours: browsing another
+// theme, light or dark, must not change them.
+func TestMidnightIsTheDefaultAndIgnoresTheTheme(t *testing.T) {
+	h := newHarness(t, "theme = Dracula\n")
+	h.m.state.Interface = ""
+	if h.m.interfaceName() != "midnight" {
+		t.Fatalf("the default interface should be midnight, is %s", h.m.interfaceName())
+	}
+	before := h.m.panelChrome()
+	light, ok := h.m.lib.Get("swiss-grid")
+	if !ok {
+		t.Fatal("swiss-grid should be installed")
+	}
+	h.m.showTheme(light)
+	after := h.m.panelChrome()
+	if before != after {
+		t.Fatalf("the palette followed the theme: %+v -> %+v", before, after)
+	}
+	h.m.recompute()
+	for i, l := range strings.Split(h.view(), "\n") {
+		if w := ansi.StringWidth(l); w != h.m.width {
+			t.Fatalf("line %d is %d cells wide, want %d", i, w, h.m.width)
+		}
+	}
 }

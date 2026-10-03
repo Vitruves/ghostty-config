@@ -1,0 +1,26 @@
+# ghostty-config collection · weight-of-colour
+# Albers · Yellow reads lighter than its value says
+
+background = #101014
+foreground = #d7d7e0
+cursor-color = #f4e225
+cursor-text = #101014
+selection-background = #293962
+selection-foreground = #d7d7e0
+
+palette = 0=#2c2c30
+palette = 1=#dd6840
+palette = 2=#5bdd40
+palette = 3=#ddd040
+palette = 4=#517ce0
+palette = 5=#dd40ac
+palette = 6=#40ddc6
+palette = 7=#c4c4ca
+palette = 8=#52525b
+palette = 9=#e29b83
+palette = 10=#93e283
+palette = 11=#e2da83
+palette = 12=#83a0e2
+palette = 13=#e283c4
+palette = 14=#83e2d4
+palette = 15=#efeff0

@@ -1,0 +1,26 @@
+# ghostty-config collection · sixty-thirty-ten
+# Harmony · Sixty parts neutral, thirty supporting, ten accent
+
+background = #16191d
+foreground = #d6dbe0
+cursor-color = #f49d25
+cursor-text = #16191d
+selection-background = #304168
+selection-foreground = #d6dbe0
+
+palette = 0=#2c2e30
+palette = 1=#dd6840
+palette = 2=#5bdd40
+palette = 3=#dda440
+palette = 4=#5a83e2
+palette = 5=#dd40ac
+palette = 6=#40ddc6
+palette = 7=#c4c6ca
+palette = 8=#52565b
+palette = 9=#e29b83
+palette = 10=#93e283
+palette = 11=#e2c083
+palette = 12=#83a0e2
+palette = 13=#e283c4
+palette = 14=#83e2d4
+palette = 15=#eff0f0

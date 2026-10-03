@@ -1,0 +1,26 @@
+# ghostty-config collection · shadow-self
+# Jung · What the day leaves out, near-black violet
+
+background = #09090c
+foreground = #d8d6e0
+cursor-color = #8e6fb9
+cursor-text = #09090c
+selection-background = #303159
+selection-foreground = #d8d6e0
+
+palette = 0=#2c2c30
+palette = 1=#ce5067
+palette = 2=#50ce87
+palette = 3=#cea050
+palette = 4=#7072d7
+palette = 5=#ae50ce
+palette = 6=#50aace
+palette = 7=#c4c4ca
+palette = 8=#52525b
+palette = 9=#d78e9b
+palette = 10=#8ed7ae
+palette = 11=#d7bd8e
+palette = 12=#8e8fd7
+palette = 13=#c58ed7
+palette = 14=#8ec2d7
+palette = 15=#efeff0

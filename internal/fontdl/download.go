@@ -32,28 +32,32 @@ type FontDownload struct {
 	Name    string // display name
 	Archive string // asset file name, without .zip
 	Note    string
+	// URL is the archive's address when it is not in the Nerd Fonts release.
+	URL string
 }
 
 // AvailableDownloads is the offered set: widely used, actively maintained, and
 // all genuinely monospaced. Kept short on purpose — a list of ninety families
 // is a worse answer to "I need a good terminal font" than a list of fifteen.
 var AvailableDownloads = []FontDownload{
-	{"JetBrains Mono", "JetBrainsMono", "Tall x-height, made for long reading"},
-	{"Fira Code", "FiraCode", "The one with the programming ligatures"},
-	{"Hack", "Hack", "Plain, legible, no surprises"},
-	{"Meslo LG", "Meslo", "Menlo redrawn, the powerline default"},
-	{"Source Code Pro", "SourceCodePro", "Adobe, conservative and even"},
-	{"Cascadia Code", "CascadiaCode", "Microsoft, ships with Windows Terminal"},
-	{"Iosevka", "Iosevka", "Narrow, fits more columns per line"},
-	{"Ubuntu Mono", "UbuntuMono", "Humanist, unusually compact"},
-	{"DejaVu Sans Mono", "DejaVuSansMono", "Enormous glyph coverage"},
-	{"Roboto Mono", "RobotoMono", "Neutral and unfussy"},
-	{"Inconsolata", "Inconsolata", "A classic, still excellent"},
-	{"Victor Mono", "VictorMono", "Cursive italics for comments"},
-	{"Space Mono", "SpaceMono", "Distinctive, with real character"},
-	{"IBM Plex Mono", "IBMPlexMono", "Corporate in the good sense"},
-	{"Anonymous Pro", "AnonymousPro", "Designed for small sizes"},
-	{"Terminus", "Terminus", "Bitmap heritage, sharp at small sizes"},
+	{"Google Sans Code", "GoogleSansCode", "Google's monospace, the font this tool draws its own pictures in",
+		"https://github.com/googlefonts/googlesans-code/releases/download/v7.001/GoogleSansCode-v7.001.zip"},
+	{"JetBrains Mono", "JetBrainsMono", "Tall x-height, made for long reading", ""},
+	{"Fira Code", "FiraCode", "The one with the programming ligatures", ""},
+	{"Hack", "Hack", "Plain, legible, no surprises", ""},
+	{"Meslo LG", "Meslo", "Menlo redrawn, the powerline default", ""},
+	{"Source Code Pro", "SourceCodePro", "Adobe, conservative and even", ""},
+	{"Cascadia Code", "CascadiaCode", "Microsoft, ships with Windows Terminal", ""},
+	{"Iosevka", "Iosevka", "Narrow, fits more columns per line", ""},
+	{"Ubuntu Mono", "UbuntuMono", "Humanist, unusually compact", ""},
+	{"DejaVu Sans Mono", "DejaVuSansMono", "Enormous glyph coverage", ""},
+	{"Roboto Mono", "RobotoMono", "Neutral and unfussy", ""},
+	{"Inconsolata", "Inconsolata", "A classic, still excellent", ""},
+	{"Victor Mono", "VictorMono", "Cursive italics for comments", ""},
+	{"Space Mono", "SpaceMono", "Distinctive, with real character", ""},
+	{"IBM Plex Mono", "IBMPlexMono", "Corporate in the good sense", ""},
+	{"Anonymous Pro", "AnonymousPro", "Designed for small sizes", ""},
+	{"Terminus", "Terminus", "Bitmap heritage, sharp at small sizes", ""},
 }
 
 // downloadTimeout is generous: some of these archives are tens of megabytes.
@@ -111,6 +115,9 @@ func Install(font FontDownload, progress func(string)) error {
 	}
 
 	url := nerdFontsRelease + font.Archive + ".zip"
+	if font.URL != "" {
+		url = font.URL
+	}
 	report("Fetching %s…", font.Name)
 
 	archive, err := downloadToTemp(url)

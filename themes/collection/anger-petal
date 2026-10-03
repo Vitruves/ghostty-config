@@ -1,0 +1,26 @@
+# ghostty-config collection · anger-petal
+# Plutchik · Red at the wheel's hot edge, kept an accent
+
+background = #250909
+foreground = #e0d6d6
+cursor-color = #f44d34
+cursor-text = #250909
+selection-background = #403060
+selection-foreground = #e0d6d6
+
+palette = 0=#302c2c
+palette = 1=#e64e37
+palette = 2=#55e637
+palette = 3=#e6a737
+palette = 4=#6d70ed
+palette = 5=#e637af
+palette = 6=#37dbe6
+palette = 7=#cac4c4
+palette = 8=#5b5252
+palette = 9=#e88b7d
+palette = 10=#8fe87d
+palette = 11=#e8c17d
+palette = 12=#7d7fe8
+palette = 13=#e87dc6
+palette = 14=#7de1e8
+palette = 15=#f0efef

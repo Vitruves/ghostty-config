@@ -1,0 +1,26 @@
+# ghostty-config collection · kaki-persimmon
+# Wabi-sabi · Ripe persimmon on a bare branch
+
+background = #20140e
+foreground = #e0dad6
+cursor-color = #e87430
+cursor-text = #20140e
+selection-background = #333c5e
+selection-foreground = #e0dad6
+
+palette = 0=#302d2c
+palette = 1=#dd6840
+palette = 2=#5bdd40
+palette = 3=#dda440
+palette = 4=#517ce0
+palette = 5=#dd40ac
+palette = 6=#40d3dd
+palette = 7=#cac6c4
+palette = 8=#5b5552
+palette = 9=#e29b83
+palette = 10=#93e283
+palette = 11=#e2c083
+palette = 12=#83a0e2
+palette = 13=#e283c4
+palette = 14=#83dce2
+palette = 15=#f0efef

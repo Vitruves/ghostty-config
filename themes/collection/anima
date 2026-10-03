@@ -1,0 +1,26 @@
+# ghostty-config collection · anima
+# Jung · The inner feminine, rose and soft
+
+background = #1f0f17
+foreground = #e0d6db
+cursor-color = #d2799e
+cursor-text = #1f0f17
+selection-background = #3e3563
+selection-foreground = #e0d6db
+
+palette = 0=#302c2e
+palette = 1=#d94f68
+palette = 2=#47d75a
+palette = 3=#d7a347
+palette = 4=#7173e0
+palette = 5=#d747a9
+palette = 6=#47cdd7
+palette = 7=#cac4c7
+palette = 8=#5b5257
+palette = 9=#dd8897
+palette = 10=#88dd93
+palette = 11=#ddbe88
+palette = 12=#8889dd
+palette = 13=#dd88c2
+palette = 14=#88d8dd
+palette = 15=#f0eff0
