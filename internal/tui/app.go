@@ -12,6 +12,8 @@ import (
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 
+	uv "github.com/charmbracelet/ultraviolet"
+
 	"github.com/vitruves/ghostty-config/internal/ghostty"
 	"github.com/vitruves/ghostty-config/internal/update"
 )
@@ -26,12 +28,6 @@ const (
 	overlayConfirm
 	overlayBusy
 	overlayMessage
-)
-
-// Layout: header, prompt, rule, body, status, keys.
-const (
-	chromeTop = 3
-	chromeBot = 2
 )
 
 // writeDebounce is how long the highlight must rest before a font or a
@@ -83,10 +79,21 @@ type Model struct {
 	centre   bool // put the highlight mid-list on the next draw
 	lastText string
 
-	// The group whose commands the empty prompt lists, and whether the
-	// palette is hidden to look at the terminal behind it.
+	// browsed is whether the highlight was moved by hand since the prompt
+	// last changed: opening the list of fonts must not write the first one.
+	browsed bool
+
+	// The section whose commands the empty prompt lists, and whether the
+	// editor has stepped aside to show the terminal it was started from.
 	group int
 	peek  bool
+
+	// What the terminal says its own colours are, where the wall of themes is
+	// scrolled to, and the theme painted into the terminal for a try, if any.
+	term     termColours
+	galTop   int
+	galAlign bool
+	tried    string
 
 	// Palette edit mode: the prompt becomes a slot editor.
 	editing  bool
@@ -130,6 +137,8 @@ type Model struct {
 	confirmText string
 	confirmYes  func(*Model) tea.Cmd
 	confirmNo   func(*Model) tea.Cmd // nil means "no" only closes the question
+	confirmEsc  func(*Model) tea.Cmd // nil means Esc only closes the question
+	shaderSeq   int                  // which "keep this shader?" is still waiting
 	busyText    string
 	messageText string
 	spin        spinner.Model
@@ -144,8 +153,8 @@ type Model struct {
 	reloadSeq int
 
 	reloadFailed bool
-	// top is the terminal row the editor's first row sits on: it draws in
-	// the bottom rows, under what was on screen.
+	// top is the terminal row the editor's first row sits on: always the
+	// first, now that it takes the whole screen.
 	top        int
 	exitNote   string
 	updateNote string // a newer release, told again on the way out
@@ -231,8 +240,11 @@ func (m *Model) ExitNote() string {
 	return m.exitNote + "\n" + m.updateNote
 }
 
-// Init starts the spinner and the update check.
-func (m *Model) Init() tea.Cmd { return tea.Batch(m.spin.Tick, m.checkUpdate()) }
+// Init starts the spinner and the update check, asks the terminal for its
+// colours, and asks to be told when it goes from light to dark.
+func (m *Model) Init() tea.Cmd {
+	return tea.Batch(m.spin.Tick, m.checkUpdate(), askTerminalColours(), tea.Raw(watchScheme))
+}
 
 // checkUpdate asks GitHub for the newest release in the background. The UI
 // never waits on it: offline, it times out quietly. A recent answer is reused
@@ -275,12 +287,22 @@ type (
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.width, m.height = msg.Width, InlineHeight(msg.Height)
-		m.top = msg.Height - m.height
+		m.width, m.height = msg.Width, msg.Height
+		m.top = 0
 		if m.opts.Images {
 			m.refreshCell()
 		}
 		return m, nil
+	case tea.BackgroundColorMsg:
+		m.term.bg = hexOf(msg.Color)
+		return m, nil
+	case tea.ForegroundColorMsg:
+		m.term.fg = hexOf(msg.Color)
+		return m, nil
+	case uv.DarkColorSchemeEvent, uv.LightColorSchemeEvent:
+		// The terminal changed its scheme: its colours are no longer the
+		// ones it reported.
+		return m, askTerminalColours()
 	case spinner.TickMsg:
 		var cmd tea.Cmd
 		m.spin, cmd = m.spin.Update(msg)
@@ -297,8 +319,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.reloadFailed = true
 			m.warn("%v", msg.err)
+			return m, nil
 		}
-		return m, nil
+		// Ghostty has re-read its files: the terminal may wear new colours.
+		return m, askTerminalColours()
 	case fontsLoadedMsg:
 		m.families = msg.families
 		m.fontsLoaded, m.fontLoading = true, false
@@ -310,6 +334,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case installDoneMsg:
 		return m, m.finishInstall(msg)
+	case shaderDoneMsg:
+		return m, m.finishShader(msg)
+	case shaderExpireMsg:
+		return m, m.expireShader(msg)
+	case packDoneMsg:
+		return m, m.finishPack(msg)
 	case updateMsg:
 		if msg.err != nil {
 			// Offline or rate limited: try again next start.
@@ -355,7 +385,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.updateOverlay(msg)
 		}
 		if m.peek {
-			// Any key brings the palette back.
+			// Any key brings the editor back.
 			m.peek = false
 			return m, nil
 		}
@@ -371,9 +401,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// View hands the frame to Bubble Tea. The editor lives in the bottom rows
-// of the terminal, so it asks for no alternate screen; the mouse is asked
-// for with the view, as Bubble Tea v2 wants.
+// View hands the frame to Bubble Tea. The editor takes the whole terminal on
+// the alternate screen, and leaves it while peeking so that what was in the
+// terminal shows again; the mouse is asked for with the view, as Bubble Tea
+// v2 wants.
 func (m *Model) View() tea.View {
 	content := m.render()
 	if m.imgs != nil {
@@ -381,6 +412,7 @@ func (m *Model) View() tea.View {
 		m.imgs.flush()
 	}
 	v := tea.NewView(content)
+	v.AltScreen = !m.peek
 	v.MouseMode = tea.MouseModeCellMotion
 	v.WindowTitle = "ghostty-config"
 	return v
@@ -392,6 +424,11 @@ func (m *Model) render() string {
 		return ""
 	}
 	m.regions = m.regions[:0]
+	if m.peek {
+		// One line, on the terminal's own screen, under what was there.
+		ui := m.panelChrome()
+		return rebase(ui.fill(ui.base().Render(" ")+ui.keyHintFit(m.width-2, "any key", "brings ghostty-config back"), m.width), ui.base())
+	}
 	body := m.viewMain()
 	if m.overlay != overlayNone {
 		body = m.viewOverlay(body)
@@ -400,10 +437,10 @@ func (m *Model) render() string {
 }
 
 // fillScreen pads the frame to the terminal size so every cell carries the
-// chrome background.
+// interface's colours.
 func (m *Model) fillScreen(body string) string {
 	lines := strings.Split(body, "\n")
-	c := m.clearChrome()
+	c := m.panelChrome()
 	base := c.base()
 	out := make([]string, 0, m.height)
 	for i := 0; i < m.height; i++ {
@@ -474,8 +511,11 @@ func (m *Model) reload() tea.Cmd {
 	m.reloadSeq++
 	seq := m.reloadSeq
 	binary := m.paths.Binary
-	return func() tea.Msg { return reloadDoneMsg{seq, ghostty.Reload(binary)} }
+	return func() tea.Msg { return reloadDoneMsg{seq, reloadGhostty(binary)} }
 }
+
+// reloadGhostty sends the reload keystroke; a variable so tests never send one.
+var reloadGhostty = ghostty.Reload
 
 // reloadHint tells the user how to reload when the tool cannot.
 func (m *Model) reloadHint() string {
@@ -509,6 +549,7 @@ func (m *Model) quit() (tea.Model, tea.Cmd) {
 			return m.leave()
 		}
 		m.confirmNo = func(m *Model) tea.Cmd { return m.leave() }
+		m.confirmEsc = nil
 		m.overlay = overlayConfirm
 		return m, nil
 	}
@@ -529,6 +570,11 @@ func (m *Model) leave() tea.Cmd {
 		}
 		m.exitNote += m.reloadHint()
 	}
+	if m.tried != "" {
+		// A theme was painted into the terminal for a try: put back what the
+		// configuration says.
+		m.live.Reset()
+	}
 	if m.cur != nil && m.cur.Name != m.applied {
 		m.live.Reset()
 		if t, ok := m.lib.Get(m.applied); ok {
@@ -541,7 +587,7 @@ func (m *Model) leave() tea.Cmd {
 	_ = m.state.Save()
 	m.quitting = true
 	m.live.Close()
-	return tea.Sequence(m.reload(), tea.Quit)
+	return tea.Sequence(m.reload(), tea.Raw(unwatchScheme), tea.Quit)
 }
 
 // abandon leaves without writing anything and puts the terminal's colours
@@ -552,5 +598,5 @@ func (m *Model) abandon() (tea.Model, tea.Cmd) {
 	_ = m.state.Save()
 	m.quitting = true
 	m.exitNote = "Left without writing anything"
-	return m, tea.Quit
+	return m, tea.Sequence(tea.Raw(unwatchScheme), tea.Quit)
 }

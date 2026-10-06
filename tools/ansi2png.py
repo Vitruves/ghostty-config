@@ -4,8 +4,11 @@
 Usage: ansi2png.py frame.ansi out.png [cols rows]
 When frame.layers.json and an img/ directory sit beside the frame, the pictures
 are composited too: placed ones under the text, placeholder cells in place.
-Handles SGR truecolor/256, bold, dim, reverse. Block elements are drawn as
-rectangles so they join exactly; everything else is drawn with Menlo.
+Handles SGR truecolor/256, bold, dim, reverse and underline with its own
+colour. Block elements are drawn as rectangles so they join exactly;
+everything else is drawn with Menlo. When frame.term sits beside the frame and
+holds two colours, "#bg #fg", they stand for the terminal's own: the cells
+that paint no background take them, as they would in that terminal.
 """
 import re, sys, os, json, glob
 from PIL import Image, ImageDraw, ImageFont
@@ -42,19 +45,33 @@ def xterm(n):
     g = 8 + (n-232)*10
     return (g,g,g)
 
+ULCOL = re.compile(r'(?:^|(?<=;))58[:;]2[:;]{1,2}(\d+)[:;](\d+)[:;](\d+);?')
+
 def parse(text):
     rows = [[]]
     fg, bg, b, d, rv = None, None, False, False, False
+    ul, ulc = False, None
     i = 0
     tok = re.compile(r'\x1b\[([0-9;:]*)m|\x1b\[[0-9;?]*[A-Za-ln-zA-Z]|\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)|\n|.', re.S)
     for m in tok.finditer(text):
         s = m.group(0)
         if m.group(1) is not None:
-            a = [int(x) if x else 0 for x in re.split('[;:]', m.group(1))] or [0]
+            params = m.group(1)
+            # The underline's own colour is taken out first: its numbers are
+            # not attributes.
+            um = ULCOL.search(params)
+            if um:
+                ulc = tuple(int(x) for x in um.groups())
+                params = ULCOL.sub('', params).strip(';')
+                if not params: continue
+            a = [int(x) if x else 0 for x in re.split('[;:]', params)] or [0]
             k = 0
             while k < len(a):
                 c = a[k]
-                if c == 0: fg=bg=None; b=d=rv=False
+                if c == 0: fg=bg=None; b=d=rv=False; ul=False; ulc=None
+                elif c == 4: ul = True
+                elif c == 24: ul = False
+                elif c == 59: ulc = None
                 elif c == 1: b = True
                 elif c == 2: d = True
                 elif c == 22: b = d = False
@@ -81,7 +98,7 @@ def parse(text):
                 prev = rows[-1][-1]
                 rows[-1][-1] = (prev[0] + s,) + prev[1:]
             else:
-                rows[-1].append((s, fg, bg, b, d, rv))
+                rows[-1].append((s, fg, bg, b, d, rv, (ulc or True) if ul else None))
     return rows
 
 def placeholder_extent(pic):
@@ -95,9 +112,13 @@ def main():
     if len(sys.argv) > 4: cols, nrows = int(sys.argv[3]), int(sys.argv[4])
     else: nrows = len(rows)
     DEFBG, DEFFG = (20,20,24), (220,220,225)
+    base = os.path.splitext(src)[0]
+    if os.path.exists(base + ".term"):
+        own = re.findall(r'#([0-9a-fA-F]{6})', open(base + ".term").read())
+        if len(own) >= 2:
+            DEFBG, DEFFG = (tuple(int(h[i:i+2], 16) for i in (0, 2, 4)) for h in own[:2])
     img = Image.new("RGB", (cols*CW, nrows*CH), DEFBG)
     dr = ImageDraw.Draw(img)
-    base = os.path.splitext(src)[0]
     imgdir = os.path.join(os.path.dirname(src), "img")
     cache = {}
     def picture(i):
@@ -107,7 +128,7 @@ def main():
         return cache[i]
     # pass 1: cell backgrounds
     for y, row in enumerate(rows[:nrows]):
-        for x, (ch, fg, bg, b, d, rv) in enumerate(row[:cols]):
+        for x, (ch, fg, bg, b, d, rv, ul) in enumerate(row[:cols]):
             f, g = fg or DEFFG, bg or DEFBG
             if rv: g = f
             dr.rectangle([x*CW, y*CH, x*CW+CW-1, y*CH+CH-1], fill=g)
@@ -122,11 +143,12 @@ def main():
     dr = ImageDraw.Draw(img)
     # pass 3: text, and placeholder cells showing their slice of a picture
     for y, row in enumerate(rows[:nrows]):
-        for x, (ch, fg, bg, b, d, rv) in enumerate(row[:cols]):
+        for x, (ch, fg, bg, b, d, rv, ul) in enumerate(row[:cols]):
             f, g = fg or DEFFG, bg or DEFBG
             if rv: f, g = g, f
             if d: f = tuple((a+c)//2 for a, c in zip(f, g))
             X, Y = x*CW, y*CH
+            if ul: dr.rectangle([X, Y+CH-3, X+CW-1, Y+CH-2], fill=f if ul is True else ul)
             if ch.startswith(chr(PH)):
                 marks = [DIAC.get(ord(c)) for c in ch[1:]]
                 if len(marks) >= 2 and fg:

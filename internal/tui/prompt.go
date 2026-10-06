@@ -229,6 +229,7 @@ func (m *Model) move(delta int) tea.Cmd {
 	}
 	m.skipHeaders(dir)
 	m.sel.clamp(len(m.results), m.resultsHeight())
+	m.browsed = true
 	return m.afterMove()
 }
 
@@ -250,7 +251,7 @@ func (m *Model) cmdNeedsFonts() bool {
 		return false
 	}
 	switch m.cmd.name {
-	case "font", "style", "download":
+	case "font", "style":
 		return true
 	}
 	return false
@@ -258,6 +259,7 @@ func (m *Model) cmdNeedsFonts() bool {
 
 // setPromptText replaces the prompt and recomputes.
 func (m *Model) setPromptText(text string) {
+	m.browsed = false
 	m.prompt.SetValue(text)
 	m.prompt.CursorEnd()
 	m.recompute()
@@ -323,6 +325,41 @@ func (m *Model) run() tea.Cmd {
 
 // updatePrompt handles keys while the prompt owns the keyboard.
 func (m *Model) updatePrompt(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.screen() == screenGallery {
+		// On the wall the arrows walk the cards, whatever has been typed.
+		switch msg.String() {
+		case "up", "ctrl+p":
+			return m, m.gridMove(0, -1)
+		case "down", "ctrl+n":
+			return m, m.gridMove(0, 1)
+		case "left":
+			return m, m.gridMove(-1, 0)
+		case "right":
+			return m, m.gridMove(1, 0)
+		case "pgup":
+			return m, m.gridMove(0, -m.galleryPage())
+		case "pgdown":
+			return m, m.gridMove(0, m.galleryPage())
+		case "home":
+			m.sel.cursor = 0
+			m.skipHeaders(1)
+			m.galAlign = true
+			return m, m.afterMove()
+		case "end":
+			m.sel.cursor = len(m.results) - 1
+			m.skipHeaders(-1)
+			return m, m.afterMove()
+		case "shift+up":
+			return m, m.gridJumpGroup(-1)
+		case "shift+down":
+			return m, m.gridJumpGroup(1)
+		case "ctrl+f":
+			m.toggleFavorite()
+			return m, nil
+		case "ctrl+t":
+			return m, m.tryHere()
+		}
+	}
 	switch msg.String() {
 	case "esc":
 		if m.prompt.Value() != "" {
@@ -362,10 +399,15 @@ func (m *Model) updatePrompt(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "pgdown":
 		return m, m.move(m.resultsHeight())
 	case "left", "right":
-		// On an empty prompt there is no text to move through, so the
-		// arrows walk the columns of the menu instead.
+		// On an empty prompt there is no text to move through. On a setting
+		// the arrows step it through its values; on any other line they walk
+		// the sections.
 		if m.prompt.Value() == "" && m.cmd == nil {
-			m.switchGroup(map[string]int{"left": -1, "right": 1}[msg.String()])
+			dir := map[string]int{"left": -1, "right": 1}[msg.String()]
+			if cmd, ok := m.adjustSelected(dir); ok {
+				return m, cmd
+			}
+			m.switchGroup(dir)
 			return m, nil
 		}
 	case "home":
@@ -403,6 +445,7 @@ func (m *Model) updatePrompt(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.prompt, cmd = m.prompt.Update(msg)
 	if text := m.prompt.Value(); text != m.lastText {
 		m.lastText = text
+		m.browsed = false
 		m.recompute()
 		m.renderStatus()
 		return m, tea.Batch(cmd, m.afterMove())
@@ -671,7 +714,7 @@ func (m *Model) installFonts(candidates []fontdl.FontDownload) tea.Cmd {
 	return func() tea.Msg {
 		var installed, failed []string
 		for _, candidate := range candidates {
-			if err := fontdl.Install(candidate, nil); err != nil {
+			if err := installFont(candidate, nil); err != nil {
 				failed = append(failed, candidate.Name)
 				continue
 			}
@@ -692,9 +735,9 @@ func (m *Model) finishInstall(msg installDoneMsg) tea.Cmd {
 	case len(msg.failed) > 0:
 		m.warn("Installed %d — %s failed", len(msg.installed), strings.Join(msg.failed, ", "))
 	case len(msg.installed) == 1:
-		m.info("Installed %s — type font and its name to use it", msg.installed[0])
+		m.info("Installed %s — it is in the list now; moving onto it tries it", msg.installed[0])
 	default:
-		m.info("Installed %d font families — type font to browse them", len(msg.installed))
+		m.info("Installed %d font families — they are in the list now", len(msg.installed))
 	}
 	m.fontsLoaded = false
 	return m.ensureFonts()

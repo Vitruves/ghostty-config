@@ -19,6 +19,7 @@ const (
 	hitGroup
 	hitPreview
 	hitButton
+	hitRail
 )
 
 type region struct {
@@ -120,6 +121,7 @@ func (m *Model) updateMouse(raw tea.MouseMsg) (tea.Model, tea.Cmd) {
 		}
 		m.sel.cursor = r.index
 		m.sel.clamp(len(m.results), m.resultsHeight())
+		m.browsed = true
 		cmd := m.afterMove()
 		if double {
 			return m, tea.Batch(cmd, m.run())
@@ -130,6 +132,12 @@ func (m *Model) updateMouse(raw tea.MouseMsg) (tea.Model, tea.Cmd) {
 			m.stopEdit()
 		}
 		m.setPromptText(title(r.name) + " ")
+		return m, m.afterMove()
+	case hitRail:
+		// A group of the wall: go to its first theme, its title at the top.
+		m.sel.cursor = r.index
+		m.skipHeaders(1)
+		m.galAlign = true
 		return m, m.afterMove()
 	case hitGroup:
 		if m.editing {
@@ -187,6 +195,9 @@ func (m *Model) wheel(msg mouseEv) (tea.Model, tea.Cmd) {
 	if m.editing {
 		m.moveEditSlot(delta)
 		return m, nil
+	}
+	if m.screen() == screenGallery {
+		return m, m.gridMove(0, delta)
 	}
 	return m, m.move(delta)
 }

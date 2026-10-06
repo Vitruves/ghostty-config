@@ -1,8 +1,10 @@
 # ghostty-config
 
-A terminal UI to set up [Ghostty](https://ghostty.org): themes, colours, fonts, window and input options. It edits your existing Ghostty config in place and runs in any terminal, as a palette in the bottom rows of the one you are in.
+A full-screen terminal UI to set up [Ghostty](https://ghostty.org): themes, fonts, window, input and session options, shaders. It edits your existing config in place and takes the colours of the terminal it runs in, light or dark.
 
-![Themes](img/themes.png)
+<p align="center">
+  <img src="img/themes.png" alt="The wall of themes in a dark terminal" width="900">
+</p>
 
 ## Install
 
@@ -10,9 +12,7 @@ A terminal UI to set up [Ghostty](https://ghostty.org): themes, colours, fonts, 
 go install github.com/vitruves/ghostty-config/cmd/ghostty-config@latest
 ```
 
-Building needs Go 1.26 (the Go command fetches it by itself if yours is older). The interface is written with [Bubble Tea v2](https://charm.land/bubbletea).
-
-Or from source:
+Or from source, with Go 1.26:
 
 ```bash
 git clone https://github.com/vitruves/ghostty-config.git
@@ -22,123 +22,64 @@ make build && make local-install
 
 ## Usage
 
-Run `ghostty-config`. A card opens in the bottom rows of your terminal: a prompt, six tabs (Themes, Fonts, Window, Input, Session, Tool), a list, and under it an explanation of the highlighted line. Pick a tab with the arrows or the mouse, or type a command's name.
+Run `ghostty-config`. Pick a section with `Tab`, move with the arrows, type to search or to run a command, apply with `Enter`. Browsing never changes your config: a theme is written when you press `Enter` on it, a setting when you choose its value.
 
 | Key | Action |
 | --- | --- |
-| `↑` `↓` | Move in the list |
-| `Tab` | Next tab, or complete the value being typed |
-| `Enter` | Open a command, or apply the highlighted value |
-| `Ctrl+X` | Delete the highlighted theme file, after asking |
-| `Esc` | Go back, then leave |
-| `F2` | Hide the palette to see the terminal behind it |
-| `F1` | Help |
-| `Ctrl+C` | Leave without writing anything |
+| `Tab` | Next section |
+| `←` `↓` `↑` `→` | Walk the wall of themes or a list; on a setting, `←` `→` change its value |
+| `Enter` | Apply the highlighted theme or value, or open a command |
+| `Ctrl+T` | Try the highlighted theme in this terminal, writing nothing |
+| `Ctrl+F` `Ctrl+X` | Star a theme; delete a theme file, after asking |
+| `F2` `F1` | Step aside to see the terminal; help |
+| `Esc` `Ctrl+C` | Go back, then leave; leave without writing anything |
 
-Browsing never changes your config or your terminal. A theme is written only when you press `Enter` on it, and then the terminal takes its colours at once; a setting is written when you choose its value.
+<p align="center">
+  <img src="img/themes-light.png" alt="The same wall in a light terminal" width="32%">
+  <img src="img/fonts.png" alt="Fonts, with the families that can be installed" width="32%">
+  <img src="img/window.png" alt="Window settings, with a picture of the window" width="32%">
+</p>
+<p align="center"><sub>A light terminal · Fonts · Window settings</sub></p>
 
-## Pictures
+## Sections
 
-In Ghostty and Kitty the highlighted theme is shown as a picture beside its details, drawn through the Kitty graphics protocol: a card with rounded corners and a soft shadow, a few lines of sample output in its own colours, its sixteen colours as one strip, and how readable it is. The text in the picture is set in Google Sans Code and Google Sans Flex, built into the program (SIL Open Font License, see `internal/kimg/fonts`), so it looks the same whatever font your terminal uses.
-
-![A theme card](img/picture-card.png)
-
-Elsewhere the details are drawn from cells as before. `-no-images` forces that, `-images` asks for the picture in a terminal that is not known to draw it, and nothing is drawn as a picture inside tmux or screen. To have the rest of the interface in the same typeface, `Download` offers Google Sans Code first and `Font` picks it.
-
-## Themes
-
-The `Collection` command installs 252 curated themes in 27 families. Each takes its structure from a named account of colour, so a theme's name tells you the logic behind it: moods (Focus, Calm, Warmth, Energy), historical colour theory (Goethe, Itten, Hering, Kobayashi, Birren, Luscher, Munsell), vision and sleep science (Scotopic, Circadian), and, new in this release, Plutchik's emotion wheel, the harmony rules taught in design schools (analogous, triadic, split-complement, 60-30-10…), Gestalt laws, Albers, Dutch and Swiss modernism, Japanese aesthetics, cognitive psychology (Stroop, Yerkes-Dodson, flow, Von Restorff), Jung's archetypes, Kandinsky and the art movements. Colour–mood links are mostly convention and several of these theories are historical rather than correct; what is checked is legibility: every theme clears WCAG AAA for body text and AA for every ANSI colour, and the test suite enforces it.
-
-| Command | |
+| Section | What it holds |
 | --- | --- |
-| `Theme` | Browse, with the highlighted theme shown beside its details; moving only looks, `Enter` applies. Typing a family name such as `Gestalt` lists that family |
-| `Favs` `Fav` | Starred themes |
-| `New` `Random` | Generate a theme from a harmony rule |
-| `Edit` | Change a colour: brightness, hue, saturation, lightness, or a hex |
-| `Save` `Fork` `Undo` | Manage your own themes |
-| `Delete` | Pick a theme file to delete from your themes directory, or `collection` to remove every installed collection theme; in any theme list `Ctrl+X` deletes the highlighted one. Always asks first; bundled themes are never touched |
+| Themes | Every theme as a card, grouped by family and running from dark to light. 252 curated themes in 27 families, all checked for contrast. Create, edit, save and delete your own |
+| Fonts | Family, style, size, spacing, ligatures. Families that are not installed yet are listed under the others: `Enter` downloads one from Nerd Fonts |
+| Window | Presets, title bar, opacity, blur, padding, beside a picture of the window as the settings draw it |
+| Input | Cursor, clipboard, mouse, Option as Alt |
+| Session | Scrollback, closing, notifications, restoring windows |
+| Extensions | Shaders and packs of themes (Catppuccin, Rosé Pine), downloaded for you. Source and licence are shown before anything is installed |
+| Tool | Reload, the interface's own colours, config lines that override the theme, backup, paths |
 
-## Fonts
+## Good to know
 
-| Command | |
-| --- | --- |
-| `Font` `Style` `Size` | Family, style and size |
-| `Download` | Install a Nerd Font |
-| `Lineheight` `Cellwidth` `Ligatures` | Line spacing, letter spacing, ligatures |
-| `Thicken` `Thickness` `Faint` | Stroke weight (macOS), strength of it, how dim `dim` text is drawn |
-
-## Window
-
-![Window](img/window.png)
-
-| Command | |
-| --- | --- |
-| `Preset` | Nine bundles in one go: `default` `glass` `minimal` `focus` `compact` `reading` `presentation` `power` `careful`. The panel lists each setting that would change, with what it does |
-| `Titlebar` `Shadow` | Title bar style and window shadow |
-| `Opacity` `Blur` | Transparency |
-| `Paddingx` `Paddingy` `Balance` `Paddingcolor` | Padding |
-| `Windowtheme` `Colorspace` `Contrast` | Window chrome, colour space, minimum contrast |
-| `Splitopacity` `Opaquecells` | Fade unfocused splits, translucent coloured cells |
-
-## Input
-
-| Command | |
-| --- | --- |
-| `Cursor` `Blink` `Cursoropacity` | Cursor shape, blinking, opacity |
-| `Copy` `Clearselect` `Trimspaces` `Pasteguard` | Copy on select, selection and clipboard hygiene, paste protection |
-| `Clicktomove` `Hidemouse` `Focusmouse` | Mouse behaviour |
-| `Optionalt` | Option as Alt (macOS) |
-| `Scrollbar` | Scrollbar visibility |
-
-## Session
-
-| Command | |
-| --- | --- |
-| `Scrollback` | Scrollback size |
-| `Confirmclose` `Quitlast` | Closing behaviour |
-| `Notify` | Notification when a long command ends (Ghostty 1.3) |
-| `Inheritcwd` `Resizeoverlay` | New windows start where you are; resize popup |
-| `Savestate` `Stepresize` | Restore windows, resize in whole cells (macOS) |
-| `Tabbar` | Tab bar visibility (Linux) |
-
-## Tool
-
-| Command | |
-| --- | --- |
-| `Reload` `Autoreload` | Reload Ghostty |
-| `Interface` | Colours of the tool itself: `midnight` (near-black, the default, the same in every terminal whatever its theme), `graphite`, `paper`, `theme` to follow the theme being browsed, or `clear` to take the terminal's own background |
-| `Overrides` | Disable config lines that override the theme |
-| `Collection` | Install the 252 extra themes |
-| `Backup` `Paths` | Back up the config, show file locations |
+- **Light or dark.** The interface asks the terminal for its colours and follows it when they change. `Interface`, in Tool, offers fixed schemes instead.
+- **Pictures.** In Ghostty and Kitty the cards are images, drawn through the Kitty graphics protocol. Elsewhere, and inside tmux or screen, they are drawn from cells. `-no-images` and `-images` force one or the other.
+- **Shaders.** One at a time. Where the tool can reload Ghostty, it asks whether to keep a shader it has just switched on and puts the config back after ten seconds without an answer, since a shader that fails can leave the window unreadable.
+- **Your files.** The tool reads the files Ghostty reads and rewrites a setting on the line where it is defined; comments and other lines are left alone. Each file is backed up to `~/.config/ghostty-config/backups/` before its first change.
+- **Network.** Used only for the downloads you ask for and, at most once a day, to check for a newer release. `-no-update-check` turns that off.
+- **Reload.** Ghostty has no reload command. On macOS the tool sends it the reload shortcut, which needs the Accessibility permission; elsewhere, reload Ghostty yourself.
 
 ## Options
 
 ```
 -config file            edit this file instead of the default config
 -themes dir             user themes directory
--export-collection dir  write the 252 extra themes to a directory and exit
+-export-collection dir  write the 252 curated themes to a directory and exit
 -no-reload              never ask Ghostty to reload
--no-images              never show the highlighted theme as a picture
--images                 show it as a picture even where the terminal is not known to draw it
+-no-images              never draw pictures: the wall of themes is made of cells
+-images                 draw pictures even where the terminal is not known to show them
 -plain                  use only glyphs that every terminal can draw
 -paths                  print the files that are read and written
 -no-update-check        never look for a newer release on GitHub
 -version                print the version
 ```
 
-## Config files
-
-The tool reads the same files as Ghostty, in the same order: `config` and `config.ghostty` in `~/.config/ghostty/`, then on macOS the same names in `~/Library/Application Support/com.mitchellh.ghostty/`, then any file included with `config-file`. A setting is rewritten on the line where it is currently defined. Comments and other lines are left untouched.
-
-Each file is backed up to `~/.config/ghostty-config/backups/` before its first change. Themes you save go to `~/.config/ghostty/themes/`.
-
-At most once a day, the tool asks GitHub in the background whether a newer release exists and tells you on exit. It never delays startup, stays silent offline, and downloads nothing. Use `-no-update-check` to turn it off.
-
-Ghostty has no reload command. On macOS the tool sends the reload shortcut to Ghostty, which requires the Accessibility permission. Elsewhere, reload Ghostty yourself after a change.
-
 ## Credits
 
-Thanks to Mitchell Hashimoto and the contributors of [Ghostty](https://github.com/ghostty-org/ghostty) for the terminal.
+Thanks to Mitchell Hashimoto and the contributors of [Ghostty](https://github.com/ghostty-org/ghostty) for the terminal. Shaders come from [KroneCorylus/ghostty-shader-playground](https://github.com/KroneCorylus/ghostty-shader-playground) and [0xhckr/ghostty-shaders](https://github.com/0xhckr/ghostty-shaders).
 
 ## License
 

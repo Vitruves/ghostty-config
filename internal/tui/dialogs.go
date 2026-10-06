@@ -13,6 +13,7 @@ func (m *Model) openConfirm(text string, yes func(*Model) tea.Cmd) {
 	m.confirmText = text
 	m.confirmYes = yes
 	m.confirmNo = nil
+	m.confirmEsc = nil
 	m.overlay = overlayConfirm
 }
 
@@ -50,6 +51,9 @@ func (m *Model) updateOverlay(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			}
 		case "esc", "q":
 			m.overlay = overlayNone
+			if m.confirmEsc != nil {
+				return m, m.confirmEsc(m)
+			}
 		}
 	}
 	return m, nil
@@ -57,7 +61,7 @@ func (m *Model) updateOverlay(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 // viewOverlay draws the open dialog centred over the screen.
 func (m *Model) viewOverlay(body string) string {
-	c := m.panelChrome()
+	c := m.dialogChrome()
 	var lines []string
 	title, width := "", 0
 	switch m.overlay {
@@ -84,8 +88,8 @@ func (m *Model) viewOverlay(body string) string {
 		width = m.width - 2
 	}
 	box := m.card(title, "", lines, width)
-	// The card adds a border row, a title and a rule above the lines, and a
-	// border column to the left.
+	// The card adds a row of air, a title and another row of air above the
+	// lines, and a column to the left.
 	top := (m.height - (len(lines) + 5)) / 2
 	left := (m.width-(width+2))/2 + 1
 	for i := range m.regions {
@@ -99,7 +103,7 @@ func (m *Model) viewOverlay(body string) string {
 
 // confirmButtons renders Yes / No and registers them relative to the box.
 func (m *Model) confirmButtons(row int) string {
-	c := m.panelChrome()
+	c := m.dialogChrome()
 	yes := " y  yes "
 	no := " n  no "
 	m.addRegion(3, row, lipgloss.Width(yes)+2, 1, hitButton, 0, "confirm-yes")
@@ -110,6 +114,7 @@ func (m *Model) confirmButtons(row int) string {
 // overlayCentered composes a dialog over the body by replacing the rows it
 // covers, so the screen behind stays visible around it.
 func overlayCentered(m *Model, body, box string) string {
+	ui := m.panelChrome()
 	bodyLines := strings.Split(body, "\n")
 	boxLines := strings.Split(box, "\n")
 	boxW := lipgloss.Width(boxLines[0])
@@ -126,7 +131,7 @@ func overlayCentered(m *Model, body, box string) string {
 		if row >= len(bodyLines) {
 			break
 		}
-		orig := m.c.fill(bodyLines[row], m.width)
+		orig := ui.fill(bodyLines[row], m.width)
 		bodyLines[row] = truncateExact(orig, left) + bl + dropLeft(orig, left+boxW)
 	}
 	return strings.Join(bodyLines, "\n")
@@ -157,7 +162,7 @@ func wrapLines(text string, width int, style lipgloss.Style) []string {
 
 // viewHelp shows the keyboard reference and the command list.
 func (m *Model) viewHelp() string {
-	c := m.panelChrome()
+	c := m.dialogChrome()
 	group := func(title string, pairs ...string) []string {
 		lines := []string{c.bold(c.accent).Render(" " + title)}
 		for i := 0; i+1 < len(pairs); i += 2 {
@@ -166,13 +171,14 @@ func (m *Model) viewHelp() string {
 		return append(lines, "")
 	}
 	left := concat(
-		group("The palette", "type", "A command, then its argument", "↑ ↓", "Walk the list", "Enter", "Open, or apply the line", "Tab", "Next group, or complete", "Esc", "Back; on an empty prompt, leave", "Ctrl+X", "Delete the highlighted theme file", "F2", "Hide the palette to look", "⇧↑ ⇧↓", "Scroll the explanation", "Ctrl+C", "Leave, writing nothing", "F1", "This help"),
+		group("Everywhere", "type", "A command, then its argument", "↑ ↓", "Walk the list", "Enter", "Open, or apply the line", "Tab", "Next section, or complete", "Esc", "Back; on an empty prompt, leave", "F2", "Step aside to see the terminal", "⇧↑ ⇧↓", "Scroll the explanation", "Ctrl+C", "Leave, writing nothing", "F1", "This help"),
+		group("The wall of themes", "← ↓ ↑ →", "Walk the cards", "⇧↑ ⇧↓", "Previous, next group", "Enter", "Apply the highlighted theme", "Ctrl+T", "Try it in this terminal", "Ctrl+F", "Star or unstar it", "Ctrl+X", "Delete its file, after asking"),
 		group("Slot editor", "← →", "Brighten / darken", "⇧← ⇧→", "Rotate hue", "- +", "Saturation", "[ ]", "Lightness", "hex digits", "Type an exact value", "⌫", "Clear an optional slot", "u", "Undo this slot", "↑ ↓", "Next slot", "Esc", "Back to the prompt"),
 	)
 	var right []string
 	right = append(right, c.bold(c.accent).Render(" Commands"), c.mutedS().Render("  type one, then Enter; Tab completes"), "")
-	for i, g := range groups {
-		right = append(right, "  "+c.bold(groupColour(c, i)).Render(g))
+	for _, g := range groups {
+		right = append(right, "  "+c.bold(c.fg).Render(g))
 		var names []string
 		for _, cmd := range m.commands() {
 			if cmd.group == g {
@@ -202,7 +208,7 @@ func (m *Model) viewHelp() string {
 		lines = lines[:maxInt(1, m.height-4)]
 	}
 	box := m.card("Keys and commands", "any key closes", lines, width)
-	return overlayCentered(m, m.viewMainBackdrop(), box)
+	return overlayCentered(m, m.viewMain(), box)
 }
 
 func concat(groups ...[]string) []string {
@@ -213,21 +219,20 @@ func concat(groups ...[]string) []string {
 	return out
 }
 
-// viewWelcome fills the screen with the introduction, drawn in the palette
-// that is already live.
+// viewWelcome fills the screen with the introduction, drawn in the colours
+// the interface already wears.
 func (m *Model) viewWelcome() string {
 	c := m.panelChrome()
 	features := [][3]string{
-		{"Theme rose", "Browse themes", "every match is listed, the highlighted one shown beside its details; Enter applies"},
-		{"edit red", "Tune a colour", "brightness, hue, saturation, lightness, or type a hex"},
-		{"new triadic", "Create a theme", "from a harmony rule; light, dark, or seeded from a colour"},
-		{"font jet", "Pick a font", "only families Ghostty can load; style and size the same way"},
-		{"size 14", "Font size", "half points allowed"},
-		{"preset glass", "Window and more", "presets, title bar, opacity, blur, padding; then Input and Session"},
-		{"save mine", "Keep your edits", "into ~/.config/ghostty/themes, never over a bundled theme"},
+		{"← ↓ ↑ →", "The wall of themes", "every theme is a card, grouped by family, dark to light; Enter applies"},
+		{"type", "Search, or a command", "catp finds a theme; edit red, new triadic and save mine are commands"},
+		{"Tab", "The sections", "Themes, Fonts, Window, Input, Session, Extensions, Tool"},
+		{"← →", "Change a setting", "where it is listed; Enter shows every value and what it means"},
+		{"font", "Pick or install a font", "the families Ghostty can load, and under them the ones to download"},
+		{"shader", "Extensions", "shaders and packs of themes, fetched and switched on for you"},
 		{"", "", ""},
-		{"↑ ↓ Enter", "The list", "walk it, apply the highlighted line; clicks work too"},
-		{"Esc", "Back", "to the groups, and from there out; leaving applies nothing"},
+		{"Ctrl+T", "Try a theme here", "paints this terminal and writes nothing; F2 steps aside to look"},
+		{"Esc", "Back", "to the section's list, and from there out; leaving applies nothing"},
 		{"F1", "All keys", "and the full list of commands"},
 	}
 	var lines []string
@@ -245,7 +250,7 @@ func (m *Model) viewWelcome() string {
 	}
 	add(center(c.bold(c.accent).Render("g h o s t t y   c o n f i g")))
 	add(center(c.faintS().Render(strings.Repeat("─", 30))))
-	add(center(c.mutedS().Render("one prompt for themes, fonts and the window, previewed where you use them")))
+	add(center(c.mutedS().Render("themes, fonts, the window and extensions for Ghostty, in your terminal's own colours")))
 	add("")
 	if m.cur != nil {
 		for _, from := range []int{0, 8} {

@@ -1,6 +1,7 @@
 package tui
 
 import (
+	stdcolor "image/color"
 	"os"
 	"path/filepath"
 	"strings"
@@ -8,6 +9,8 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
+
+	"github.com/vitruves/ghostty-config/internal/color"
 )
 
 func imageHarness(t *testing.T, config string, w, hgt int) (*harness, *strings.Builder) {
@@ -60,21 +63,57 @@ func TestThemeDetailsShowAPictureWhenTheTerminalCan(t *testing.T) {
 	}
 }
 
-// TestPaletteFrames draws the palette in its default interface, for a look
-// with tools/shot.sh.
+// TestPaletteFrames draws the screens in the default interface, in a dark
+// terminal and in a light one, for a look with tools/shot.sh.
 func TestPaletteFrames(t *testing.T) {
-	h, _ := imageHarness(t, "theme = dusk-synth\n", 130, 38)
+	for i, term := range []struct{ name, theme string }{{"dark", "sumi-ink"}, {"light", "neue-grafik"}} {
+		h, _ := imageHarness(t, "theme = "+term.theme+"\n", 124, 38)
+		h.m.state.Interface = ""
+		// The two runs dump their pictures into one directory: keep their
+		// numbers apart.
+		h.m.imgs.next += uint32(i) * 0x4000
+		// The terminal runs the theme its config names, and says so.
+		applied, _ := h.m.lib.Get(term.theme)
+		bg, _ := color.ParseHex(applied.Background())
+		fg, _ := color.ParseHex(applied.Foreground())
+		h.send(tea.BackgroundColorMsg{Color: stdcolor.RGBA{R: uint8(bg.R), G: uint8(bg.G), B: uint8(bg.B), A: 0xff}})
+		h.send(tea.ForegroundColorMsg{Color: stdcolor.RGBA{R: uint8(fg.R), G: uint8(fg.G), B: uint8(fg.B), A: 0xff}})
+
+		h.m.setPromptText("Theme ")
+		h.key("right", "down")
+		h.dump(term.name + "-1-wall")
+		h.m.setPromptText("Theme catp")
+		h.dump(term.name + "-2-search")
+		h.m.setPromptText("")
+		h.m.group = 2
+		h.m.recompute()
+		h.key("down", "down", "down")
+		h.dump(term.name + "-3-window")
+		h.m.setPromptText("Preset glass")
+		h.key("enter", "esc")
+		h.m.setPromptText("Titlebar ")
+		h.key("down")
+		h.dump(term.name + "-4-titlebar")
+		h.m.setPromptText("Font ")
+		h.dump(term.name + "-5-font")
+		h.m.setPromptText("Shader ")
+		h.key("down", "down")
+		h.dump(term.name + "-9-shader")
+		h.m.setPromptText("Edit blue")
+		h.key("enter")
+		h.dump(term.name + "-6-edit")
+		h.key("right", "esc", "esc", "esc")
+		h.dump(term.name + "-7-confirm")
+		h.key("esc")
+		h.send(keyPress("f1"))
+		h.dump(term.name + "-8-help")
+	}
+	// The same wall where the terminal draws no pictures.
+	h := newHarness(t, "theme = sumi-ink\n")
 	h.m.state.Interface = ""
+	h.send(tea.WindowSizeMsg{Width: 124, Height: 38})
 	h.m.setPromptText("Theme ")
-	h.key("down", "down")
-	h.dump("pal-theme")
-	h.m.setPromptText("")
-	h.m.group = 2
-	h.m.recompute()
-	h.dump("pal-window")
-	h.m.setPromptText("Preset glass")
-	h.dump("pal-preset")
-	h.m.setPromptText("Edit blue")
-	h.key("enter")
-	h.dump("pal-edit")
+	h.dump("cells-1-wall")
+	h.send(tea.WindowSizeMsg{Width: 80, Height: 24})
+	h.dump("cells-2-narrow")
 }

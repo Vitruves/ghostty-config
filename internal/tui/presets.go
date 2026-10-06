@@ -147,7 +147,7 @@ func presetCommand() *command {
 			}
 			lines = append(lines, c.mutedS().Render(fmt.Sprintf("Enter changes %d setting(s):", len(changes))))
 			for _, ch := range changes {
-				lines = append(lines, truncate(c.bold(c.fg).Render(pad(ch[0], 26))+c.mutedS().Render(ch[1]+" → ")+valueStyle(c, ch[2]).Bold(true).Render(ch[2]), width))
+				lines = append(lines, truncate(c.bold(c.fg).Render(pad(ch[0], 26))+c.mutedS().Render(ch[1]+" → ")+settingValueStyle(c, ch[2]).Bold(true).Render(ch[2]), width))
 				lines = append(lines, para(c.mutedS(), "  "+ch[3]+".", width)...)
 			}
 			return lines

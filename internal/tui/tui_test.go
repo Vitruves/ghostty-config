@@ -1,6 +1,7 @@
 package tui
 
 import (
+	stdcolor "image/color"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -10,10 +11,13 @@ import (
 	"time"
 
 	tea "charm.land/bubbletea/v2"
+	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/vitruves/ghostty-config/internal/collection"
 	"github.com/vitruves/ghostty-config/internal/color"
+	"github.com/vitruves/ghostty-config/internal/extensions"
+	"github.com/vitruves/ghostty-config/internal/fontdl"
 	"github.com/vitruves/ghostty-config/internal/ghostty"
 )
 
@@ -60,8 +64,8 @@ func newHarnessWith(t *testing.T, config string, opts Options) *harness {
 	lib := ghostty.LoadLibrary(paths)
 	state := ghostty.LoadState(paths)
 	state.Welcomed = true
-	// Most tests were written for the clear interface, whose rounded frame
-	// and unpainted ground they look for; midnight has its own tests.
+	// Most tests were written for the clear interface, which follows the
+	// theme being shown and paints no ground; the others have their own tests.
 	state.Interface = "clear"
 	writeDebounce = time.Millisecond
 	// Tests have no terminal to detect: draw in full colour, rounded.
@@ -180,6 +184,9 @@ func (h *harness) dump(name string) {
 	os.MkdirAll(dir, 0o755)
 	os.WriteFile(filepath.Join(dir, name+".txt"), []byte(h.view()), 0o644)
 	os.WriteFile(filepath.Join(dir, name+".ansi"), []byte(h.m.render()), 0o644)
+	// What the terminal's own colours are, for the cells that paint none.
+	ui := h.m.panelChrome()
+	os.WriteFile(filepath.Join(dir, name+".term"), []byte(ui.bg+" "+ui.fg), 0o644)
 }
 
 func (h *harness) config() string {
@@ -187,8 +194,7 @@ func (h *harness) config() string {
 	return string(data)
 }
 
-// click presses at a cell of the editor; the terminal reports it counted
-// from the top of the screen, and the editor sits in the bottom rows.
+// click presses at a cell of the editor, which takes the whole screen.
 func (h *harness) click(x, y int) {
 	h.send(tea.MouseClickMsg{X: x, Y: y + h.m.top, Button: tea.MouseLeft})
 }
@@ -213,17 +219,19 @@ func TestPaletteReachesEveryCommandAtTheUsersWindowSize(t *testing.T) {
 			t.Fatalf("palette lacks %q:\n%s", want, v)
 		}
 	}
-	// The highlighted command is described in full, never cut.
-	if !strings.Contains(v, "Theme <name>") || !strings.Contains(v, "Enter applies the highlighted one.") {
+	// The highlighted command is described in full beside the list, wrapped
+	// rather than cut.
+	if !strings.Contains(v, "Theme <name>") || !strings.Contains(v, "Browse themes; moving only looks") || !strings.Contains(v, "highlighted one.") {
 		t.Fatalf("the highlighted command should be described in full:\n%s", v)
 	}
-	// Around the palette is the user's own terminal: nothing is drawn there.
-	if strings.Contains(v, "user@host") {
-		t.Fatalf("no terminal sample is drawn around the palette:\n%s", v)
+	// Nothing is framed: no box is drawn round the list, the explanation or
+	// the screen.
+	if strings.ContainsAny(v, "╭╮╰╯│┌┐└┘") {
+		t.Fatalf("the screen draws no frames:\n%s", v)
 	}
 	lines := strings.Split(v, "\n")
-	if len(lines) != InlineHeight(28) {
-		t.Fatalf("view should fill the bottom rows it takes: %d lines", len(lines))
+	if len(lines) != 28 {
+		t.Fatalf("view should fill the terminal: %d lines", len(lines))
 	}
 	for i, l := range lines {
 		if w := ansi.StringWidth(l); w != 105 {
@@ -273,20 +281,21 @@ func TestPaletteReachesEveryCommandAtTheUsersWindowSize(t *testing.T) {
 		t.Fatal("pad is ambiguous and should keep the menu")
 	}
 	v = h.view()
-	if !strings.Contains(v, "Paddingx") || !strings.Contains(v, "Paddingcolor") || !strings.Contains(v, "all groups") || strings.Contains(v, "Autoreload") {
+	if !strings.Contains(v, "Paddingx") || !strings.Contains(v, "Paddingcolor") || !strings.Contains(v, "all sections") || strings.Contains(v, "Autoreload") {
 		t.Fatalf("typing should search the commands:\n%s", v)
 	}
 	h.dump("03-search")
 	h.key("esc")
 
-	// F2 hides the palette to look at the terminal alone.
+	// F2 steps aside to show the terminal alone: one line is left, and the
+	// alternate screen is given up while it lasts.
 	h.send(keyPress("f2"))
-	if strings.Contains(h.view(), "╭") || !strings.Contains(h.view(), "brings the palette back") {
+	if strings.Contains(h.view(), "Themes") || !strings.Contains(h.view(), "brings ghostty-config back") || h.m.View().AltScreen {
 		t.Fatalf("F2 should leave only the terminal:\n%s", h.view())
 	}
 	h.key("x")
-	if !strings.Contains(h.view(), "╭") {
-		t.Fatal("any key should bring the palette back")
+	if !strings.Contains(h.view(), "Themes") || !h.m.View().AltScreen {
+		t.Fatal("any key should bring the editor back")
 	}
 }
 
@@ -303,7 +312,9 @@ func TestOpensOnTheThemesWithTheirColours(t *testing.T) {
 		t.Fatalf("the applied theme should be highlighted, on %+v", o)
 	}
 	v := h.view()
-	for _, want := range []string{"╭", "╮", "╰", "╯", "normal", "bright", "#282a36", "█"} {
+	// The wall: its groups, the cards with their specimen and their sixteen
+	// colours, and the applied theme marked.
+	for _, want := range []string{"Bundled", "Dracula", "Aa", "▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄", "applied", "This is the configured theme."} {
 		if !strings.Contains(v, want) {
 			t.Fatalf("opening view lacks %q:\n%s", want, v)
 		}
@@ -550,7 +561,7 @@ func TestLookingNeverChangesTheConfig(t *testing.T) {
 	}
 
 	// Browsing then leaving writes nothing.
-	h.key("down", "down", "down")
+	h.key("up", "left", "up")
 	if h.m.cur.Name == "Dracula" {
 		t.Fatal("moving should preview another theme")
 	}
@@ -605,14 +616,15 @@ func TestInterfaceHasItsOwnColoursAndRampsLineUp(t *testing.T) {
 	if paper == "" {
 		t.Fatal("could not work out how the interface background is encoded")
 	}
-	// By default nothing paints a background: the palette sits on the
-	// terminal's own, so the frame around it can be round.
+	// The clear interface paints no background behind its text: the screen
+	// sits on the terminal's own, and nothing is framed.
 	painted := regexp.MustCompile(`[\[;]48;`)
-	if painted.MatchString(strings.Split(h.m.render(), "\n")[1]) || h.m.panelChrome().paint() != "" || !strings.Contains(h.view(), "╭") || !strings.Contains(h.view(), "╯") {
-		t.Fatalf("the clear palette paints no background and has a rounded frame:\n%s", h.view())
+	rows := strings.Split(h.m.render(), "\n")
+	if painted.MatchString(rows[0]) || painted.MatchString(rows[len(rows)-1]) || h.m.panelChrome().paint() != "" || strings.ContainsAny(h.view(), "╭╮╰╯│") {
+		t.Fatalf("the clear interface paints no background and draws no frame:\n%s", h.view())
 	}
-	if len(strings.Split(h.m.render(), "\n")) != InlineHeight(28) || h.m.top != 28-InlineHeight(28) {
-		t.Fatal("the editor draws in the bottom rows only")
+	if len(rows) != 28 || h.m.top != 0 {
+		t.Fatal("the editor takes the whole terminal")
 	}
 	h.send(keyPress("f2"))
 	h.key("x")
@@ -628,29 +640,23 @@ func TestInterfaceHasItsOwnColoursAndRampsLineUp(t *testing.T) {
 		t.Fatal("a light palette over a dark theme is the point of paper")
 	}
 	ui := h.m.panelChrome()
-	if color.Contrast(ui.border, ui.bg) < 2.5 || color.Contrast(ui.border, h.m.cur.Background()) < 2.5 {
-		t.Fatalf("the border %s should stand out from the card and from the terminal", ui.border)
+	if color.Contrast(ui.muted, ui.bg) < 4.5 || color.Contrast(ui.accent, ui.bg) < 4.5 {
+		t.Fatalf("quiet text %s and the accent %s must stay readable on %s", ui.muted, ui.accent, ui.bg)
 	}
-	// Every ramp starts in the same column, whatever the row says after it.
-	column := -1
-	rows := 0
-	for _, l := range strings.Split(h.view(), "\n") {
-		if !strings.Contains(l, " dark ") && !strings.Contains(l, " light ") {
-			continue
+	// The wall is a grid: every card of a row starts where the one above it
+	// does, and a row holds as many cards as the window is wide.
+	h.key("home")
+	h.m.render()
+	columns := map[int]bool{}
+	cards := 0
+	for _, r := range h.m.regions {
+		if r.kind == hitResult && r.w == tileW {
+			columns[r.x] = true
+			cards++
 		}
-		i := strings.Index(l, "████████████████")
-		if i < 0 {
-			continue
-		}
-		at := ansi.StringWidth(l[:i])
-		if column >= 0 && at != column {
-			t.Fatalf("ramps are not aligned: column %d and %d\n%s", column, at, h.view())
-		}
-		column = at
-		rows++
 	}
-	if rows < 8 {
-		t.Fatalf("expected a long list of themes, saw %d rows:\n%s", rows, h.view())
+	if want := h.m.layout().cols; cards < 8 || len(columns) != want {
+		t.Fatalf("expected a wall of cards in %d columns, saw %d cards in %d:\n%s", want, cards, len(columns), h.view())
 	}
 	h.dump("13-theme-list")
 	h.key("esc")
@@ -700,7 +706,7 @@ func TestRunsInAnyTerminal(t *testing.T) {
 	h.send(tea.WindowSizeMsg{Width: 105, Height: 28})
 	h.typeText("theme ")
 	raw := h.m.render()
-	if strings.ContainsAny(raw, "\ue0b6\ue0b4"+cornerTL+cornerTR+cornerBL+cornerBR+bandTop+bandBot) {
+	if strings.ContainsAny(raw, "\ue0b6\ue0b4") {
 		t.Fatal("glyphs the terminal may not have must not be drawn")
 	}
 	for i, l := range strings.Split(ansi.Strip(raw), "\n") {
@@ -710,7 +716,10 @@ func TestRunsInAnyTerminal(t *testing.T) {
 	}
 	// Every cell is painted: after a reset the colours are set again before
 	// anything is drawn, so nothing ever shows the terminal's own background.
-	const reset = "\x1b[0m"
+	const reset = "\x1b[m"
+	if !strings.Contains(raw, reset) || strings.Contains(raw, "\x1b[0m") {
+		t.Fatal("the test looks for the reset the styles write, and it is not the one in the frame")
+	}
 	for i, l := range strings.Split(raw, "\n") {
 		rest := l
 		for {
@@ -826,14 +835,11 @@ func TestCtrlXDeletesTheHighlightedTheme(t *testing.T) {
 	}
 }
 
-// The default interface is a card of its own colours: browsing another
-// theme, light or dark, must not change them.
-func TestMidnightIsTheDefaultAndIgnoresTheTheme(t *testing.T) {
+// The midnight interface has colours of its own: browsing another theme,
+// light or dark, must not change them.
+func TestMidnightIgnoresTheTheme(t *testing.T) {
 	h := newHarness(t, "theme = Dracula\n")
-	h.m.state.Interface = ""
-	if h.m.interfaceName() != "midnight" {
-		t.Fatalf("the default interface should be midnight, is %s", h.m.interfaceName())
-	}
+	h.m.state.Interface = "midnight"
 	before := h.m.panelChrome()
 	light, ok := h.m.lib.Get("swiss-grid")
 	if !ok {
@@ -849,5 +855,351 @@ func TestMidnightIsTheDefaultAndIgnoresTheTheme(t *testing.T) {
 		if w := ansi.StringWidth(l); w != h.m.width {
 			t.Fatalf("line %d is %d cells wide, want %d", i, w, h.m.width)
 		}
+	}
+}
+
+// The default interface has no colours of its own. It takes the terminal's,
+// so the same screen reads in a light terminal and in a dark one, paints no
+// ground of its own, and changes when the terminal does.
+func TestAutoFollowsTheTerminalLightOrDark(t *testing.T) {
+	h := newHarness(t, "theme = Dracula\n")
+	h.m.state.Interface = ""
+	if h.m.interfaceName() != "auto" {
+		t.Fatalf("the default interface should be auto, is %s", h.m.interfaceName())
+	}
+	// Until the terminal answers, the configured theme stands in for it.
+	if ui := h.m.panelChrome(); ui.bg != "#282a36" || !ui.clear {
+		t.Fatalf("before the terminal answers, the ground is the applied theme's, unpainted: %+v", ui)
+	}
+	check := func(what string) {
+		t.Helper()
+		ui := h.m.panelChrome()
+		for name, hex := range map[string]string{"text": ui.fg, "quiet text": ui.muted, "accent": ui.accent, "ok": ui.ok, "warning": ui.warn, "danger": ui.danger} {
+			if r := color.Contrast(hex, ui.bg); r < 4.5 {
+				t.Errorf("%s: %s %s reads at %.1f:1 on %s", what, name, hex, r, ui.bg)
+			}
+		}
+		if r := color.Contrast(ui.selFg, ui.selBg); r < 4.5 {
+			t.Errorf("%s: the highlighted row reads at %.1f:1", what, r)
+		}
+		if regexp.MustCompile(`[\[;]48;`).MatchString(strings.Split(h.m.render(), "\n")[2]) {
+			t.Errorf("%s: an empty row paints a background", what)
+		}
+	}
+	h.send(tea.BackgroundColorMsg{Color: stdcolor.RGBA{R: 0xf4, G: 0xf5, B: 0xf7, A: 0xff}})
+	h.send(tea.ForegroundColorMsg{Color: stdcolor.RGBA{R: 0x1d, G: 0x21, B: 0x25, A: 0xff}})
+	if ui := h.m.panelChrome(); ui.bg != "#f4f5f7" || ui.fg != "#1d2125" || color.IsDark(ui.bg) {
+		t.Fatalf("a light terminal should give a light interface: %+v", ui)
+	}
+	check("light terminal")
+	h.typeText("theme ")
+	check("light terminal, wall of themes")
+	h.send(tea.BackgroundColorMsg{Color: stdcolor.RGBA{R: 0x0e, G: 0x0f, B: 0x11, A: 0xff}})
+	h.send(tea.ForegroundColorMsg{Color: stdcolor.RGBA{R: 0xd8, G: 0xda, B: 0xdf, A: 0xff}})
+	if !color.IsDark(h.m.panelChrome().bg) {
+		t.Fatal("a dark terminal should give a dark interface")
+	}
+	check("dark terminal")
+	// A terminal that says its scheme changed is asked for its colours again.
+	if _, cmd := h.m.Update(uv.LightColorSchemeEvent{}); cmd == nil {
+		t.Fatal("a change of scheme should ask the terminal for its colours")
+	}
+}
+
+// The wall is walked in two dimensions, group after group, and a click on a
+// group in the left column goes to it.
+func TestWallIsWalkedInTwoDimensions(t *testing.T) {
+	h := newHarness(t, "theme = Dracula\n")
+	h.typeText("theme ")
+	cols := h.m.layout().cols
+	if cols < 3 {
+		t.Fatalf("a window 130 wide should hold several cards per row, holds %d", cols)
+	}
+	h.key("home")
+	first := h.m.sel.cursor
+	if h.m.results[first].header || first != 1 {
+		t.Fatalf("home should land on the first card, under its title: %d", first)
+	}
+	h.key("right", "right")
+	if h.m.sel.cursor != first+2 {
+		t.Fatalf("right twice should move two cards on, at %d", h.m.sel.cursor)
+	}
+	h.key("down")
+	if h.m.sel.cursor != first+2+cols {
+		t.Fatalf("down should land on the card below, at %d want %d", h.m.sel.cursor, first+2+cols)
+	}
+	h.key("up", "left", "left")
+	if h.m.sel.cursor != first {
+		t.Fatalf("up and left twice should come back, at %d", h.m.sel.cursor)
+	}
+	// Shift+Down goes to the next group, and the group is marked beside the wall.
+	before := themeFamily(h.m.selected().theme)
+	h.key("shift+down")
+	after := themeFamily(h.m.selected().theme)
+	if after == before || !h.m.results[h.m.sel.cursor-1].header {
+		t.Fatalf("shift+down should land on the first card of the next group: %s then %s", before, after)
+	}
+	rail, ok := h.find(hitRail, -1, "Wabi-sabi")
+	if !ok {
+		t.Fatalf("the groups should be listed beside the wall:\n%s", h.view())
+	}
+	h.click(rail.x+1, rail.y)
+	if o := h.m.selected(); o == nil || themeFamily(o.theme) != "Wabi-sabi" {
+		t.Fatalf("a click on a group should go to it, on %+v", o)
+	}
+	if v := h.view(); !strings.Contains(v, "Wabi-sabi  10 themes, dark to light") {
+		t.Fatalf("the title of the group should be on screen:\n%s", v)
+	}
+	// A family name typed after the command lists that family alone.
+	h.key("esc")
+	h.typeText("theme gestalt")
+	n := 0
+	for _, o := range h.m.results {
+		if o.theme != nil {
+			n++
+			if themeFamily(o.theme) != "Gestalt" {
+				t.Fatalf("theme gestalt should list that family only, has %s", o.theme.Name)
+			}
+		}
+	}
+	if n != 10 {
+		t.Fatalf("Gestalt has ten themes, listed %d", n)
+	}
+	// Looking, all the while, wrote nothing.
+	if got := h.config(); got != "theme = Dracula\n" {
+		t.Fatalf("walking the wall must not write anything:\n%s", got)
+	}
+}
+
+// Installing a font is done where fonts are chosen: the families that can be
+// downloaded are listed under the installed ones, and Enter on one fetches it.
+func TestFontsAreInstalledWhereTheyAreChosen(t *testing.T) {
+	h := newHarness(t, "theme = Dracula\n")
+	var fetched []string
+	real := installFont
+	installFont = func(d fontdl.FontDownload, _ func(string)) error {
+		fetched = append(fetched, d.Name)
+		return nil
+	}
+	defer func() { installFont = real }()
+
+	for _, c := range h.m.commands() {
+		if c.name == "download" {
+			t.Fatal("installing a font is part of the font list, not a command of its own")
+		}
+	}
+	h.typeText("font ")
+	v := h.view()
+	for _, want := range []string{here(), "monospace first", "Not installed yet", "Enter installs one", "JetBrains Mono", "download"} {
+		if !strings.Contains(v, want) {
+			t.Fatalf("the font list lacks %q:\n%s", want, v)
+		}
+	}
+	for _, o := range h.m.results {
+		if o.label == "Hack" && strings.HasPrefix(o.value, downloadPrefix) {
+			t.Fatal("a family that is installed must not be offered for download")
+		}
+	}
+	h.typeText("jetbrains")
+	o := h.m.selected()
+	if o == nil || o.label != "JetBrains Mono" || !strings.HasPrefix(o.value, downloadPrefix) {
+		t.Fatalf("typing a family that is not installed should land on its download, on %+v", o)
+	}
+	if !strings.Contains(h.view(), "downloads and installs it") || !strings.Contains(h.view(), "nerd-fonts") {
+		t.Fatalf("the panel should say what Enter does and where the font comes from:\n%s", h.view())
+	}
+	if h.config() != "theme = Dracula\n" {
+		t.Fatalf("resting on a download writes nothing:\n%s", h.config())
+	}
+	// Enter fetches it behind the spinner. The command is run by hand so the
+	// test stops before the machine's fonts would be listed again.
+	_, cmd := h.m.Update(keyPress("enter"))
+	if h.m.overlay != overlayBusy || cmd == nil {
+		t.Fatalf("Enter on a download should start it, overlay %v", h.m.overlay)
+	}
+	done, ok := cmd().(installDoneMsg)
+	if !ok || len(fetched) != 1 || fetched[0] != "JetBrains Mono" || len(done.installed) != 1 {
+		t.Fatalf("exactly that family should have been fetched: %v %+v", fetched, done)
+	}
+}
+
+// A setting is changed where it is listed: ← and → step it through its values
+// and each step is written. On a line that holds no scale they walk the
+// sections, as Tab does everywhere.
+func TestArrowsStepASettingWhereItIsListed(t *testing.T) {
+	h := newHarness(t, "theme = Dracula\n")
+	h.key("tab", "tab")
+	if groups[h.m.group] != "Window" {
+		t.Fatalf("two Tabs should reach Window, on %s", groups[h.m.group])
+	}
+	for i := 0; i < 20 && (h.m.selected() == nil || h.m.selected().value != "paddingx"); i++ {
+		h.key("down")
+	}
+	if o := h.m.selected(); o == nil || o.value != "paddingx" || o.detail != "2" {
+		t.Fatalf("Paddingx should be listed with its value, on %+v", o)
+	}
+	if !strings.Contains(h.view(), "←→ change") {
+		t.Fatalf("the keys should say the setting can be changed in place:\n%s", h.view())
+	}
+	h.key("right")
+	if o := h.m.selected(); !strings.Contains(h.config(), "window-padding-x = 4\n") || o == nil || o.value != "paddingx" || o.detail != "4" || groups[h.m.group] != "Window" {
+		t.Fatalf("right should step the setting and stay on it, on %+v:\n%s", o, h.config())
+	}
+	h.key("left", "left")
+	if !strings.Contains(h.config(), "window-padding-x = 0\n") {
+		t.Fatalf("left twice should step it down to 0:\n%s", h.config())
+	}
+	before := h.config()
+	h.key("left")
+	if h.config() != before || groups[h.m.group] != "Window" {
+		t.Fatal("at the end of the scale the arrow does nothing, and does not leave the section")
+	}
+	h.key("home", "right")
+	if groups[h.m.group] != "Input" {
+		t.Fatalf("on a line with no scale the arrows walk the sections, on %s", groups[h.m.group])
+	}
+}
+
+// The Extensions section fetches what Ghostty can be extended with, shaders
+// and packs of themes, and says exactly what it writes. Fonts are not there:
+// they are installed where they are chosen.
+func TestExtensionsInstallShadersAndThemePacks(t *testing.T) {
+	h := newHarness(t, "theme = Dracula\n")
+	var asked []string
+	real := extensions.Get
+	extensions.Get = func(url string) ([]byte, error) {
+		asked = append(asked, url)
+		if strings.HasSuffix(url, ".glsl") {
+			return []byte("void mainImage(out vec4 colour, in vec2 at) {}\n"), nil
+		}
+		return []byte("background = #1e1e2e\nforeground = #cdd6f4\n"), nil
+	}
+	defer func() { extensions.Get = real }()
+
+	var names []string
+	for _, c := range h.m.commands() {
+		if c.group == "Extensions" {
+			names = append(names, c.name)
+		}
+	}
+	if strings.Join(names, " ") != "shader pack" {
+		t.Fatalf("Extensions should hold shaders and theme packs, and nothing about fonts: %v", names)
+	}
+	if !strings.Contains(h.view(), " Extensions ") {
+		t.Fatalf("the section should be among the others at the top:\n%s", h.view())
+	}
+
+	h.typeText("shader ")
+	v := h.view()
+	for _, want := range []string{"none", "Cursor effects", "Screen effects", "cursor_smear", "bloom", "download"} {
+		if !strings.Contains(v, want) {
+			t.Fatalf("the list of shaders lacks %q:\n%s", want, v)
+		}
+	}
+	h.typeText("bloom")
+	if v := h.view(); !strings.Contains(v, "0xhckr/ghostty-shaders") || !strings.Contains(v, "none stated") {
+		t.Fatalf("a shader whose repository states no licence should say so:\n%s", v)
+	}
+	h.key("esc")
+	h.typeText("shader cursor_bl")
+	if o := h.m.selected(); o == nil || o.value != "cursor_blaze" {
+		t.Fatalf("typing should find the shader, on %+v", o)
+	}
+	if v := h.view(); !strings.Contains(v, "KroneCorylus/ghostty-shader-playground") || !strings.Contains(v, "MIT") || !strings.Contains(v, "custom-shader = ") {
+		t.Fatalf("the panel should say where it comes from and what is written:\n%s", v)
+	}
+	if len(asked) != 0 || h.config() != "theme = Dracula\n" {
+		t.Fatal("looking at a shader fetches nothing and writes nothing")
+	}
+	h.key("enter")
+	file := filepath.Join(h.paths.ConfigDir, "shaders", "cursor_blaze.glsl")
+	if _, err := os.Stat(file); err != nil {
+		t.Fatalf("the shader should be installed beside the config: %v", err)
+	}
+	if len(asked) != 1 || asked[0] != "https://raw.githubusercontent.com/KroneCorylus/ghostty-shader-playground/main/public/shaders/cursor_blaze.glsl" {
+		t.Fatalf("exactly that file should have been fetched: %v", asked)
+	}
+	if !strings.Contains(h.config(), "custom-shader = "+file+"\n") {
+		t.Fatalf("the config should name the shader:\n%s", h.config())
+	}
+	// Nothing reloads Ghostty here, so nothing is on screen to ask about.
+	if h.m.overlay != overlayNone {
+		t.Fatalf("no question without a reload, overlay %v", h.m.overlay)
+	}
+	h.key("esc")
+	h.typeText("shader ")
+	if o := h.m.selected(); o == nil || o.value != "cursor_blaze" || !o.current || o.detail != "on" {
+		t.Fatalf("the list should open on the shader that is on, on %+v", o)
+	}
+	h.key("esc")
+	h.typeText("shader none")
+	h.key("enter")
+	if strings.Contains(h.config(), "\ncustom-shader = ") {
+		t.Fatalf("none should switch the shader off:\n%s", h.config())
+	}
+	if _, err := os.Stat(file); err != nil {
+		t.Fatal("switching a shader off keeps its file")
+	}
+
+	// A pack of themes lands in the themes directory and on the wall.
+	h.key("esc")
+	h.typeText("pack catp")
+	h.key("enter")
+	for _, name := range []string{"catppuccin-latte", "catppuccin-frappe", "catppuccin-macchiato", "catppuccin-mocha"} {
+		if _, err := os.Stat(filepath.Join(h.paths.ThemesDir, name)); err != nil {
+			t.Fatalf("the pack should have written %s: %v", name, err)
+		}
+		if _, ok := h.m.lib.Get(name); !ok {
+			t.Fatalf("%s should be in the library at once", name)
+		}
+	}
+	if o := h.m.results[0]; o.label != "catppuccin" || o.detail != "installed" {
+		t.Fatalf("the pack should be listed as installed, is %+v", o)
+	}
+}
+
+// Where Ghostty reloads by itself a shader is on screen as soon as it is
+// switched on, and a shader that fails can leave the window unreadable: the
+// question whether to keep it puts the config back when it goes unanswered.
+func TestAShaderIsPutBackUnlessItIsKept(t *testing.T) {
+	h := newHarness(t, "theme = Dracula\n")
+	realGet, realReload, realDelay := extensions.Get, reloadGhostty, keepDelay
+	extensions.Get = func(string) ([]byte, error) { return []byte("void mainImage(out vec4 colour, in vec2 at) {}\n"), nil }
+	reloads := 0
+	reloadGhostty = func(string) error { reloads++; return nil }
+	keepDelay = time.Millisecond
+	defer func() { extensions.Get, reloadGhostty, keepDelay = realGet, realReload, realDelay }()
+	h.m.opts.NoReload = false
+	h.m.caps.inGhostty = true
+
+	// Unanswered: the harness runs the timer out, and the line is gone again.
+	h.typeText("shader bloom")
+	h.key("enter")
+	if strings.Contains(h.config(), "\ncustom-shader = ") || h.m.overlay != overlayNone || reloads < 2 {
+		t.Fatalf("an unanswered question should put the config back and reload (%d reloads), overlay %v:\n%s", reloads, h.m.overlay, h.config())
+	}
+	if !strings.Contains(h.m.status, "was not kept") {
+		t.Fatalf("the status should say it was put back, says %q", h.m.status)
+	}
+
+	// Answered: the timer of this question is left unrun, as if it were
+	// still counting, and y keeps the shader.
+	h.key("esc")
+	h.typeText("shader bloom")
+	h.m.Update(keyPress("enter"))
+	if h.m.overlay != overlayConfirm || !strings.Contains(h.m.confirmText, "Keep it?") {
+		t.Fatalf("switching a shader on should ask whether to keep it, overlay %v", h.m.overlay)
+	}
+	h.key("y")
+	if !strings.Contains(h.config(), "\ncustom-shader = ") || !strings.Contains(h.m.status, "kept") {
+		t.Fatalf("y should keep the shader:\n%s", h.config())
+	}
+	// And Esc on the question puts it back, as no does.
+	h.key("esc")
+	h.typeText("shader crt")
+	h.m.Update(keyPress("enter"))
+	h.key("esc")
+	if !strings.Contains(h.config(), "bloom.glsl") || strings.Contains(h.config(), "crt.glsl") {
+		t.Fatalf("Esc should put back the shader that was on before:\n%s", h.config())
 	}
 }

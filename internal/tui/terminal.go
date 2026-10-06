@@ -88,18 +88,10 @@ func rebase(line string, base lipgloss.Style) string {
 	if seq == "" {
 		return line
 	}
-	const reset = "\x1b[0m"
+	// A reset is written either way; the styles here write the short one.
+	const reset = "\x1b[m"
+	line = strings.ReplaceAll(line, "\x1b[0m", reset)
 	return seq + strings.ReplaceAll(line, reset, reset+seq) + reset
-}
-
-// InlineHeight is how many rows of a terminal h rows high the editor takes.
-// It draws in the bottom rows and leaves the rest to what was on screen; a
-// short terminal is given over whole, since the palette needs room.
-func InlineHeight(h int) int {
-	if h <= 28 {
-		return h
-	}
-	return minInt(maxInt(28, h*2/3), 40)
 }
 
 func minInt(a, b int) int {

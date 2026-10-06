@@ -13,11 +13,10 @@ import (
 	"github.com/vitruves/ghostty-config/internal/kimg"
 )
 
-// Pictures. When the terminal speaks the Kitty graphics protocol the
-// full-screen interface draws its theme cards and its window preview as real
-// images, with rounded corners, shadows and a real blur, in Google Sans. The
-// rest stays text. Where the terminal does not, or the cell size is unknown,
-// the same screens are drawn from cells, as they always were.
+// Pictures. When the terminal speaks the Kitty graphics protocol the wall of
+// themes is made of real images, with rounded corners and soft shadows, in
+// Google Sans. The rest stays text. Where the terminal does not, or the cell
+// size is unknown, the same cards are drawn from cells.
 
 // imageStore remembers which pictures the terminal already holds, queues the
 // ones it does not, and writes them out before the frame that uses them.
@@ -158,29 +157,27 @@ func hex2(v uint8) string {
 func (m *Model) themeSpec(t *ghostty.Theme) kimg.CardSpec {
 	fg := t.Foreground()
 	spec := kimg.CardSpec{
-		Name: t.Name, Family: themeFamily(t), Dark: t.IsDark(),
 		BG: t.Background(), FG: fg,
 		Accent: color.Normalize(t.Get("cursor-color"), color.Normalize(t.Get(paletteKey(12)), fg)),
 	}
 	for i := 0; i < 16; i++ {
 		spec.Pal[i] = color.Normalize(t.Get(paletteKey(i)), fg)
 	}
-	spec.Ratio = color.Contrast(fg, spec.BG)
-	spec.Grade = color.Grade(spec.Ratio)
 	return spec
 }
 
-// themePicture is a card for a theme, cols by rows cells, drawn as a picture
-// and laid out as the placeholder cells that show it. bg is the colour the
-// cells sit on.
-func (m *Model) themePicture(t *ghostty.Theme, cols, rows int, applied, fav bool, bg string) []string {
+// themeTile is one card of the wall, cols by rows cells, drawn as a picture
+// and laid out as the placeholder cells that show it. The picture depends on
+// the screen it sits on: its shadow is lighter on a light one, and the ring
+// round the highlighted card is the interface's accent.
+func (m *Model) themeTile(t *ghostty.Theme, cols, rows int, selected bool, ui chrome) []string {
 	spec := m.themeSpec(t)
-	spec.Applied, spec.Fav = applied, fav
-	key := strings.Join([]string{"card", t.Name, spec.BG, spec.FG, spec.Accent, boolKey(applied), boolKey(fav), itoa(cols), itoa(rows)}, "|")
+	spec.Selected, spec.Ring, spec.Screen = selected, ui.accent, ui.bg
+	key := strings.Join([]string{"tile", t.Name, spec.BG, spec.FG, spec.Accent, strings.Join(spec.Pal[:], ""), boolKey(selected), ui.accent, boolKey(color.IsDark(ui.bg)), itoa(cols), itoa(rows)}, "|")
 	id := m.imgs.ensure(key, cols, rows, func() []byte {
-		return kimg.Card(cols, rows, m.cellW, m.cellH, spec).PNG()
+		return kimg.Tile(cols, rows, m.cellW, m.cellH, spec).PNG()
 	})
-	return pictureRows(id, cols, rows, bg)
+	return pictureRows(id, cols, rows, ui.paint())
 }
 
 func boolKey(b bool) string {
@@ -188,28 +185,6 @@ func boolKey(b bool) string {
 		return "1"
 	}
 	return "0"
-}
-
-// sideBySide sets two blocks of rows next to each other, the left one lw
-// cells wide, and pads the shorter so every row is complete.
-func sideBySide(c chrome, left []string, lw int, right []string, gap int) []string {
-	n := len(left)
-	if len(right) > n {
-		n = len(right)
-	}
-	out := make([]string, n)
-	for i := range out {
-		l := ""
-		if i < len(left) {
-			l = left[i]
-		}
-		r := ""
-		if i < len(right) {
-			r = right[i]
-		}
-		out[i] = c.fill(l, lw) + c.base().Render(strings.Repeat(" ", gap)) + r
-	}
-	return out
 }
 
 // ImagesSupported reports whether this terminal can show the pictures.

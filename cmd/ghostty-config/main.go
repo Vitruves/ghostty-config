@@ -1,16 +1,14 @@
 // Command ghostty-config is an interactive editor for Ghostty: themes, the
-// palette behind them, fonts and the window, all previewed in the terminal
-// you are sitting in.
+// palette behind them, fonts, the window and what Ghostty can be extended
+// with, on one full-screen interface that takes the terminal's own colours.
 package main
 
 import (
 	"flag"
 	"fmt"
 	"os"
-	"strings"
 
 	tea "charm.land/bubbletea/v2"
-	"github.com/charmbracelet/x/term"
 
 	"github.com/vitruves/ghostty-config/internal/collection"
 	"github.com/vitruves/ghostty-config/internal/ghostty"
@@ -25,7 +23,7 @@ func main() {
 	themesPath := flag.String("themes", "", "User themes directory (default: ~/.config/ghostty/themes)")
 	exportPath := flag.String("export-collection", "", "Write the curated collection to a directory and exit")
 	noReload := flag.Bool("no-reload", false, "Never ask the running Ghostty to reload")
-	noImages := flag.Bool("no-images", false, "Never show the highlighted theme as a picture")
+	noImages := flag.Bool("no-images", false, "Never draw pictures: the wall of themes is made of cells")
 	forceImages := flag.Bool("images", false, "Draw pictures through the Kitty graphics protocol even where this terminal is not known to support it")
 	plain := flag.Bool("plain", false, "Use only glyphs every terminal and font can draw")
 	showVersion := flag.Bool("version", false, "Show version information")
@@ -43,8 +41,8 @@ Options:
   -themes dir            User themes directory (default ~/.config/ghostty/themes)
   -export-collection dir Write the %d curated themes to a directory and exit
   -no-reload             Never send the reload keystroke to Ghostty
-  -no-images             Never show the highlighted theme as a picture
-  -images                Show theme pictures even where this terminal is not known to draw them
+  -no-images             Never draw pictures: the wall of themes is made of cells
+  -images                Draw pictures even where this terminal is not known to show them
   -plain                 Use only glyphs every terminal and font can draw
   -paths                 Show which files are read and written
   -no-update-check       Never look for a newer release on GitHub
@@ -57,8 +55,9 @@ value that wins. Nothing else in those files is touched; every rewrite is
 atomic and backed up under ~/.config/ghostty-config/backups.
 
 Keys:
-  ↑↓ browse (previews live)   a apply   Tab palette   f fonts   p settings
-  n create   g random   / search   * favourite   ? all keys   q quit
+  Tab next section       ←↓↑→ walk the wall of themes   Enter apply, or open
+  type to search or run  ←→ change a setting in place    Esc back, then leave
+  Ctrl+T try a theme     F2 step aside to see the terminal    F1 all keys
 `, len(collection.Collection))
 	}
 	flag.Parse()
@@ -124,8 +123,7 @@ Keys:
 		Images:  !*noImages && (*forceImages || tui.ImagesSupported()),
 		Version: version, NoUpdateCheck: *noUpdateCheck,
 	})
-	reserveRows()
-	// The mouse is asked for by the view itself.
+	// The alternate screen and the mouse are asked for by the view itself.
 	program := tea.NewProgram(model)
 	if _, err := program.Run(); err != nil {
 		fail("%v", err)
@@ -137,19 +135,6 @@ Keys:
 	if note := model.ExitNote(); note != "" {
 		fmt.Println(note)
 	}
-}
-
-// reserveRows makes room for the editor in the bottom rows of the terminal,
-// the way fzf --height does: what is on screen scrolls up just enough to
-// clear them, and drawing starts on the first of them. The editor then
-// knows where it sits, which the mouse needs.
-func reserveRows() {
-	w, h, err := term.GetSize(os.Stdout.Fd())
-	if err != nil || w <= 0 || h <= 0 {
-		return
-	}
-	rows := tui.InlineHeight(h)
-	fmt.Print(strings.Repeat("\n", rows) + fmt.Sprintf("\x1b[%d;1H", h-rows+1))
 }
 
 func fail(format string, a ...interface{}) {

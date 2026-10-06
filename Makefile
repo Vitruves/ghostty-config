@@ -30,7 +30,9 @@ run: build
 export-collection: build
 	./$(BUILD_DIR)/$(BINARY_NAME) -export-collection themes/collection
 
-# Draw the palette frames the tests produce and render them to PNG in
-# build/shots, pictures included, to check alignment and legibility by eye.
+# Draw the screens the tests produce, in a dark terminal and in a light one,
+# and render them to PNG in build/shots, pictures included, to check alignment
+# and legibility by eye. Needs Pillow: PYTHON=path/to/python names an
+# interpreter that has it.
 shots:
 	tools/shot.sh build/shots TestPaletteFrames

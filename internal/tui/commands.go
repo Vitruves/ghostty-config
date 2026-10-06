@@ -11,7 +11,6 @@ import (
 
 	"github.com/vitruves/ghostty-config/internal/collection"
 	"github.com/vitruves/ghostty-config/internal/color"
-	"github.com/vitruves/ghostty-config/internal/fontdl"
 	"github.com/vitruves/ghostty-config/internal/ghostty"
 )
 
@@ -51,10 +50,13 @@ type command struct {
 	// keepArg leaves the typed argument alone after Enter; otherwise the
 	// prompt is cleared back to the command word.
 	keepArg bool
+	// adjust marks a setting whose values form a short scale: on the menu,
+	// ← and → step it without opening it.
+	adjust bool
 }
 
 // Groups, in the order the menu shows them.
-var groups = []string{"Themes", "Fonts", "Window", "Input", "Session", "Tool"}
+var groups = []string{"Themes", "Fonts", "Window", "Input", "Session", "Extensions", "Tool"}
 
 // commands is the registry, built once per model because the closures need
 // platform facts.
@@ -65,13 +67,7 @@ func (m *Model) buildCommands() []*command {
 	// --- Themes -----------------------------------------------------------
 	add(&command{name: "theme", group: "Themes", syntax: "theme <name>", desc: "Browse themes; moving only looks, Enter applies the highlighted one",
 		filters: true,
-		options: func(m *Model, arg string) []option {
-			var out []option
-			for _, t := range m.lib.Themes {
-				out = append(out, m.themeOption(t))
-			}
-			return out
-		},
+		options: func(m *Model, arg string) []option { return m.themeOptions(arg) },
 		onMove: func(m *Model, opt *option) tea.Cmd {
 			if opt != nil && opt.theme != nil {
 				m.previewTheme(opt.theme)
@@ -88,7 +84,6 @@ func (m *Model) buildCommands() []*command {
 			}
 			return m.applyNow()
 		},
-		preview: previewThemePanel,
 	})
 	add(&command{name: "favs", group: "Themes", syntax: "favs", desc: "Only the starred themes",
 		filters: true,
@@ -117,7 +112,6 @@ func (m *Model) buildCommands() []*command {
 			}
 			return nil
 		},
-		preview: previewThemePanel,
 	})
 	add(&command{name: "fav", group: "Themes", syntax: "fav", desc: "Star or unstar the theme on screen",
 		run:     func(m *Model, arg string, opt *option) tea.Cmd { m.toggleFavorite(); return nil },
@@ -285,39 +279,31 @@ func (m *Model) buildCommands() []*command {
 			}
 			return nil
 		},
-		preview: previewThemePanel,
 	})
 
 	// --- Fonts ------------------------------------------------------------
-	add(&command{name: "font", group: "Fonts", syntax: "font <family>", desc: "Pick the font family; only families Ghostty can load are listed, monospace first",
+	add(&command{name: "font", group: "Fonts", syntax: "font <family>", desc: "Pick the font family, or install one: the families Ghostty can load are listed monospace first, the ones that can be downloaded under them",
 		filters: true,
-		options: func(m *Model, arg string) []option {
-			if !m.fontsLoaded {
-				return []option{{label: "Listing the fonts Ghostty can load…", header: true}}
-			}
-			var out []option
-			for i := range m.families {
-				f := &m.families[i]
-				detail := "proportional"
-				if f.Mono {
-					detail = "monospace"
-				}
-				if len(f.Styles) > 1 {
-					detail += fmt.Sprintf(" · %d styles", len(f.Styles))
-				}
-				out = append(out, option{label: f.Name, detail: detail, value: f.Name, family: f, current: f.Name == m.fontFamily})
-			}
-			sort.SliceStable(out, func(a, b int) bool { return out[a].family.Mono && !out[b].family.Mono })
-			return out
-		},
+		options: func(m *Model, arg string) []option { return m.fontOptions(arg) },
 		onMove: func(m *Model, opt *option) tea.Cmd {
 			if opt == nil || opt.family == nil {
+				return nil
+			}
+			if m.fontFamily == "" && strings.TrimSpace(m.arg) == "" && !m.browsed {
+				// The list was only opened: with no family configured the
+				// highlight rests on the first one, which nobody chose.
 				return nil
 			}
 			return m.pickFamily(*opt.family)
 		},
 		run: func(m *Model, arg string, opt *option) tea.Cmd {
-			if opt == nil || opt.family == nil {
+			if opt == nil {
+				return nil
+			}
+			if archive, ok := strings.CutPrefix(opt.value, downloadPrefix); ok {
+				return m.installArchive(archive)
+			}
+			if opt.family == nil {
 				return nil
 			}
 			cmd := m.pickFamily(*opt.family)
@@ -397,49 +383,17 @@ func (m *Model) buildCommands() []*command {
 		},
 		preview: previewFontPanel,
 	})
-	add(&command{name: "download", group: "Fonts", syntax: "download [family]", desc: "Install a monospace family from the Nerd Fonts archive into your user fonts",
-		filters: true,
-		options: func(m *Model, arg string) []option {
-			installed := m.installedDownloadables()
-			missing := 0
-			for _, d := range fontdl.AvailableDownloads {
-				if !installed[d.Name] {
-					missing++
-				}
-			}
-			out := []option{{label: fmt.Sprintf("Everything (%d missing)", missing), detail: "one archive after another, roughly a minute", value: "*"}}
-			for _, d := range fontdl.AvailableDownloads {
-				note := d.Note
-				if installed[d.Name] {
-					note += " · already installed"
-				}
-				out = append(out, option{label: d.Name, detail: note, value: d.Archive})
-			}
-			return out
-		},
-		run: func(m *Model, arg string, opt *option) tea.Cmd {
-			if opt == nil {
-				return nil
-			}
-			if opt.value == "*" {
-				return m.installFonts(fontdl.AvailableDownloads)
-			}
-			for _, d := range fontdl.AvailableDownloads {
-				if d.Archive == opt.value {
-					return m.installFonts([]fontdl.FontDownload{d})
-				}
-			}
-			return nil
-		},
-		preview: previewDownloadPanel,
-	})
-
 	add(presetCommand())
 
 	// --- Window and text settings, generated from the setting table -----------
 	for _, s := range m.buildSettings() {
 		s := s
 		add(settingCommand(s))
+	}
+
+	// --- Extensions: shaders and packs of themes ---------------------------
+	for _, c := range m.extensionCommands() {
+		add(c)
 	}
 
 	// --- Tool -------------------------------------------------------------
@@ -452,6 +406,7 @@ func (m *Model) buildCommands() []*command {
 		preview: previewOverview,
 	})
 	add(&command{name: "autoreload", group: "Tool", syntax: "autoreload on|off", desc: "Whether every change sends the reload keystroke to Ghostty (macOS, needs Accessibility)",
+		adjust: true,
 		options: func(m *Model, arg string) []option {
 			return onOff(m.state.AutoReloadEnabled())
 		},
@@ -465,7 +420,7 @@ func (m *Model) buildCommands() []*command {
 		},
 		preview: previewOverview,
 	})
-	add(&command{name: "interface", group: "Tool", syntax: "interface clear|paper|graphite|theme", desc: "The colours of the editor itself, kept apart from the theme being looked at",
+	add(&command{name: "interface", group: "Tool", syntax: "interface auto|midnight|graphite|paper|theme|clear", desc: "The colours of the editor itself, kept apart from the theme being looked at",
 		options: func(m *Model, arg string) []option {
 			var out []option
 			for _, n := range interfaceNames {
@@ -548,7 +503,7 @@ func (m *Model) buildCommands() []*command {
 
 // settingCommand turns a setting row into a command with its values as options.
 func settingCommand(s setting) *command {
-	c := &command{name: s.cmd, group: s.group, syntax: s.syntax, desc: s.detail}
+	c := &command{name: s.cmd, group: s.group, syntax: s.syntax, desc: s.detail, adjust: true}
 	c.options = func(m *Model, arg string) []option {
 		current := s.get(m)
 		var out []option

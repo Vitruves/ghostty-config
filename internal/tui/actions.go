@@ -77,6 +77,10 @@ func (m *Model) applyNow() tea.Cmd {
 		return nil
 	}
 	m.tintApplied()
+	if m.caps.inGhostty {
+		m.term = termColours{bg: m.cur.Background(), fg: m.cur.Foreground()}
+	}
+	m.tried = ""
 	return m.commitConfig()
 }
 
