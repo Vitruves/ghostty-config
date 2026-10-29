@@ -20,34 +20,34 @@ type preset struct {
 var presets = []preset{
 	{"default", "Everything a preset touches, back to Ghostty's own default", [][2]string{
 		{"opacity", "1.00"}, {"blur", "off"}, {"titlebar", "transparent"}, {"shadow", "on"}, {"paddingx", "2"}, {"paddingy", "2"},
-		{"balance", "off"}, {"paddingcolor", "background"}, {"lineheight", "0%"}, {"cellwidth", "0%"}, {"faint", "0.50"},
+		{"balance", "false"}, {"paddingcolor", "background"}, {"lineheight", "0%"}, {"cellwidth", "0%"}, {"faint", "0.50"},
 		{"splitopacity", "0.70"}, {"cursor", "block"}, {"blink", "default"}, {"cursoropacity", "1.0"}, {"scrollbar", "system"},
 		{"resizeoverlay", "after-first"}, {"contrast", "1"}, {"hidemouse", "off"}, {"notify", "never"},
 	}},
 	{"glass", "Translucent and blurred, the desktop showing through, roomy padding", [][2]string{
 		{"opacity", "0.85"}, {"blur", "macos-glass-regular"}, {"titlebar", "transparent"}, {"shadow", "on"},
-		{"paddingx", "14"}, {"paddingy", "12"}, {"balance", "on"}, {"paddingcolor", "extend"}, {"contrast", "3"},
+		{"paddingx", "14"}, {"paddingy", "12"}, {"balance", "true"}, {"paddingcolor", "extend"}, {"contrast", "3"},
 	}},
 	{"minimal", "No title bar, no overlays, no scrollbar: the window is just text", [][2]string{
 		{"titlebar", "hidden"}, {"shadow", "off"}, {"opacity", "1.00"}, {"blur", "off"}, {"paddingx", "16"}, {"paddingy", "12"},
-		{"balance", "on"}, {"paddingcolor", "extend"}, {"scrollbar", "never"}, {"resizeoverlay", "never"},
+		{"balance", "true"}, {"paddingcolor", "extend"}, {"scrollbar", "never"}, {"resizeoverlay", "never"},
 	}},
 	{"focus", "Wide margins, a calm bar cursor, fading splits, a quiet pointer", [][2]string{
-		{"paddingx", "28"}, {"paddingy", "22"}, {"balance", "on"}, {"paddingcolor", "extend"}, {"lineheight", "10%"},
+		{"paddingx", "28"}, {"paddingy", "22"}, {"balance", "true"}, {"paddingcolor", "extend"}, {"lineheight", "10%"},
 		{"cursor", "bar"}, {"blink", "false"}, {"splitopacity", "0.45"}, {"scrollbar", "never"}, {"hidemouse", "on"}, {"notify", "unfocused"},
 	}},
 	{"compact", "Tight rows and margins to fit as much as the screen allows", [][2]string{
-		{"titlebar", "tabs"}, {"paddingx", "6"}, {"paddingy", "4"}, {"balance", "off"}, {"lineheight", "-6%"},
+		{"titlebar", "tabs"}, {"paddingx", "6"}, {"paddingy", "4"}, {"balance", "false"}, {"lineheight", "-6%"},
 		{"cellwidth", "-2%"}, {"scrollbar", "never"}, {"resizeoverlay", "never"},
 	}},
 	{"reading", "Airy lines and letters for long text, with dimmed text kept readable", [][2]string{
-		{"lineheight", "22%"}, {"cellwidth", "2%"}, {"paddingx", "22"}, {"paddingy", "16"}, {"balance", "on"},
+		{"lineheight", "22%"}, {"cellwidth", "2%"}, {"paddingx", "22"}, {"paddingy", "16"}, {"balance", "true"},
 		{"faint", "0.70"}, {"cursor", "bar"}, {"blink", "true"}, {"contrast", "4.5"},
 	}},
 	{"presentation", "Large margins, solid background and a contrast floor, for projectors", [][2]string{
 		{"opacity", "1.00"}, {"blur", "off"}, {"contrast", "7"}, {"faint", "0.85"}, {"lineheight", "12%"},
 		{"cursor", "block"}, {"blink", "false"}, {"cursoropacity", "1.0"}, {"paddingx", "24"}, {"paddingy", "20"},
-		{"balance", "on"}, {"thicken", "on"}, {"resizeoverlay", "never"},
+		{"balance", "true"}, {"thicken", "on"}, {"resizeoverlay", "never"},
 	}},
 	{"power", "Fast keys: copy on select, Option as Alt, deep scrollback, quiet notifications", [][2]string{
 		{"copy", "true"}, {"optionalt", "true"}, {"scrollback", "100000000"}, {"clicktomove", "on"}, {"inheritcwd", "on"},
@@ -71,11 +71,21 @@ func (m *Model) presetChanges(p preset) [][4]string {
 		if !ok {
 			continue
 		}
-		if now := s.get(m); !strings.EqualFold(now, kv[1]) {
-			out = append(out, [4]string{s.label, now, kv[1], s.detail})
+		want := presetValue(s, kv[1])
+		if now := s.get(m); !strings.EqualFold(now, want) {
+			out = append(out, [4]string{s.label, now, want, s.detail})
 		}
 	}
 	return out
+}
+
+// presetValue is a preset's value in the words the setting offers on this
+// Ghostty: copy true is primary on Linux since 1.4.
+func presetValue(s setting, v string) string {
+	if s.canon != nil {
+		return s.canon(v)
+	}
+	return v
 }
 
 func (m *Model) applyPreset(p preset) tea.Cmd {
@@ -87,10 +97,10 @@ func (m *Model) applyPreset(p preset) tea.Cmd {
 	var cmds []tea.Cmd
 	for _, kv := range p.values {
 		s, ok := settings[kv[0]]
-		if !ok || strings.EqualFold(s.get(m), kv[1]) {
+		if !ok || strings.EqualFold(s.get(m), presetValue(s, kv[1])) {
 			continue
 		}
-		if cmd := s.set(m, kv[1]); cmd != nil {
+		if cmd := s.set(m, presetValue(s, kv[1])); cmd != nil {
 			cmds = append(cmds, cmd)
 		}
 		n++
@@ -173,7 +183,6 @@ var valueNotes = map[string]map[string]string{
 	"optionalt":     {"default": "let macOS decide from your keyboard layout", "true": "both Option keys act as Alt: readline and vim shortcuts work, accents on Option do not", "left": "only the left Option is Alt; the right still types accents", "right": "only the right Option is Alt; the left still types accents", "false": "Option types accented characters; Alt shortcuts are lost"},
 	"savestate":     {"default": "follow the macOS setting for restoring windows", "never": "always start with a clean window", "always": "always bring back the windows from last time"},
 	"scrollbar":     {"system": "show the scrollbar the way macOS or the desktop does", "never": "no scrollbar; scrolling still works"},
-	"scrollback":    {"1000000": "about 1 MB per terminal: a few thousand lines", "10000000": "about 10 MB per terminal: the default, tens of thousands of lines", "50000000": "about 50 MB per terminal: long build logs stay", "100000000": "about 100 MB per terminal: very deep history", "500000000": "about 500 MB per terminal: for people who never clear"},
 	"paddingcolor":  {"background": "the margin is the theme background", "extend": "the nearest row's colour continues into the margin, so full-screen apps look seamless", "extend-always": "extend even where the background would otherwise stay plain"},
 	"windowtheme":   {"auto": "dark or light chrome chosen from the theme background", "system": "chrome follows the desktop's light or dark mode", "light": "always light chrome", "dark": "always dark chrome"},
 	"colorspace":    {"srgb": "theme colours as written, the safe choice", "display-p3": "render in the wider P3 gamut: colours get richer on a P3 display"},

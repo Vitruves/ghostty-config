@@ -772,6 +772,10 @@ type setting struct {
 	list func(m *Model, arg string) []option
 	// show is how a value reads in the menu, when not as it is written.
 	show func(v string) string
+	// canon turns a value spelled the way an older Ghostty took it, true for
+	// copy-on-select, into the word the menu offers; presets are written once
+	// for every version.
+	canon func(v string) string
 	// describe explains a value that explain has no entry for.
 	describe func(m *Model, v string) string
 	// hint is said under every value: what else the setting needs.
@@ -906,9 +910,17 @@ func percent(v float64) string {
 	return plain(v) + "%"
 }
 
+// since14 is whether the Ghostty installed reads the keys and values 1.4
+// added. An older one's validator rejects them, so they are only offered to
+// a binary that knows them; one that cannot say counts as 1.4.
+func (m *Model) since14() bool {
+	return ghostty.BinaryVersion(m.paths.Binary).AtLeast(1, 4)
+}
+
 // buildSettings assembles the window and text settings for this platform.
 func (m *Model) buildSettings() []setting {
 	mac := runtime.GOOS == "darwin"
+	v14 := m.since14()
 	var s []setting
 	if mac {
 		s = append(s, setting{
@@ -982,7 +994,7 @@ func (m *Model) buildSettings() []setting {
 	s = append(s, bl)
 	s = append(s, numberSetting("paddingx", "window-padding-x", "Padding, left and right", "Points between the cells and the window edge", 2, 0, 60, 2, plain))
 	s = append(s, numberSetting("paddingy", "window-padding-y", "Padding, top and bottom", "With a transparent title bar, extra top padding keeps the first line clear of the buttons", 2, 0, 60, 2, plain))
-	s = append(s, boolSetting("balance", "window-padding-balance", "Balance leftover padding", "Spread the space the grid does not fill over all four edges", false))
+	s = append(s, paddingBalance(v14))
 	s = append(s, keySetting("paddingcolor", "window-padding-color", "Padding colour", "extend continues the nearest cell's background into the padding", []string{"background", "extend", "extend-always"}, "background"))
 	s = append(s, keySetting("windowtheme", "window-theme", "Window chrome theme", "auto follows the terminal background · system follows the desktop", []string{"auto", "system", "light", "dark"}, "auto"))
 	if mac {
@@ -1028,7 +1040,7 @@ func (m *Model) buildSettings() []setting {
 
 	// --- Input and Session: how the terminal acts rather than how it looks. -----------
 	session := func(st setting) { st.group = "Session"; s = append(s, st) }
-	input(keySetting("copy", "copy-on-select", "Copy on select", "true copies a selection as you make it; clipboard also fills the system clipboard on Linux", []string{"true", "clipboard", "false"}, "true"))
+	input(copyOnSelect(mac, v14))
 	input(boolSetting("clearselect", "selection-clear-on-typing", "Clear selection on typing", "Typing drops the selection instead of leaving it highlighted", true))
 	input(boolSetting("trimspaces", "clipboard-trim-trailing-spaces", "Trim copied spaces", "Strip trailing spaces from every copied line", true))
 	input(boolSetting("pasteguard", "clipboard-paste-protection", "Paste protection", "Ask before pasting text that looks like it would run a command", true))
@@ -1036,7 +1048,14 @@ func (m *Model) buildSettings() []setting {
 	input(boolSetting("hidemouse", "mouse-hide-while-typing", "Hide mouse while typing", "The pointer disappears when a key is pressed and returns when it moves", false))
 	input(boolSetting("focusmouse", "focus-follows-mouse", "Focus follows mouse", "Hovering a split focuses it without a click", false))
 	input(keySetting("scrollbar", "scrollbar", "Scrollbar", "system follows the OS setting; never removes the widget but keeps scrolling", []string{"system", "never"}, "system"))
-	session(keySetting("scrollback", "scrollback-limit", "Scrollback size", "Bytes kept per terminal, not lines: roughly 10 MB is a few tens of thousands of lines", []string{"1000000", "10000000", "50000000", "100000000", "500000000"}, "10000000"))
+	if v14 {
+		for _, st := range inputSettings14(mac) {
+			input(st)
+		}
+	}
+	for _, st := range scrollbackSettings(v14) {
+		session(st)
+	}
 	session(keySetting("confirmclose", "confirm-close-surface", "Confirm before closing", "true asks only when a process is running; always asks every time", []string{"true", "always", "false"}, "true"))
 	session(keySetting("notify", "notify-on-command-finish", "Notify after a command", "Needs shell integration; unfocused only pings when you are looking elsewhere (Ghostty 1.3)", []string{"never", "unfocused", "always"}, "never"))
 	session(keySetting("resizeoverlay", "resize-overlay", "Resize overlay", "The columns × rows popup shown while a window is being resized", []string{"after-first", "always", "never"}, "after-first"))
@@ -1048,6 +1067,25 @@ func (m *Model) buildSettings() []setting {
 		session(boolSetting("stepresize", "window-step-resize", "Resize in whole cells", "Window edges snap to the cell grid instead of pixels", false))
 	} else {
 		session(keySetting("tabbar", "window-show-tab-bar", "Tab bar", "auto shows it from two tabs up (GTK)", []string{"auto", "always", "never"}, "auto"))
+		if v14 {
+			session(boolSetting("tabsinverted", "gtk-tabs-inverted", "Close button first", "Each tab's close button at its start and its icon at its end, in the tab bar and the overview", false))
+			session(boolSetting("tabswipe", "gtk-horizontal-tab-scroll", "Swipe between tabs", "Two-finger horizontal scrolling on a touchpad switches tabs: left to the next, right to the previous", true))
+		}
+	}
+	if v14 {
+		dh := keySetting("draghandle", "drag-handle", "Split drag handle", "The handle that drags a split to another place in the window", []string{"auto", "always", "never"}, "auto")
+		dh.explain = map[string]string{
+			"auto":   "shown once there are two splits or more",
+			"always": "shown even over a terminal that is not split",
+			"never":  "never shown: splits cannot be rearranged with the mouse",
+		}
+		if mac {
+			dh.explain["auto"] = "shown while the pointer is over it; hidden for a lone terminal in full screen"
+		}
+		s = append(s, dh)
+		for _, st := range programSettings14(mac) {
+			session(st)
+		}
 	}
 	s = append(s, m.windowExtraSettings(mac)...)
 	s = append(s, m.sessionExtraSettings(mac)...)

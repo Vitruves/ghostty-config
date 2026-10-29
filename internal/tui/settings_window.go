@@ -2,6 +2,7 @@ package tui
 
 import (
 	"strconv"
+	"strings"
 
 	tea "charm.land/bubbletea/v2"
 )
@@ -87,4 +88,25 @@ func (m *Model) windowExtraSettings(mac bool) []setting {
 		add(y)
 	}
 	return s
+}
+
+// paddingBalance is window-padding-balance, a switch until Ghostty 1.4 added
+// equal: true now caps the space above the first row, equal does not.
+func paddingBalance(v14 bool) setting {
+	const key = "window-padding-balance"
+	options := []string{"false", "true"}
+	if v14 {
+		options = append(options, "equal")
+	}
+	st := keySetting("balance", key, "Balance leftover padding", "Spread the space the grid does not fill over the edges, instead of leaving it at the right and bottom", options, "false")
+	st.get = func(m *Model) string { return strings.ToLower(m.tree.Value(key, "false")) }
+	st.explain = map[string]string{
+		"false": "the first cell hugs the top left corner; what the grid leaves goes to the right and bottom edges",
+		"true":  "what the grid leaves is shared by all four edges",
+		"equal": "shared equally by all four edges, the top as much as the others",
+	}
+	if v14 {
+		st.explain["true"] = "shared by all four edges, but the top takes only a little: the rest goes to the bottom"
+	}
+	return st
 }

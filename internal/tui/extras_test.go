@@ -123,7 +123,7 @@ func TestQuickTerminalAndLaunchSettingsFollowThePlatform(t *testing.T) {
 	mac := runtime.GOOS == "darwin"
 	for name, want := range map[string]bool{
 		"quickposition": true, "quicksize": true, "quickhide": true, "columns": true, "rows": true, "shell": true, "bellsound": true,
-		"quickscreen": mac, "quickanimation": mac, "quickspaces": mac, "windowx": mac, "windowy": mac,
+		"quickscreen": true, "quickanimation": mac, "quickspaces": mac, "windowx": mac, "windowy": mac,
 		"quickkeyboard": !mac, "quicklayer": !mac,
 	} {
 		if has[name] != want {

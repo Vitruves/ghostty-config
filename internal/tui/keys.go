@@ -53,9 +53,9 @@ type keyRow struct {
 // could take. Forms bound in the config or by default join their action's
 // group whatever they are.
 var keyGroups = [][2]string{
-	{"Tabs", "new_tab close_tab:this previous_tab next_tab last_tab goto_tab:1 goto_tab:2 goto_tab:3 goto_tab:4 goto_tab:5 goto_tab:6 goto_tab:7 goto_tab:8 goto_tab:9 move_tab:-1 move_tab:1 prompt_tab_title toggle_tab_overview"},
+	{"Tabs", "new_tab close_tab:this previous_tab next_tab last_tab goto_tab:1 goto_tab:2 goto_tab:3 goto_tab:4 goto_tab:5 goto_tab:6 goto_tab:7 goto_tab:8 goto_tab:9 move_tab:-1 move_tab:1 move_tab_to_new_window prompt_tab_title toggle_tab_overview"},
 	{"Splits", "new_split:right new_split:down new_split:left new_split:up new_split:auto goto_split:previous goto_split:next goto_split:up goto_split:down goto_split:left goto_split:right toggle_split_zoom equalize_splits resize_split:up,10 resize_split:down,10 resize_split:left,10 resize_split:right,10"},
-	{"Windows", "new_window close_surface close_window close_all_windows goto_window:previous goto_window:next toggle_fullscreen toggle_maximize toggle_window_decorations toggle_window_float_on_top toggle_background_opacity reset_window_size prompt_surface_title toggle_readonly"},
+	{"Windows", "new_window close_surface close_window close_all_windows goto_window:previous goto_window:next toggle_fullscreen toggle_maximize toggle_window_decorations toggle_window_float_on_top toggle_background_opacity reset_window_size prompt_surface_title prompt_window_title toggle_readonly"},
 	{"Quick terminal", "toggle_quick_terminal toggle_visibility"},
 	{"Clipboard", "copy_to_clipboard:mixed paste_from_clipboard paste_from_selection copy_url_to_clipboard copy_title_to_clipboard select_all"},
 	{"Selection", "adjust_selection:left adjust_selection:right adjust_selection:up adjust_selection:down adjust_selection:page_up adjust_selection:page_down adjust_selection:home adjust_selection:end adjust_selection:beginning_of_line adjust_selection:end_of_line"},
@@ -70,14 +70,14 @@ var keyGroups = [][2]string{
 
 // keyLabels name the common forms the way a menu would.
 var keyLabels = map[string]string{
-	"close_tab:this": "Close tab", "move_tab:-1": "Move tab left", "move_tab:1": "Move tab right",
+	"close_tab:this": "Close tab", "move_tab:-1": "Move tab left", "move_tab:1": "Move tab right", "move_tab_to_new_window": "Move tab to a new window",
 	"prompt_tab_title": "Rename tab", "toggle_tab_overview": "Tab overview",
 	"new_split:auto": "Split along the longer side", "goto_split:previous": "Previous split", "goto_split:next": "Next split",
 	"goto_split:up": "Split above", "goto_split:down": "Split below", "goto_split:left": "Split on the left", "goto_split:right": "Split on the right",
 	"toggle_split_zoom": "Zoom split", "close_surface": "Close",
 	"goto_window:previous": "Previous window", "goto_window:next": "Next window", "toggle_fullscreen": "Full screen",
 	"toggle_maximize": "Maximize", "toggle_window_decorations": "Window decorations", "toggle_window_float_on_top": "Float on top",
-	"toggle_background_opacity": "Background opacity", "prompt_surface_title": "Rename terminal", "toggle_readonly": "Read-only",
+	"toggle_background_opacity": "Background opacity", "prompt_surface_title": "Rename terminal", "prompt_window_title": "Rename window", "toggle_readonly": "Read-only",
 	"toggle_quick_terminal": "Quick terminal", "toggle_visibility": "Show or hide Ghostty",
 	"copy_to_clipboard": "Copy", "copy_to_clipboard:mixed": "Copy", "paste_from_clipboard": "Paste", "paste_from_selection": "Paste the selection",
 	"copy_url_to_clipboard": "Copy link", "copy_title_to_clipboard": "Copy title",
