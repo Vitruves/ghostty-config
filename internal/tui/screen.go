@@ -601,6 +601,18 @@ func (m *Model) keyPairs() []string {
 		}
 		pairs = append(pairs, "Esc", "back", "Tab", "complete", "F2", "peek", "F1", "help")
 	}
+	// Where Ghostty has a page on the line, F3 reads it: before the peek and
+	// the help, which every screen has.
+	if name, _ := m.explainTarget(); name != "" {
+		at := len(pairs)
+		for i := 0; i+1 < len(pairs); i += 2 {
+			if pairs[i] == "F2" || pairs[i] == "F1" {
+				at = i
+				break
+			}
+		}
+		pairs = append(pairs[:at], append([]string{"F3", "docs"}, pairs[at:]...)...)
+	}
 	return pairs
 }
 

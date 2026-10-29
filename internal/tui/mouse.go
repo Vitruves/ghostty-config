@@ -110,7 +110,7 @@ func (m *Model) updateMouse(raw tea.MouseMsg) (tea.Model, tea.Cmd) {
 		if ok && r.kind == hitButton {
 			return m.pressButton(r.name)
 		}
-		if m.overlay == overlayWelcome || m.overlay == overlayHelp || m.overlay == overlayMessage {
+		if m.overlay == overlayWelcome || m.overlay == overlayHelp || m.overlay == overlayMessage || m.overlay == overlayExplain {
 			return m.updateOverlay(tea.KeyPressMsg{Code: tea.KeyEnter})
 		}
 		return m, nil
@@ -226,12 +226,16 @@ func (m *Model) pressButton(name string) (tea.Model, tea.Cmd) {
 
 // wheel scrolls the results, or the panel when the pointer is over it.
 func (m *Model) wheel(msg mouseEv) (tea.Model, tea.Cmd) {
-	if m.overlay != overlayNone {
-		return m, nil
-	}
 	delta := 1
 	if msg.Button == tea.MouseWheelUp {
 		delta = -1
+	}
+	if m.overlay == overlayExplain {
+		m.ex.scrollBy(delta * 3)
+		return m, nil
+	}
+	if m.overlay != overlayNone {
+		return m, nil
 	}
 	if r, ok := m.hit(msg.X, msg.Y); ok && r.kind == hitPreview {
 		m.previewScrl += delta * 3
