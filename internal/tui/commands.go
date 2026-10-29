@@ -435,7 +435,7 @@ func (m *Model) buildCommands() []*command {
 		},
 		preview: previewOverview,
 	})
-	add(&command{name: "autoreload", group: "Tool", syntax: "autoreload on|off", desc: "Whether every change sends the reload keystroke to Ghostty (macOS, needs Accessibility)",
+	add(&command{name: "autoreload", group: "Tool", syntax: "autoreload on|off", desc: "Whether every change asks the running Ghostty to reload",
 		adjust: true,
 		options: func(m *Model, arg string) []option {
 			return onOff(m.state.AutoReloadEnabled())

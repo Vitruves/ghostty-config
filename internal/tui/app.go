@@ -692,8 +692,8 @@ func (m *Model) flushWrites() tea.Cmd {
 // live preview already shows colours; this is what makes fonts, padding and
 // the title bar follow, and what carries a theme into every other window.
 func (m *Model) reload() tea.Cmd {
-	// The reload is a keystroke sent to the frontmost window, so it must
-	// only ever be sent from inside Ghostty.
+	// Before Ghostty 1.3 the reload is a keystroke sent to the frontmost
+	// window, so it must only ever be sent from inside Ghostty.
 	if m.opts.NoReload || !m.caps.inGhostty || !m.state.AutoReloadEnabled() || m.reloadFailed {
 		return nil
 	}
@@ -703,7 +703,7 @@ func (m *Model) reload() tea.Cmd {
 	return func() tea.Msg { return reloadDoneMsg{seq, reloadGhostty(binary)} }
 }
 
-// reloadGhostty sends the reload keystroke; a variable so tests never send one.
+// reloadGhostty asks Ghostty to reload; a variable so tests never do.
 var reloadGhostty = ghostty.Reload
 
 // reloadHint tells the user how to reload when the tool cannot.
@@ -772,7 +772,7 @@ func (m *Model) leave() tea.Cmd {
 	m.quitting = true
 	var reload tea.Cmd
 	if len(written) > 0 {
-		// Only a file that changed is worth a keystroke into Ghostty.
+		// Only a file that changed is worth a reload.
 		reload = m.reload()
 	}
 	return tea.Sequence(reload, tea.Raw(unwatchScheme), m.dropPictures(), tea.Quit)

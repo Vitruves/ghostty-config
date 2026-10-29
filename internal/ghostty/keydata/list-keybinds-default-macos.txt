@@ -1,5 +1,5 @@
 keybind = super+shift+,=reload_config
-keybind = super+,=open_config
+keybind = super+,=open_config:os_open
 keybind = copy=copy_to_clipboard:mixed
 keybind = paste=paste_from_clipboard
 keybind = super+c=copy_to_clipboard:mixed
@@ -86,8 +86,8 @@ keybind = super+shift+g=navigate_search:previous
 keybind = super+alt+i=inspector:toggle
 keybind = super+ctrl+f=toggle_fullscreen
 keybind = super+shift+v=paste_from_selection
-keybind = super+arrow_right=text:\\x05
-keybind = super+arrow_left=text:\\x01
-keybind = super+backspace=text:\\x15
+keybind = super+arrow_right=text:\x05
+keybind = super+arrow_left=text:\x01
+keybind = super+backspace=text:\x15
 keybind = alt+arrow_left=esc:b
 keybind = alt+arrow_right=esc:f

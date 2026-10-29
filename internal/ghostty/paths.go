@@ -49,7 +49,7 @@ func DefaultPaths(configOverride, themesOverride string) Paths {
 		StateDir:  filepath.Join(xdg, "ghostty-config"),
 	}
 
-	// Ghostty 1.3 reads both the historical `config` and the newer
+	// Ghostty 1.3 and 1.4 read both the historical `config` and the newer
 	// `config.ghostty`, in that order, first from XDG and then, on macOS,
 	// from Application Support. Later files override earlier ones.
 	p.Roots = []string{

@@ -12,7 +12,7 @@ import (
 
 // What Ghostty can bind and what it binds on its own. Both come from the
 // binary, `+list-actions --docs` and `+list-keybinds --default`, so they
-// match the version installed. A copy of what Ghostty 1.3 answers on macOS is
+// match the version installed. A copy of what Ghostty 1.4 answers on macOS is
 // kept in keydata for when the binary cannot be found or run.
 
 //go:embed keydata/list-actions-docs.txt
@@ -141,9 +141,10 @@ func ParseActionDocs(text string) []ActionDoc {
 }
 
 // ParseKeybindList reads `+list-keybinds --plain`: one `keybind = value`
-// per line. Ghostty escapes backslashes there, so `text:\\x05` reads as the
-// `text:\x05` a config file would hold.
+// per line. Ghostty 1.4 prints each value as a config file holds it, but 1.3
+// doubled every backslash, so its `text:\\x05` reads as `text:\x05`.
 func ParseKeybindList(text string) []Binding {
+	escaped := backslashesDoubled(text)
 	var out []Binding
 	for _, line := range strings.Split(text, "\n") {
 		value, ok := strings.CutPrefix(strings.TrimSpace(line), "keybind")
@@ -151,10 +152,31 @@ func ParseKeybindList(text string) []Binding {
 			continue
 		}
 		value = strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(value), "="))
-		value = strings.ReplaceAll(value, `\\`, `\`)
+		if escaped {
+			value = strings.ReplaceAll(value, `\\`, `\`)
+		}
 		if b, err := ParseBinding(value); err == nil && !b.Clear && !b.Chain && b.Table == "" {
 			out = append(out, b)
 		}
 	}
 	return out
+}
+
+// backslashesDoubled tells a 1.3 listing from a 1.4 one: in 1.3 every run of
+// backslashes is even. The macOS defaults hold `text:\x05`, so a 1.4
+// listing of them always has an odd run; the Linux ones hold no backslash.
+func backslashesDoubled(text string) bool {
+	seen, run := false, 0
+	for i := 0; i <= len(text); i++ {
+		if i < len(text) && text[i] == '\\' {
+			seen = true
+			run++
+			continue
+		}
+		if run%2 == 1 {
+			return false
+		}
+		run = 0
+	}
+	return seen
 }
