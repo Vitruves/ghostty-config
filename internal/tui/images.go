@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"bytes"
+	"image/png"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -26,7 +28,10 @@ import (
 type imageStore struct {
 	ids   map[string]uint32
 	used  map[string]int
+	size  map[string]int // what each picture takes in the terminal, in bytes
+	bytes int            // the sum of size
 	tick  int
+	frame int // tick at the last flush: pictures used since are on screen
 	next  uint32
 	queue strings.Builder
 	out   io.Writer
@@ -40,7 +45,7 @@ func newImageStore(out io.Writer) *imageStore {
 	// what an earlier run left on the alternate screen, and a picture sent
 	// under a number still in use there would be drawn over the old one.
 	base := uint32(firstID + randInt(0xD00000))
-	return &imageStore{ids: map[string]uint32{}, used: map[string]int{}, next: base, out: out}
+	return &imageStore{ids: map[string]uint32{}, used: map[string]int{}, size: map[string]int{}, next: base, out: out}
 }
 
 // The numbers a run gives its pictures. A number reaches the terminal as a
@@ -78,17 +83,31 @@ func (s *imageStore) holds(id uint32) bool {
 	return false
 }
 
-// maxImages bounds what the terminal holds: past it the oldest are freed.
-const maxImages = 360
+// maxImages and maxImageBytes bound what the terminal holds: past either
+// the least recently used are freed. The terminal has a bound of its own,
+// image-storage-limit, 320 MB of pixels per screen in Ghostty and Kitty by
+// default, and when it reaches it, it frees the pictures it was sent first,
+// whether they still show or not: the rows of the screen that never change
+// would go blank, and the store, which thinks the terminal still holds them,
+// would never send them again. A row of a full-screen window on a 5K display
+// is around 700 KB, so the count alone would let the store pass that bound;
+// half of it leaves room for a frame or two in flight.
+const (
+	maxImages     = 360
+	maxImageBytes = 160 << 20
+)
 
 func (s *imageStore) touch(key string) {
 	s.tick++
 	s.used[key] = s.tick
 }
 
-// evict frees the least recently used pictures once there are too many.
+// evict frees the least recently used pictures once there are too many or
+// they take too much room, down to three quarters of either bound, so that
+// it does not run again on the next picture. A picture the frame being drawn
+// uses is never freed.
 func (s *imageStore) evict() {
-	if len(s.ids) <= maxImages {
+	if len(s.ids) <= maxImages && s.bytes <= maxImageBytes {
 		return
 	}
 	type kv struct {
@@ -100,12 +119,33 @@ func (s *imageStore) evict() {
 		all = append(all, kv{k, s.used[k]})
 	}
 	sort.Slice(all, func(i, j int) bool { return all[i].used < all[j].used })
-	for _, e := range all[:maxImages/4] {
-		id := s.ids[e.key]
-		s.queue.WriteString(kimg.Delete(id))
+	for _, e := range all {
+		if len(s.ids) <= maxImages*3/4 && s.bytes <= maxImageBytes*3/4 || e.used > s.frame {
+			break
+		}
+		s.queue.WriteString(kimg.Delete(s.ids[e.key]))
+		s.bytes -= s.size[e.key]
 		delete(s.ids, e.key)
 		delete(s.used, e.key)
+		delete(s.size, e.key)
 	}
+}
+
+// add records a picture sent under a number, size bytes in the terminal.
+func (s *imageStore) add(key string, id uint32, size int) {
+	s.ids[key] = id
+	s.size[key] = size
+	s.bytes += size
+	s.touch(key)
+}
+
+// pngSize is what a PNG takes in the terminal once decoded: 4 bytes a pixel.
+func pngSize(data []byte) int {
+	cfg, err := png.DecodeConfig(bytes.NewReader(data))
+	if err != nil {
+		return len(data)
+	}
+	return cfg.Width * cfg.Height * 4
 }
 
 // ensure returns the number of the picture with this key, drawing and
@@ -116,9 +156,8 @@ func (s *imageStore) ensure(key string, cols, rows int, draw func() []byte) uint
 		return id
 	}
 	id := s.newID()
-	s.ids[key] = id
-	s.touch(key)
 	data := draw()
+	s.add(key, id, pngSize(data))
 	s.dump(id, data)
 	s.queue.WriteString(kimg.Transmit(id, data, cols, rows))
 	s.evict()
@@ -133,8 +172,7 @@ func (s *imageStore) ensureRGBA(key string, p []byte, w, h, cols, rows int, file
 		return id
 	}
 	id := s.newID()
-	s.ids[key] = id
-	s.touch(key)
+	s.add(key, id, w*h*4)
 	path := ""
 	if file != nil {
 		path = file(p)
@@ -146,6 +184,7 @@ func (s *imageStore) ensureRGBA(key string, p []byte, w, h, cols, rows int, file
 
 // flush writes what is queued, in pieces the terminal reads whole.
 func (s *imageStore) flush() {
+	s.frame = s.tick
 	if s.queue.Len() == 0 || s.out == nil {
 		return
 	}
@@ -175,6 +214,8 @@ func (s *imageStore) dropAll() string {
 	b.WriteString(kimg.DeleteAll())
 	s.ids = map[string]uint32{}
 	s.used = map[string]int{}
+	s.size = map[string]int{}
+	s.bytes = 0
 	return b.String()
 }
 

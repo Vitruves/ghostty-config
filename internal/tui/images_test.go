@@ -4,6 +4,7 @@ import (
 	stdcolor "image/color"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -138,5 +139,43 @@ func TestPictureNumbersWrapWithinTheColour(t *testing.T) {
 	}
 	if !seen[firstID+1] {
 		t.Fatalf("the numbering did not wrap to the start: %v", seen)
+	}
+}
+
+// The store frees pictures by the room they take in the terminal, not only
+// by their number, so that the terminal never reaches its own bound and
+// frees rows still on screen; a picture of the frame being drawn stays.
+func TestPicturesAreFreedByTheRoomTheyTake(t *testing.T) {
+	var sent strings.Builder
+	s := newImageStore(&sent)
+	const w, h = 6000, 44 // one row of a full-screen 6K window: about 1 MB
+	band := make([]byte, w*h*4)
+	frame := func(first, n int) {
+		for i := first; i < first+n; i++ {
+			s.ensureRGBA(strconv.Itoa(i), band, w, h, 300, 1, nil)
+		}
+		s.flush()
+	}
+	for f := 0; f < 8; f++ {
+		frame(f*80, 80)
+		if s.bytes > maxImageBytes+80*len(band) {
+			t.Fatalf("frame %d: the store holds %d MB", f, s.bytes>>20)
+		}
+	}
+	if len(s.ids) >= 8*80 || !strings.Contains(sent.String(), "a=d,d=I") {
+		t.Fatal("nothing was freed")
+	}
+	// The last frame is whole.
+	for i := 7 * 80; i < 8*80; i++ {
+		if _, ok := s.ids[strconv.Itoa(i)]; !ok {
+			t.Fatalf("picture %d of the frame on screen was freed", i)
+		}
+	}
+	total := 0
+	for k := range s.ids {
+		total += s.size[k]
+	}
+	if total != s.bytes {
+		t.Fatalf("sizes add up to %d, the store counts %d", total, s.bytes)
 	}
 }
