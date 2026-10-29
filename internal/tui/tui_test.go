@@ -244,20 +244,25 @@ func TestPaletteReachesEveryCommandAtTheUsersWindowSize(t *testing.T) {
 	}
 	h.dump("01-themes-group")
 
-	// Every group fits whole, one at a time, with what each setting is now.
+	// Every group is there one at a time, with what each setting is now; a
+	// group longer than the window scrolls to whatever is highlighted.
 	seen := map[string]bool{}
 	for i := 0; i < len(groups); i++ {
-		for _, o := range h.m.results {
+		for j, o := range h.m.results {
 			seen[o.value] = true
+			h.m.sel.cursor = j
 			if !strings.Contains(h.view(), " "+o.label) {
 				t.Fatalf("group %s: %q is not on screen:\n%s", groups[h.m.group], o.label, h.view())
 			}
 		}
+		h.m.sel.cursor, h.m.sel.offset = 0, 0
 		h.dump("02-group-" + strings.ToLower(groups[h.m.group]))
 		h.key("tab")
 	}
 	for _, c := range h.m.commands() {
-		if !seen[c.name] {
+		// A setting that cannot matter yet, the image's fit without an
+		// image, waits for the one it depends on.
+		if !seen[c.name] && h.m.listed(c) {
 			t.Errorf("command %s is reachable from no group", c.name)
 		}
 	}
@@ -415,7 +420,7 @@ func TestSlotEditorAndSave(t *testing.T) {
 	}
 }
 
-func TestNewRandomAndUndo(t *testing.T) {
+func TestNewRandomAndRevert(t *testing.T) {
 	h := newHarness(t, "theme = Dracula\n")
 	h.typeText("new light tri")
 	h.key("enter")
@@ -424,10 +429,10 @@ func TestNewRandomAndUndo(t *testing.T) {
 	}
 	h.dump("05-new")
 	h.key("esc")
-	h.typeText("undo")
+	h.typeText("revert")
 	h.key("enter")
 	if h.m.cur.Name != "Dracula" {
-		t.Fatalf("undo should drop the draft, showing %s", h.m.cur.Name)
+		t.Fatalf("revert should drop the draft, showing %s", h.m.cur.Name)
 	}
 	h.typeText("random")
 	h.key("enter")
@@ -994,7 +999,7 @@ func TestFontsAreInstalledWhereTheyAreChosen(t *testing.T) {
 	}
 	h.typeText("font ")
 	v := h.view()
-	for _, want := range []string{here(), "monospace first", "Not installed yet", "Enter installs one", "JetBrains Mono", "download"} {
+	for _, want := range []string{here(), "monospace first", "Popular", "Enter installs one", "JetBrains Mono", "download", "More"} {
 		if !strings.Contains(v, want) {
 			t.Fatalf("the font list lacks %q:\n%s", want, v)
 		}

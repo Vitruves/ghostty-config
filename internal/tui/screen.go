@@ -420,7 +420,7 @@ func (m *Model) viewCommandRail(ui chrome, l layout) []string {
 	var cmds []*command
 	cur := 0
 	for _, c := range m.commands() {
-		if c.group != groups[m.group] {
+		if c.group != groups[m.group] || !m.listed(c) || c.transient {
 			continue
 		}
 		if c == m.cmd {
@@ -433,7 +433,7 @@ func (m *Model) viewCommandRail(ui chrome, l layout) []string {
 	return s.window(len(cmds), l.bodyH, func(i int, selected bool) string {
 		c := cmds[i]
 		m.addRegion(marginX, l.bodyY+(i-s.offset), l.railW, 1, hitCommand, i, c.name)
-		name := title(c.name)
+		name := c.title()
 		value := truncate(m.currentValueOf(c), l.railW-lipgloss.Width(name)-4)
 		gap := l.railW - 2 - lipgloss.Width(name) - lipgloss.Width(value)
 		if gap < 1 {
@@ -559,7 +559,15 @@ func (m *Model) keyPairs() []string {
 				pairs = append(pairs, "Delete", "default")
 			}
 		}
-		pairs = append(pairs, "Enter", "open", "Tab", "section", "Esc", "leave", "F2", "peek", "F1", "help", "type", "to search")
+		enter := "open"
+		if o := m.selected(); o != nil && o.cmd != nil && o.cmd.name == "fixfont" {
+			// The row that mends the font installs or lists, never opens.
+			enter = "choose"
+			if strings.HasPrefix(o.cmd.label, "Install") {
+				enter = "install"
+			}
+		}
+		pairs = append(pairs, "Enter", enter, "Tab", "section", "Esc", "leave", "F2", "peek", "F1", "help", "type", "to search")
 	case themeCommand(m.cmd):
 		pairs = []string{"←↓↑→", "move", "Enter", "apply", "^T", "try here", "^F", "favourite"}
 		if o := m.selected(); o != nil && o.theme != nil && o.theme.Deletable() {
@@ -568,8 +576,30 @@ func (m *Model) keyPairs() []string {
 		pairs = append(pairs, "Tab", "section", "Esc", "back", "F2", "peek", "F1", "help")
 	case m.cmd.options == nil:
 		pairs = []string{"Enter", "run", "Esc", "back", "F2", "peek", "F1", "help"}
+	case m.cmd.name == "keys":
+		pairs = []string{"Enter", "set", "↑↓", "move", "Delete", "default", "^X", "unbind"}
+		if r := m.selectedKey(); r != nil && globalAction(r.action) {
+			pairs = append(pairs, "^G", "global")
+		}
+		pairs = append(pairs, "Esc", "back", "F1", "help")
 	default:
-		pairs = []string{"↑↓", "move", "Enter", "apply", "Esc", "back", "Tab", "complete", "F2", "peek", "F1", "help"}
+		pairs = []string{"↑↓", "move"}
+		// The lists of the Tool section that look after the files say what
+		// Enter does there; changes only shows.
+		switch m.cmd.name {
+		case "restore":
+			pairs = append(pairs, "Enter", "restore")
+		case "check":
+			pairs = append(pairs, "Enter", "ask again")
+		case "changes":
+		default:
+			if o := m.selected(); o != nil && strings.HasPrefix(o.value, downloadPrefix) {
+				pairs = append(pairs, "Enter", "install")
+			} else {
+				pairs = append(pairs, "Enter", "apply")
+			}
+		}
+		pairs = append(pairs, "Esc", "back", "Tab", "complete", "F2", "peek", "F1", "help")
 	}
 	return pairs
 }

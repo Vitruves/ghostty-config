@@ -209,6 +209,12 @@ func (m *Model) pressButton(name string) (tea.Model, tea.Cmd) {
 		m.overlay = overlayNone
 	case "update-install":
 		return m, m.startUpdate()
+	case "capture-set":
+		return m, m.commitCapture()
+	case "capture-cancel":
+		m.overlay = overlayNone
+	case "capture-global":
+		m.kb.global = !m.kb.global
 	case "update-later":
 		m.overlay = overlayNone
 	case "enter":

@@ -159,6 +159,41 @@ func TestPixelScreens(t *testing.T) {
 	light.m.jumpToGroup("Window")
 	light.highlightCommand("opacity")
 	light.shot("15-window-light")
+
+	// What keeps the files safe: the session's history, what it changed, the
+	// backups, and Ghostty's own check of the config.
+	s := newPixHarness(t, "midnight")
+	s.do("size 15", true)
+	s.do("paddingx 20", true)
+	s.m.setPromptText("")
+	s.m.jumpToGroup("Tool")
+	s.highlightCommand("undo")
+	s.shot("16-tool-history")
+	s.do("changes", false)
+	s.shot("17-changes")
+	s.do("restore", false)
+	s.shot("18-restore")
+	s.key("enter")
+	s.shot("19-restore-confirm")
+	s.key("esc")
+	// The answer is set here: no program is run for a picture.
+	s.m.paths.Binary = filepath.Join(s.dir, "no-ghostty")
+	s.m.problems = s.m.tree.Place(ghostty.ParseValidate("font-size: invalid value \"15\"\nmacos-titlebar-style: invalid value \"tabs\"\n"))
+	s.m.checked, s.m.checkTook, s.m.checkOpened = true, 11*time.Millisecond, true
+	s.m.setPromptText("Check ")
+	s.shot("20-check")
+	s.m.problems = nil
+	s.m.setPromptText("Check ")
+	s.shot("21-check-clean")
+	s.m.setPromptText("")
+	s.m.problems = s.m.tree.Place(ghostty.ParseValidate("font-size: invalid value \"15\"\n"))
+	s.m.tellProblems(nil)
+	s.shot("22-problem-status")
+
+	light = newPixHarness(t, "paper")
+	light.do("size 15", true)
+	light.do("restore", false)
+	light.shot("23-restore-light")
 }
 
 // TestReadmeShots draws the pictures of the README when

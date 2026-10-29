@@ -25,10 +25,15 @@ type Paths struct {
 	ResourceThemeDirs []string
 	// StateDir holds this tool's own files: favourites, settings, backups.
 	StateDir string
-	// Binary is the ghostty executable, used for +list-fonts. Empty when it
-	// cannot be found; the font browser then falls back to the platform's
-	// own font database.
+	// Binary is the ghostty executable, used for +list-fonts and
+	// +validate-config. Empty when it cannot be found; the font browser then
+	// falls back to the platform's own font database, and nothing is
+	// validated.
 	Binary string
+	// Defaults is whether Roots are Ghostty's own default files, which it
+	// reads by itself when asked to validate, rather than a file given on
+	// the command line.
+	Defaults bool
 }
 
 // DefaultPaths resolves the standard locations for this platform. A non-empty
@@ -58,6 +63,7 @@ func DefaultPaths(configOverride, themesOverride string) Paths {
 			filepath.Join(support, "config.ghostty"),
 		)
 	}
+	p.Defaults = configOverride == ""
 	if configOverride != "" {
 		p.Roots = []string{configOverride}
 	}

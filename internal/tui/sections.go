@@ -9,12 +9,16 @@ import "sort"
 var subsections = map[string][][2]string{
 	"Themes": {
 		{"Browse", "theme favs fav"},
-		{"Create", "new random edit undo save fork"},
+		{"Create", "new random edit revert save fork"},
 		{"Files", "delete"},
 	},
 	"Fonts": {
-		{"Family", "font style size"},
+		{"Family", "fixfont font style size"},
 		{"Text", "lineheight cellwidth ligatures thicken thickness faint"},
+		// The font's own features and axes are named at run time.
+		{"Features", ""},
+		{"Variable axes", ""},
+		{"Icons", "icons"},
 	},
 	"Window": {
 		{"Presets", "preset"},
@@ -22,17 +26,22 @@ var subsections = map[string][][2]string{
 		{"Appearance", "opacity blur windowtheme colorspace contrast opaquecells"},
 		{"Padding", "paddingx paddingy balance paddingcolor"},
 		{"Splits", "splitopacity"},
+		{"Background image", "bgimage bgopacity bgfit bgposition bgrepeat"},
+		{"Size at launch", "columns rows windowx windowy"},
 	},
 	"Input": {
+		{"Keyboard", "keys optionalt"},
 		{"Cursor", "cursor blink cursoropacity clicktomove"},
 		{"Clipboard", "copy clearselect trimspaces pasteguard"},
 		{"Mouse", "hidemouse focusmouse scrollbar"},
-		{"Keyboard", "optionalt"},
 	},
 	"Session": {
 		{"Windows", "savestate inheritcwd stepresize quitlast tabbar confirmclose resizeoverlay"},
+		{"Quick terminal", "quickposition quicksize quickscreen quickanimation quickhide quickspaces quickkeyboard quicklayer"},
 		{"Scrollback", "scrollback"},
 		{"Notifications", "notify"},
+		{"Bell", "bellsound bellaudio bellfile bellvolume bellbounce belltitle bellborder"},
+		{"Shell integration", "shell shellcursor shelltitle shellsudo shellpath sshenv sshterminfo"},
 	},
 	"Extensions": {
 		{"Shaders", "shader"},
@@ -41,7 +50,8 @@ var subsections = map[string][][2]string{
 	"Tool": {
 		{"Ghostty", "reload autoreload"},
 		{"Interface", "interface"},
-		{"Config", "overrides collection backup paths"},
+		{"History", "undo changes"},
+		{"Config", "check restore overrides collection backup paths"},
 		{"Help", "help quit"},
 	},
 }
@@ -50,6 +60,9 @@ var subsections = map[string][][2]string{
 // that part; commands no part names fall in one named after the section.
 func subOf(c *command) (string, int) {
 	for i, part := range subsections[c.group] {
+		if c.set != nil && c.set.part == part[0] {
+			return part[0], i
+		}
 		for _, name := range splitWords(part[1]) {
 			if name == c.name {
 				return part[0], i

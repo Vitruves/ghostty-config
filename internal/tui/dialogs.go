@@ -92,6 +92,9 @@ func (m *Model) viewOverlay(body string) string {
 		lines = append([]string{""}, wrapLines(m.messageText, 70, c.base())...)
 		lines = append(lines, "", c.mutedS().Render("  any key closes"))
 		width = 76
+	case overlayCapture:
+		title = "New shortcut for " + keyLabel(m.kb.action)
+		lines, width = m.captureLines(c, 58), 64
 	case overlayUpdate:
 		title = "Update available"
 		lines = append([]string{""}, wrapLines(m.updateText(), 52, c.base())...)
@@ -194,7 +197,7 @@ func (m *Model) viewHelp() string {
 		right = append(right, "  "+c.bold(c.fg).Render(g))
 		var names []string
 		for _, cmd := range m.commands() {
-			if cmd.group == g {
+			if cmd.group == g && m.inHelp(cmd) {
 				names = append(names, title(cmd.name))
 			}
 		}
@@ -232,7 +235,7 @@ type helpGroup struct {
 
 func helpKeyGroups() []helpGroup {
 	return []helpGroup{
-		{"Everywhere", []string{"type", "A command, then its argument", "↑ ↓", "Walk the list", "Enter", "Open, or apply the line", "Tab", "Next section, or complete", "Esc", "Back; on an empty prompt, leave", "F2", "Step aside to see the terminal", "⇧↑ ⇧↓", "Scroll the explanation", "Ctrl+C", "Leave, writing nothing", "F1", "This help"}},
+		{"Everywhere", []string{"type", "A command, then its argument", "↑ ↓", "Walk the list", "Enter", "Open, or apply the line", "Tab", "Next section, or complete", "Esc", "Back; on an empty prompt, leave", "F2", "Step aside to see the terminal", "⇧↑ ⇧↓", "Scroll the explanation", "Ctrl+Z", "Undo the last change", "Ctrl+C", "Leave, writing nothing", "F1", "This help"}},
 		{"Settings", []string{"← →", "Change the highlighted setting", "Delete", "Put it back to Ghostty's default"}},
 		{"The wall of themes", []string{"← ↓ ↑ →", "Walk the cards", "⇧↑ ⇧↓", "Previous, next group", "Enter", "Apply the highlighted theme", "Ctrl+T", "Try it in this terminal", "Ctrl+F", "Star or unstar it", "Ctrl+X", "Delete its file, after asking"}},
 		{"Slot editor", []string{"← →", "Brighten / darken", "⇧← ⇧→", "Rotate hue", "- +", "Saturation", "[ ]", "Lightness", "hex digits", "Type an exact value", "⌫", "Clear an optional slot", "u", "Undo this slot", "↑ ↓", "Next slot", "Esc", "Back to the prompt"}},

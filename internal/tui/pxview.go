@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	uv "github.com/charmbracelet/ultraviolet"
-	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/ansi/kitty"
 	"golang.org/x/image/font"
 
@@ -112,7 +111,11 @@ func (m *Model) drawScreen(c *pix.Canvas) {
 	case screenMenu:
 		m.pxMenu(c, p, f, g)
 	case screenOptions:
-		m.pxOptions(c, p, f, g)
+		if m.cmd.name == "keys" {
+			m.pxKeys(c, p, f, g)
+		} else {
+			m.pxOptions(c, p, f, g)
+		}
 	case screenEditor:
 		m.pxEditor(c, p, f, g)
 	}
@@ -362,9 +365,11 @@ func (m *Model) pxRail(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo, title string,
 		if it.active {
 			face, col = f.rowB, p.fg
 		}
-		cw := c.Width(f.small, it.count)
+		// A long value, a font family's name, gives way before the label.
+		count := c.Fit(f.small, it.count, g.railW*0.55)
+		cw := c.Width(f.small, count)
 		c.Text(face, lx, mid(y, 28, 13.5), c.Fit(face, it.label, g.railW-(lx-g.railX)-cw-20), col)
-		c.Text(f.small, g.railX+g.railW-10-cw, mid(y, 28, 12), it.count, p.muted)
+		c.Text(f.small, g.railX+g.railW-10-cw, mid(y, 28, 12), count, p.muted)
 		if it.kind != hitNone {
 			m.pxRegion(c, g.railX, y, g.railW, 28, it.kind, it.index, it.name)
 		}
@@ -833,15 +838,35 @@ func (m *Model) pxMenuRow(c *pix.Canvas, p pxPal, f pxFonts, o option, idx int, 
 func (m *Model) pxControl(c *pix.Canvas, p pxPal, f pxFonts, s *setting, v string, idx int, right, y, minLeft float32) float32 {
 	cy := y + rowH/2
 	switch {
+	case s.list != nil:
+		// A file: its name, and a chevron that says Enter lists the others.
+		x := right - 10
+		c.Line(x+3, cy-4, x+7, cy, 1.4, p.muted)
+		c.Line(x+7, cy, x+3, cy+4, 1.4, p.muted)
+		label := s.shown(v)
+		vc := p.fg
+		if quietValue(label) {
+			vc = p.muted
+		}
+		label = c.Fit(f.small, label, maxF(right-18-minLeft, 40))
+		x -= 8 + c.Width(f.small, label)
+		c.Text(f.small, x, mid(y, rowH, 12.5), label, vc)
+		return x
+
 	case s.numeric:
 		val, err := strconv.ParseFloat(strings.TrimSuffix(v, "%"), 64)
 		if err != nil {
 			val = s.min
 		}
+		vc := p.fg
+		if s.unset != "" && strings.EqualFold(v, s.unset) {
+			// Left to Ghostty: the knob rests where its own value is.
+			val, vc = s.unsetAt, p.muted
+		}
 		frac := float32((val - s.min) / (s.max - s.min))
 		frac = clampF(frac, 0, 1)
-		vw := float32(40)
-		c.Text(f.mono, right-c.Width(f.mono, v), mid(y, rowH, 13), v, p.fg)
+		vw := maxF(40, c.Width(f.mono, v))
+		c.Text(f.mono, right-c.Width(f.mono, v), mid(y, rowH, 13), v, vc)
 		tw := float32(170)
 		tx := right - vw - 12 - tw
 		c.Rect(tx, cy-2, tw, 4, 2, p.track)
@@ -917,7 +942,7 @@ func (m *Model) pxCommandSide(c *pix.Canvas, p pxPal, f pxFonts, cmd *command, o
 	defer c.Unclip()
 	s := cmd.set
 	if s == nil {
-		c.Text(f.h3, x, y+20, title(cmd.name), p.fg)
+		c.Text(f.h3, x, y+20, cmd.title(), p.fg)
 		c.Text(f.mono, x, y+46, c.Fit(f.mono, cmd.syntax, w), p.muted)
 		yy := y + 78
 		for _, line := range c.Wrap(f.body, cmd.desc+".", w-12) {
@@ -945,7 +970,11 @@ func (m *Model) pxCommandSide(c *pix.Canvas, p pxPal, f pxFonts, cmd *command, o
 	yy += 30
 	kx := x + c.Text(f.mono, x, yy+14, s.key, p.muted)
 	if s.fallback != "" {
-		c.Text(f.small, kx+10, yy+14, "· default "+displayValue(s.fallback), p.muted)
+		def := "· default " + displayValue(s.fallback)
+		if s.unset != "" && s.fallback == s.unset {
+			def = "· not set by default"
+		}
+		c.Text(f.small, kx+10, yy+14, def, p.muted)
 	}
 	yy += 34
 
@@ -972,6 +1001,21 @@ func (m *Model) pxCommandSide(c *pix.Canvas, p pxPal, f pxFonts, cmd *command, o
 		yy += 21
 		first = false
 	}
+	if s.describe != nil && lead == "" {
+		// What the highlighted value is: the file, where the icons come from.
+		yy += 8
+		for _, line := range c.Wrap(f.body, title(s.describe(m, value))+".", w-12) {
+			c.Text(f.body, x, yy+14, line, p.fg)
+			yy += 21
+		}
+	}
+	if s.hint != "" {
+		yy += 8
+		for _, line := range c.Wrap(f.small, s.hint, w-12) {
+			c.Text(f.small, x, yy+13, line, p.muted)
+			yy += 19
+		}
+	}
 	if s.note != "" {
 		yy += 10
 		note := strings.ToUpper(s.note[:1]) + s.note[1:]
@@ -983,13 +1027,25 @@ func (m *Model) pxCommandSide(c *pix.Canvas, p pxPal, f pxFonts, cmd *command, o
 	yy += 26
 	pxCaps(c, f.caps, x, yy+10, "Will write", p.muted)
 	yy += 20
-	if strings.EqualFold(value, s.fallback) {
-		c.Text(f.mono, x, yy+14, "# "+s.key+" removed: Ghostty's default", p.muted)
-	} else {
-		px := c.Text(f.mono, x, yy+14, "+ ", p.accent)
-		c.Text(f.mono, x+px, yy+14, c.Fit(f.mono, s.key+" = "+value, w-px), p.fg)
+	line := s.key + " = " + value
+	switch {
+	case s.writes != nil:
+		line = s.writes(m, value)
+	case strings.EqualFold(value, s.fallback):
+		line = ""
 	}
-	yy += 24
+	if line == "" {
+		c.Text(f.mono, x, yy+14, "# "+s.key+" removed: Ghostty's default", p.muted)
+		yy += 24
+	}
+	for _, l := range strings.Split(line, "\n") {
+		if l == "" {
+			continue
+		}
+		px := c.Text(f.mono, x, yy+14, "+ ", p.accent)
+		c.Text(f.mono, x+px, yy+14, c.Fit(f.mono, l, w-px), p.fg)
+		yy += 24
+	}
 	c.Text(f.small, x, yy+12, shortenPath(m.tree.Primary.Path), p.muted)
 	m.pxRegion(c, x, y, w, h, hitPreview, 0, "")
 }
@@ -1020,17 +1076,17 @@ func (m *Model) pxOptions(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo) {
 	var items []railItem
 	cur := 0
 	for _, cmd := range m.commands() {
-		if cmd.group != groups[m.group] {
+		if cmd.group != groups[m.group] || !m.listed(cmd) || cmd.transient {
 			continue
 		}
 		if cmd == m.cmd {
 			cur = len(items)
 		}
-		items = append(items, railItem{label: title(cmd.name), count: m.currentValueOf(cmd), active: cmd == m.cmd, kind: hitCommand, index: len(items), name: cmd.name, dot: cmd.set != nil && m.changed(cmd.set)})
+		items = append(items, railItem{label: cmd.title(), count: m.currentValueOf(cmd), active: cmd == m.cmd, kind: hitCommand, index: len(items), name: cmd.name, dot: cmd.set != nil && m.changed(cmd.set)})
 	}
 	m.pxRail(c, p, f, g, groups[m.group], items, cur, 0)
 
-	label := title(m.cmd.name)
+	label := m.cmd.title()
 	if m.cmd.set != nil {
 		label = m.cmd.set.label
 	}
@@ -1399,7 +1455,10 @@ func (m *Model) pxOverlay(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo) {
 		w := minF(520, g.W-40)
 		x, y := card(w, 110)
 		c.Text(f.h3, x+28, y+40, "Working", p.fg)
-		sw := c.Text(f.mono, x+28, y+76, ansi.Strip(m.spin.View()), p.accent)
+		// The spinner's braille frames are in no face the canvas carries: a
+		// dot in the accent says the same.
+		pxDot(c, x+31, y+71, p.accent)
+		sw := float32(6)
 		c.Text(f.body, x+28+sw+10, y+76, c.Fit(f.body, m.busyText, w-70-sw), p.text2)
 	case overlayMessage:
 		w := minF(600, g.W-40)
@@ -1415,6 +1474,8 @@ func (m *Model) pxOverlay(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo) {
 		c.Text(f.small, x+28, y+h-22, "Any key closes", p.muted)
 	case overlayHelp:
 		m.pxHelp(c, p, f, g, card)
+	case overlayCapture:
+		m.pxCapture(c, p, f, g, card)
 	case overlayUpdate:
 		w := minF(540, g.W-40)
 		lines := c.Wrap(f.body, "Install downloads it for this system, checks it against the release checksums and replaces this binary. The new version starts next time.", w-56)
@@ -1466,6 +1527,12 @@ func (m *Model) pxHelp(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo, card func(w, 
 	}
 	keyCol += 16
 	for _, grp := range helpKeyGroups() {
+		// A group cut in half reads as the whole of it; one that does not
+		// fit is left to the footer of its own screen, which lists its keys.
+		if yy+24+float32(len(grp.pairs)/2)*23 > y+h-20 {
+			c.Text(f.small, x+28, yy, c.Fit(f.small, "The "+strings.ToLower(grp.title)+" lists its own keys at the foot of its screen", colW), p.muted)
+			break
+		}
 		c.Text(f.h2, x+28, yy, grp.title, p.accent)
 		yy += 24
 		for i := 0; i+1 < len(grp.pairs); i += 2 {
@@ -1487,7 +1554,7 @@ func (m *Model) pxHelp(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo, card func(w, 
 		yy += 20
 		var names []string
 		for _, cmd := range m.commands() {
-			if cmd.group == grp {
+			if cmd.group == grp && m.inHelp(cmd) {
 				names = append(names, title(cmd.name))
 			}
 		}
@@ -1592,6 +1659,19 @@ func (m *Model) pxBridge(c *pix.Canvas, p pxPal, lines []string, x, y, w, h floa
 			// A line cut in half reads as a smudge; it waits for a scroll.
 			break
 		}
+		// Grounds first, a run of cells of one colour as one rectangle: cell
+		// by cell, the soft edges of neighbours would show as seams.
+		for col := 0; col < cols; {
+			bg := pxCellGround(buf.CellAt(col, row), p)
+			end := col + 1
+			for end < cols && bg != nil && pxCellGround(buf.CellAt(end, row), p) == bg {
+				end++
+			}
+			if bg != nil {
+				c.Rect(x+float32(col)*adv, by, adv*float32(end-col), lh, 0, bg)
+			}
+			col = end
+		}
 		for col := 0; col < cols; {
 			cell := buf.CellAt(col, row)
 			if cell == nil || cell.Width == 0 {
@@ -1599,11 +1679,6 @@ func (m *Model) pxBridge(c *pix.Canvas, p pxPal, lines []string, x, y, w, h floa
 				continue
 			}
 			cx := x + float32(col)*adv
-			if cell.Style.Bg != nil {
-				if r, g2, b, a := cell.Style.Bg.RGBA(); a > 0 && !(uint8(r>>8) == p.bg.R && uint8(g2>>8) == p.bg.G && uint8(b>>8) == p.bg.B) {
-					c.Rect(cx, by, adv*float32(cell.Width), lh, 0, cell.Style.Bg)
-				}
-			}
 			var ink stdcolor.Color = p.fg
 			if cell.Style.Fg != nil {
 				ink = cell.Style.Fg
@@ -1636,4 +1711,17 @@ func (m *Model) pxBridge(c *pix.Canvas, p pxPal, lines []string, x, y, w, h floa
 			col += cell.Width
 		}
 	}
+}
+
+// pxCellGround is the ground a cell of the text bridge paints, nil where it
+// is the screen's own.
+func pxCellGround(cell *uv.Cell, p pxPal) stdcolor.Color {
+	if cell == nil || cell.Style.Bg == nil {
+		return nil
+	}
+	r, g, b, a := cell.Style.Bg.RGBA()
+	if a == 0 || (uint8(r>>8) == p.bg.R && uint8(g>>8) == p.bg.G && uint8(b>>8) == p.bg.B) {
+		return nil
+	}
+	return stdcolor.NRGBA{uint8(r >> 8), uint8(g >> 8), uint8(b >> 8), uint8(a >> 8)}
 }

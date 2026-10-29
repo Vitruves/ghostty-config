@@ -41,6 +41,9 @@ type Document struct {
 	// disk is what the file held when it was read or last written, which is
 	// how a save notices that someone else edited it in the meantime.
 	disk string
+	// removed counts the entries an undo took out since the last write:
+	// lines this session had added, which the save may drop.
+	removed int
 }
 
 // changedOnDisk reports whether the file no longer holds what this document

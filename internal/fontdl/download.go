@@ -22,7 +22,8 @@ import (
 // every family the same way — the powerline and icon glyphs a terminal prompt
 // expects are already there — and because one URL shape covers all of them.
 // The "latest" download endpoint is stable, so no version is pinned here and
-// no release index has to be fetched first.
+// no release index has to be fetched first. The few families from elsewhere
+// are pinned to a release of their own project; table.go lists them all.
 
 // nerdFontsRelease is the redirecting endpoint for the newest release assets.
 const nerdFontsRelease = "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/"
@@ -34,34 +35,19 @@ type FontDownload struct {
 	Note    string
 	// URL is the archive's address when it is not in the Nerd Fonts release.
 	URL string
+	// Families are the names the faces are installed under, see Provides;
+	// none means the archive's own name. Reserved Font Names make some
+	// differ from the original: Source Code Pro is installed as
+	// "SauceCodePro Nerd Font".
+	Families []string
+	// Only unpacks just Families from an archive that carries others too.
+	Only bool
+	// Popular marks the well-known families, listed first.
+	Popular bool
 }
 
-// AvailableDownloads is the offered set: widely used, actively maintained, and
-// all genuinely monospaced. Kept short on purpose — a list of ninety families
-// is a worse answer to "I need a good terminal font" than a list of fifteen.
-var AvailableDownloads = []FontDownload{
-	{"Google Sans Code", "GoogleSansCode", "Google's monospace, the font this tool draws its own pictures in",
-		"https://github.com/googlefonts/googlesans-code/releases/download/v7.001/GoogleSansCode-v7.001.zip"},
-	{"JetBrains Mono", "JetBrainsMono", "Tall x-height, made for long reading", ""},
-	{"Fira Code", "FiraCode", "The one with the programming ligatures", ""},
-	{"Hack", "Hack", "Plain, legible, no surprises", ""},
-	{"Meslo LG", "Meslo", "Menlo redrawn, the powerline default", ""},
-	{"Source Code Pro", "SourceCodePro", "Adobe, conservative and even", ""},
-	{"Cascadia Code", "CascadiaCode", "Microsoft, ships with Windows Terminal", ""},
-	{"Iosevka", "Iosevka", "Narrow, fits more columns per line", ""},
-	{"Ubuntu Mono", "UbuntuMono", "Humanist, unusually compact", ""},
-	{"DejaVu Sans Mono", "DejaVuSansMono", "Enormous glyph coverage", ""},
-	{"Roboto Mono", "RobotoMono", "Neutral and unfussy", ""},
-	{"Inconsolata", "Inconsolata", "A classic, still excellent", ""},
-	{"Victor Mono", "VictorMono", "Cursive italics for comments", ""},
-	{"Space Mono", "SpaceMono", "Distinctive, with real character", ""},
-	{"IBM Plex Mono", "IBMPlexMono", "Corporate in the good sense", ""},
-	{"Anonymous Pro", "AnonymousPro", "Designed for small sizes", ""},
-	{"Terminus", "Terminus", "Bitmap heritage, sharp at small sizes", ""},
-}
-
-// downloadTimeout is generous: some of these archives are tens of megabytes.
-const downloadTimeout = 5 * time.Minute
+// downloadTimeout is generous: Iosevka's archive is 400 MB, Noto's 600.
+const downloadTimeout = 30 * time.Minute
 
 // FontInstallDir is where user fonts belong on this platform.
 func FontInstallDir() (string, error) {
@@ -102,8 +88,8 @@ func Install(font FontDownload, progress func(string)) error {
 	if runtime.GOOS == "windows" {
 		return fmt.Errorf(
 			"installing fonts is not supported on Windows yet — download %s.zip from "+
-				"github.com/ryanoasis/nerd-fonts/releases and open the files to install them",
-			font.Archive)
+				"github.com/%s/releases and open the files to install them",
+			font.Archive, font.Source())
 	}
 
 	dir, err := FontInstallDir()
@@ -127,7 +113,12 @@ func Install(font FontDownload, progress func(string)) error {
 	defer os.Remove(archive)
 
 	report("Unpacking %s…", font.Name)
-	installed, err := extractFaces(archive, dir)
+	installed, err := extractFaces(archive, dir, font.keeps)
+	if err == nil && installed == 0 && font.Only {
+		// A later release named its files some other way: every family of
+		// the archive is better than none.
+		installed, err = extractFaces(archive, dir, nil)
+	}
 	if err != nil {
 		return err
 	}
@@ -178,9 +169,9 @@ func downloadToTemp(url string) (string, error) {
 	return file.Name(), nil
 }
 
-// extractFaces writes every font file in the archive into dir, flattened, and
-// returns how many it wrote.
-func extractFaces(archivePath, dir string) (int, error) {
+// extractFaces writes the font files of the archive that keep accepts, all
+// of them when it is nil, into dir, flattened, and returns how many it wrote.
+func extractFaces(archivePath, dir string, keep func(string) bool) (int, error) {
 	reader, err := zip.OpenReader(archivePath)
 	if err != nil {
 		return 0, fmt.Errorf("could not read the archive: %w", err)
@@ -190,6 +181,9 @@ func extractFaces(archivePath, dir string) (int, error) {
 	installed := 0
 	for _, entry := range reader.File {
 		if entry.FileInfo().IsDir() || !isFontFile(entry.Name) {
+			continue
+		}
+		if keep != nil && !keep(filepath.Base(entry.Name)) {
 			continue
 		}
 

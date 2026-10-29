@@ -102,7 +102,11 @@ func (m *Model) detailStyled(p chrome, width int) []string {
 // does, and for a setting of the window, the window as it stands.
 func (m *Model) detailCommand(cmd *command, width int) []string {
 	c := m.c
-	lines := wrapSyntax(c.bold(c.fg), title(cmd.syntax), width)
+	head := title(cmd.syntax)
+	if cmd.label != "" {
+		head = cmd.label
+	}
+	lines := wrapSyntax(c.bold(c.fg), head, width)
 	lines = append(lines, para(c.mutedS(), cmd.desc+".", width)...)
 	if cmd.adjust {
 		lines = append(lines, "", truncate(c.base().Render("←→")+c.mutedS().Render(" change it here   ")+c.base().Render("Enter")+c.mutedS().Render(" every value"), width))
@@ -130,6 +134,11 @@ func (m *Model) currentValueOf(cmd *command) string {
 		return m.applied
 	case "font":
 		return orDash(m.fontFamily)
+	case "fixfont":
+		if t := m.fontTrouble(); t != nil {
+			return t.state()
+		}
+		return ""
 	case "style":
 		return m.currentStyle()
 	case "size":
@@ -165,16 +174,34 @@ func (m *Model) currentValueOf(cmd *command) string {
 		return fmt.Sprintf("%d in your config", len(m.overrides))
 	case "collection":
 		return fmt.Sprintf("%d themes", len(collection.Collection))
-	case "save", "undo":
+	case "keys":
+		return m.keysValue()
+	case "save", "revert":
 		if m.dirty {
 			return "unsaved edits"
 		}
 		return ""
-	}
-	for _, s := range m.buildSettings() {
-		if s.cmd == cmd.name {
-			return s.get(m)
+	case "undo":
+		if n := m.tree.UndoSteps(); n > 0 {
+			return countWord(n, "step")
 		}
+		return "nothing yet"
+	case "changes":
+		if n := len(m.changedFiles()); n > 0 {
+			return countWord(n, "file")
+		}
+		return "none"
+	case "check":
+		switch {
+		case m.paths.Binary == "" || !m.checked:
+			return ""
+		case len(m.problems) == 0:
+			return "no problems"
+		}
+		return countWord(len(m.problems), "problem")
+	}
+	if s := cmd.set; s != nil {
+		return s.shown(s.get(m))
 	}
 	return ""
 }
@@ -237,7 +264,7 @@ func previewThemeCurrent(m *Model, opt *option, width int) []string {
 		lines = append(lines, para(c.mutedS(), m.cmd.desc+".", width)...)
 	}
 	if m.dirty {
-		lines = append(lines, para(c.text(c.warn), "Unsaved edits: save [name] keeps them, undo drops them.", width)...)
+		lines = append(lines, para(c.text(c.warn), "Unsaved edits: save [name] keeps them, revert drops them.", width)...)
 	}
 	return lines
 }
@@ -248,7 +275,7 @@ func previewNewPanel(m *Model, opt *option, width int) []string {
 	var lines []string
 	if m.cur != nil && m.cur.Source == ghostty.SourceDraft {
 		lines = append(lines, truncate(c.bold(c.fg).Render(m.cur.Name)+c.text(c.warn).Render("  draft, shown behind"), width))
-		lines = append(lines, para(c.mutedS(), "Enter makes another. save <name> keeps it, undo goes back.", width)...)
+		lines = append(lines, para(c.mutedS(), "Enter makes another. save <name> keeps it, revert goes back.", width)...)
 		return lines
 	}
 	if opt != nil {
@@ -280,17 +307,24 @@ func previewSettingPanel(m *Model, s setting, opt *option, width int) []string {
 	c := m.c
 	lines := []string{
 		c.bold(c.fg).Render(truncate(s.label, width)),
-		truncate(c.mutedS().Render(s.key+"  ·  now ")+c.base().Render(s.get(m)), width),
+		truncate(c.mutedS().Render(s.key+"  ·  now ")+c.base().Render(s.shown(s.get(m))), width),
 		"",
 	}
 	explain := s.explain
 	if explain == nil {
 		explain = valueNotes[s.cmd]
 	}
-	if explain != nil && opt != nil && explain[opt.value] != "" {
+	switch {
+	case explain != nil && opt != nil && explain[opt.value] != "":
 		lines = append(lines, m.entry(opt.value, explain[opt.value]+".", len([]rune(opt.value))+2, width, c.base())...)
-	} else {
+	case s.describe != nil && opt != nil && opt.value != "":
 		lines = append(lines, para(c.mutedS(), s.detail+".", width)...)
+		lines = append(lines, para(c.base(), title(s.describe(m, opt.value))+".", width)...)
+	default:
+		lines = append(lines, para(c.mutedS(), s.detail+".", width)...)
+	}
+	if s.hint != "" {
+		lines = append(lines, para(c.mutedS(), s.hint, width)...)
 	}
 	if s.note != "" {
 		lines = append(lines, c.text(c.warn).Render(truncate(s.note, width)))

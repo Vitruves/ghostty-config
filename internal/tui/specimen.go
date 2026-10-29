@@ -2,11 +2,14 @@ package tui
 
 import (
 	"fmt"
+	stdcolor "image/color"
 	"strconv"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
+	"golang.org/x/image/font"
 
+	"github.com/vitruves/ghostty-config/internal/fontdl"
 	"github.com/vitruves/ghostty-config/internal/ghostty"
 	"github.com/vitruves/ghostty-config/internal/pix"
 )
@@ -123,6 +126,9 @@ func (m *Model) wantSpecimen() tea.Cmd {
 // pxFontSide is the font panel of the picture interface: the family set in
 // itself.
 func (m *Model) pxFontSide(c *pix.Canvas, p pxPal, f pxFonts, opt *option, x, y, w, h float32) bool {
+	if opt != nil && strings.HasPrefix(opt.value, downloadPrefix) {
+		return m.pxDownloadSide(c, p, f, opt, x, y, w, h)
+	}
 	fam, style, ok := m.specimenOf(opt)
 	if !ok {
 		return false
@@ -188,6 +194,13 @@ func (m *Model) pxFontSide(c *pix.Canvas, p pxPal, f pxFonts, opt *option, x, y,
 	}
 
 	yy += 18
+	if icons := m.iconsNote(fam); icons != "" {
+		for _, line := range c.Wrap(f.small, icons, w-12) {
+			c.Text(f.small, x, yy+13, line, p.muted)
+			yy += 19
+		}
+		yy += 12
+	}
 	note := "Moving the highlight only looks; Enter writes it"
 	if m.autoReloadWorks() {
 		note += " and Ghostty reloads."
@@ -197,6 +210,71 @@ func (m *Model) pxFontSide(c *pix.Canvas, p pxPal, f pxFonts, opt *option, x, y,
 	for _, line := range c.Wrap(f.body, note, w-12) {
 		c.Text(f.body, x, yy+14, line, p.text2)
 		yy += 21
+	}
+	m.pxRegion(c, x, y, w, h, hitPreview, 0, "")
+	return true
+}
+
+// pxDownloadSide is the font panel for a family not installed yet: what it
+// is, where it comes from, and what Enter does. It cannot be set in itself
+// before it is on the machine.
+func (m *Model) pxDownloadSide(c *pix.Canvas, p pxPal, f pxFonts, opt *option, x, y, w, h float32) bool {
+	d := downloadOf(opt)
+	if d == nil {
+		return false
+	}
+	c.Clip(x, y, w, h)
+	defer c.Unclip()
+	para := func(face font.Face, text string, col stdcolor.NRGBA, yy float32) float32 {
+		for _, line := range c.Wrap(face, text, w-12) {
+			c.Text(face, x, yy+14, line, col)
+			yy += 21
+		}
+		return yy
+	}
+
+	yy := y
+	does := "Downloads and installs it. No administrator rights."
+	if d.HasIcons() {
+		does = "Downloads and installs it, icons and powerline glyphs included. No administrator rights."
+	}
+	if t := m.fontTrouble(); opt.current && t != nil && t.install != nil {
+		// The line that brings back the family the config names.
+		c.Text(f.h3, x, yy+18, c.Fit(f.h3, t.family, w), p.fg)
+		yy = para(f.body, "Your config names it, but it is not "+thisMachine()+": Ghostty draws with its own font instead.", p.fg, yy+36)
+		yy += 14
+		c.Text(f.rowB, x, yy+14, d.Name, p.text2)
+		yy += 21
+		does = "Downloads and " + t.installs() + ". No administrator rights."
+	} else {
+		c.Text(f.h3, x, yy+18, c.Fit(f.h3, d.Name, w), p.fg)
+		yy += 36
+	}
+	yy = para(f.body, d.Note+".", p.text2, yy)
+
+	dir, _ := fontdl.FontInstallDir()
+	source := d.Source()
+	if d.URL == "" {
+		source += ", latest release"
+	}
+	yy += 18
+	lw := maxF(c.Width(f.small, "source"), c.Width(f.small, "writes")) + 16
+	for _, row := range [][2]string{{"source", source}, {"writes", shortenPath(dir)}} {
+		c.Text(f.small, x, yy+13, row[0], p.muted)
+		c.Text(f.mono, x+lw, yy+13, c.Fit(f.mono, row[1], w-lw), p.fg)
+		yy += 22
+	}
+
+	yy += 18
+	ew := c.Text(f.rowB, x, yy+14, "Enter", p.accent) + 12
+	for _, line := range c.Wrap(f.body, does, w-ew-12) {
+		c.Text(f.body, x+ew, yy+14, line, p.text2)
+		yy += 21
+	}
+	yy += 18
+	for _, line := range c.Wrap(f.small, "It cannot be shown before it is on this machine: once installed it joins the list, where moving the highlight sets it in itself.", w-12) {
+		c.Text(f.small, x, yy+13, line, p.muted)
+		yy += 19
 	}
 	m.pxRegion(c, x, y, w, h, hitPreview, 0, "")
 	return true

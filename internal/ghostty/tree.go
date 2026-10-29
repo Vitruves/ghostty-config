@@ -41,7 +41,11 @@ type Tree struct {
 	// in the meantime. Every edit is idempotent, so replaying one that
 	// already reached disk is harmless.
 	ops []func(*Tree)
-	mu  sync.Mutex
+	// steps are the session's history, oldest first, and open the step being
+	// recorded; see history.go.
+	steps []step
+	open  *openStep
+	mu    sync.Mutex
 }
 
 // record runs an edit and remembers it for a replay. The caller holds mu.
@@ -69,6 +73,7 @@ func Load(paths Paths) (*Tree, error) {
 		t.Docs = []*Document{doc}
 		t.Primary = doc
 		t.index()
+		t.open = &openStep{before: t.snapshot()}
 		return t, nil
 	}
 
@@ -114,6 +119,7 @@ func Load(paths Paths) (*Tree, error) {
 		t.Primary = t.Docs[0]
 	}
 	t.index()
+	t.open = &openStep{before: t.snapshot()}
 	return t, nil
 }
 
@@ -435,7 +441,9 @@ func (t *Tree) Save() ([]string, error) {
 						disabled++
 					}
 				}
-				if after := doc.CountEntries() + disabled; after < before {
+				// An undo may take back a line this session appended; that
+				// entry was never the user's to lose.
+				if after := doc.CountEntries() + disabled + doc.removed; after < before {
 					return written, fmt.Errorf("refusing to write %s: the rewrite would lose %d setting(s)", doc.Path, before-after)
 				}
 				if err := backup(t.Paths.StateDir, doc.Path, original, external[doc.Path]); err != nil {
@@ -450,6 +458,7 @@ func (t *Tree) Save() ([]string, error) {
 		doc.Dirty = false
 		doc.Exists = true
 		doc.disk = text
+		doc.removed = 0
 		written = append(written, doc.Path)
 	}
 	t.ops = nil
@@ -477,6 +486,9 @@ func (t *Tree) refresh() (map[string]bool, error) {
 	if len(changed) == 0 {
 		return changed, nil
 	}
+	// The open step ends here, before the edits made elsewhere come in, and
+	// goes on from the fresh copy, so that it never holds them.
+	t.cut()
 	fresh, err := Load(t.Paths)
 	if err != nil {
 		return nil, err
@@ -497,6 +509,9 @@ func (t *Tree) refresh() (map[string]bool, error) {
 	}
 	t.Docs, t.Primary = fresh.Docs, fresh.Primary
 	t.index()
+	if t.open != nil {
+		t.open.before = t.snapshot()
+	}
 	return changed, nil
 }
 

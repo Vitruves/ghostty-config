@@ -26,6 +26,7 @@ type option struct {
 	current bool
 	header  bool // a group title in the menu, not selectable
 	cmd     *command
+	key     *keyRow // an action of the shortcut editor
 }
 
 // command is one word the prompt understands. Typing it shows its options;
@@ -55,6 +56,19 @@ type command struct {
 	adjust bool
 	// set is the setting a command was made from, nil for other commands.
 	set *setting
+	// label names the command on screen in place of its word.
+	label string
+	// transient marks a command that comes and goes with what it answers,
+	// which the help and the rail beside an open command leave out.
+	transient bool
+}
+
+// title is what the command is called on screen.
+func (c *command) title() string {
+	if c.label != "" {
+		return c.label
+	}
+	return title(c.name)
 }
 
 // Groups, in the order the menu shows them.
@@ -201,7 +215,7 @@ func (m *Model) buildCommands() []*command {
 		},
 		preview: previewPalettePanel,
 	})
-	add(&command{name: "undo", group: "Themes", syntax: "undo", desc: "Revert the theme on screen to its saved colours",
+	add(&command{name: "revert", group: "Themes", syntax: "revert", desc: "Drop the unsaved edits of the theme on screen, back to its saved colours; undo, in Tool, takes back changes to the config",
 		run:     func(m *Model, arg string, opt *option) tea.Cmd { m.revert(); return nil },
 		preview: previewThemeCurrent,
 	})
@@ -284,6 +298,9 @@ func (m *Model) buildCommands() []*command {
 	})
 
 	// --- Fonts ------------------------------------------------------------
+	if fix := m.fixFontCommand(); fix != nil {
+		add(fix)
+	}
 	add(&command{name: "font", group: "Fonts", syntax: "font <family>", desc: "Pick the font family, or install one: the families Ghostty can load are listed monospace first, the ones that can be downloaded under them",
 		filters: true,
 		options: func(m *Model, arg string) []option { return m.fontOptions(arg) },
@@ -402,6 +419,8 @@ func (m *Model) buildCommands() []*command {
 		add(settingCommand(s))
 	}
 
+	add(keysCommand())
+
 	// --- Extensions: shaders and packs of themes ---------------------------
 	for _, c := range m.extensionCommands() {
 		add(c)
@@ -465,6 +484,9 @@ func (m *Model) buildCommands() []*command {
 		},
 		preview: previewOverview,
 	})
+	for _, c := range m.safetyCommands() {
+		add(c)
+	}
 	add(&command{name: "overrides", group: "Tool", syntax: "overrides", desc: "Comment out the background/foreground/palette lines in your config that shadow every theme",
 		run: func(m *Model, arg string, opt *option) tea.Cmd {
 			if len(m.overrides) == 0 {
@@ -520,12 +542,19 @@ func (m *Model) buildCommands() []*command {
 
 // settingCommand turns a setting row into a command with its values as options.
 func settingCommand(s setting) *command {
-	c := &command{name: s.cmd, group: s.group, syntax: s.syntax, desc: s.detail, adjust: true}
+	// A list found at run time is chosen from, not stepped through.
+	c := &command{name: s.cmd, group: s.group, syntax: s.syntax, desc: s.detail, adjust: s.list == nil}
 	c.set = &s
 	c.options = func(m *Model, arg string) []option {
+		if s.list != nil {
+			return s.list(m, arg)
+		}
 		current := s.get(m)
 		var out []option
 		if s.numeric {
+			if s.unset != "" && (arg == "" || strings.HasPrefix(s.unset, strings.TrimSpace(arg))) {
+				out = append(out, option{label: s.unset, value: s.unset, current: current == s.unset})
+			}
 			// The config may write a value its own way, 0.9 for 0.90: compare
 			// numbers, not labels.
 			now, nowOK := parseNumber(current)
@@ -559,23 +588,38 @@ func settingCommand(s setting) *command {
 	}
 	c.run = func(m *Model, arg string, opt *option) tea.Cmd {
 		v := pickValue(arg, opt)
+		if s.list != nil {
+			// What was typed only filtered the list, or was turned into a
+			// line of it: the highlighted line is the value.
+			v = ""
+			if opt != nil {
+				v = opt.value
+			}
+		}
 		if v == "" {
 			return nil
 		}
-		if s.numeric {
+		if s.numeric && !strings.EqualFold(v, s.unset) {
 			f, err := strconv.ParseFloat(strings.TrimSuffix(v, "%"), 64)
 			if err != nil {
 				m.warn("%s takes a number between %s and %s", s.cmd, s.format(s.min), s.format(s.max))
 				return nil
 			}
 			v = s.format(roundStep(color.Clamp(f, s.min, s.max), s.step))
+		} else if s.numeric {
+			v = s.unset
 		}
+		seq := m.statusSeq
 		cmd := s.set(m, v)
+		if m.statusSeq != seq {
+			// The setting said something of its own: a question, a download.
+			return cmd
+		}
 		note := ""
 		if s.note != "" {
 			note = " · " + s.note
 		}
-		m.info("%s: %s — written; %s%s", s.label, v, m.reloadWord(), note)
+		m.info("%s: %s — written; %s%s", s.label, s.shown(v), m.reloadWord(), note)
 		return tea.Batch(cmd, m.flushWritesCmd())
 	}
 	c.preview = func(m *Model, opt *option, width int) []string { return previewSettingPanel(m, s, opt, width) }
@@ -717,6 +761,51 @@ type setting struct {
 	key                               string
 	// fallback is the value in effect when the config does not set one.
 	fallback string
+	// unset is the word a numeric setting shows while the config leaves it
+	// to Ghostty, offered before the numbers; unsetAt is where its slider
+	// rests then.
+	unset   string
+	unsetAt float64
+	// list replaces options for a setting whose values are only known at
+	// run time, files on disk among them. Its options carry the value to
+	// write, a typed one included, so Enter writes the highlighted line.
+	list func(m *Model, arg string) []option
+	// show is how a value reads in the menu, when not as it is written.
+	show func(v string) string
+	// describe explains a value that explain has no entry for.
+	describe func(m *Model, v string) string
+	// hint is said under every value: what else the setting needs.
+	hint string
+	// writes is the line a value puts in the file, "" for none, for a
+	// setting whose line is not key = value.
+	writes func(m *Model, v string) string
+	// hidden keeps a setting out of the menu while it cannot matter.
+	hidden func(m *Model) bool
+	// part names the part of its section, for a setting made at run time
+	// that subsections cannot name in advance.
+	part string
+	// flag marks one switch of a flag list, which the help leaves to the
+	// section: a dozen of them would crowd every other command out.
+	flag bool
+}
+
+// shown is a value as the menu writes it.
+func (s *setting) shown(v string) string {
+	if s.show != nil {
+		return s.show(v)
+	}
+	return v
+}
+
+// listed is whether a command belongs in the menu now.
+func (m *Model) listed(c *command) bool {
+	return c.set == nil || c.set.hidden == nil || !c.set.hidden(m)
+}
+
+// inHelp is whether the help names a command: not the ones a font brings,
+// which come and go with it, nor the switches of a flag list.
+func (m *Model) inHelp(c *command) bool {
+	return m.listed(c) && !c.transient && (c.set == nil || (c.set.part == "" && !c.set.flag))
 }
 
 func keySetting(cmd, key, label, detail string, options []string, fallback string) setting {
@@ -782,6 +871,34 @@ func numberSetting(cmd, key, label, detail string, fallback, min, max, step floa
 			return nil
 		},
 	}
+}
+
+// flagSetting is one flag of a flag-set key, bell-features or
+// shell-integration-features, as a switch of its own. defaults is the key's
+// default list as Ghostty writes it, which says what a flag is when the
+// config leaves it out. A change rewrites only the flag's own word of the
+// list, so flags this tool does not know survive it.
+func flagSetting(cmd, key, flag, label, detail, defaults string) setting {
+	s := boolSetting(cmd, key, label, detail, ghostty.Flags(defaults, defaults)[flag])
+	s.flag = true
+	on := func(m *Model) bool { return ghostty.Flags(m.tree.Value(key, ""), defaults)[flag] }
+	s.get = func(m *Model) string {
+		if on(m) {
+			return "on"
+		}
+		return "off"
+	}
+	s.set = func(m *Model, v string) tea.Cmd {
+		m.tree.SetFlag(key, flag, v == "on", defaults)
+		return nil
+	}
+	s.writes = func(m *Model, v string) string {
+		if next := ghostty.WithFlag(m.tree.Value(key, ""), flag, v == "on", defaults); next != "" {
+			return key + " = " + next
+		}
+		return ""
+	}
+	return s
 }
 
 func plain(v float64) string { return strconv.FormatFloat(v, 'f', -1, 64) }
@@ -932,5 +1049,8 @@ func (m *Model) buildSettings() []setting {
 	} else {
 		session(keySetting("tabbar", "window-show-tab-bar", "Tab bar", "auto shows it from two tabs up (GTK)", []string{"auto", "always", "never"}, "auto"))
 	}
+	s = append(s, m.windowExtraSettings(mac)...)
+	s = append(s, m.sessionExtraSettings(mac)...)
+	s = append(s, m.fontExtraSettings()...)
 	return s
 }

@@ -103,7 +103,7 @@ func (m *Model) commitConfig() tea.Cmd {
 	if !m.autoReloadWorks() {
 		m.status += " — " + m.reloadHint()
 	}
-	return m.reload()
+	return tea.Batch(m.reload(), m.scheduleValidate())
 }
 
 // persistCurrent writes the working colours to a theme file and applies it.

@@ -58,6 +58,10 @@ func (m *Model) recompute() {
 		// The list of interfaces was left without Enter: what it showed goes.
 		m.endInterfacePreview()
 	}
+	if m.cmd == nil || m.cmd.name != "check" {
+		// The check list asks Ghostty again the next time it is opened.
+		m.checkOpened = false
+	}
 	if m.cmd != nil {
 		for i, g := range groups {
 			if g == m.cmd.group {
@@ -104,7 +108,9 @@ func (m *Model) recompute() {
 	// A command opened with nothing typed after it lands on what is in
 	// effect, never on the first row: for themes that is the theme on
 	// screen, so opening the list previews nothing new.
-	if m.cmd != nil && strings.TrimSpace(m.arg) == "" {
+	// The shortcuts are a list to read from the top: the ones marked are
+	// the user's, not a value in effect.
+	if m.cmd != nil && strings.TrimSpace(m.arg) == "" && m.cmd.name != "keys" {
 		m.landOnCurrentValue()
 	}
 	m.skipHeaders(1)
@@ -159,8 +165,8 @@ func (m *Model) menuOptions(filter string) []option {
 	var out []option
 	if filter == "" {
 		for _, c := range m.commands() {
-			if c.group == groups[m.group] {
-				o := option{label: title(c.name), detail: m.currentValueOf(c), value: c.name, cmd: c}
+			if c.group == groups[m.group] && m.listed(c) {
+				o := option{label: c.title(), detail: m.currentValueOf(c), value: c.name, cmd: c}
 				if c.name == "theme" && m.cur != nil {
 					// The theme row carries its colours, like every theme does.
 					o.theme = m.cur
@@ -173,8 +179,8 @@ func (m *Model) menuOptions(filter string) []option {
 		return out
 	}
 	for _, c := range m.commands() {
-		if menuMatches(c, filter) {
-			out = append(out, option{label: title(c.name), detail: c.group, value: c.name, cmd: c})
+		if menuMatches(c, filter) && m.listed(c) {
+			out = append(out, option{label: c.title(), detail: c.group, value: c.name, cmd: c})
 		}
 	}
 	return out
@@ -254,6 +260,9 @@ func (m *Model) afterMove() tea.Cmd {
 	if m.cmdNeedsFonts() {
 		cmds = append(cmds, m.ensureFonts())
 	}
+	if m.cmd != nil && m.cmd.name == "keys" {
+		cmds = append(cmds, m.ensureKeys())
+	}
 	if m.cmd != nil && m.cmd.onMove != nil {
 		cmds = append(cmds, m.cmd.onMove(m, m.selected()))
 	}
@@ -308,9 +317,13 @@ func (m *Model) run() tea.Cmd {
 		if o != nil && o.cmd != nil {
 			m.setPromptText(title(o.cmd.name) + " ")
 			if o.cmd.options == nil {
-				// A command with nothing to choose runs at once.
+				// A command with nothing to choose runs at once, and hands
+				// the prompt back unless it opened another command.
+				word := m.prompt.Value()
 				cmd := o.cmd.run(m, "", nil)
-				m.setPromptText("")
+				if m.prompt.Value() == word {
+					m.setPromptText("")
+				}
 				return cmd
 			}
 			return m.afterMove()
@@ -376,6 +389,9 @@ func (m *Model) updatePrompt(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		case "ctrl+t":
 			return m, m.tryHere()
 		}
+	}
+	if cmd, ok := m.keysKey(msg.String()); ok {
+		return m, cmd
 	}
 	switch msg.String() {
 	case "esc":
@@ -592,7 +608,7 @@ func (m *Model) previewTheme(t *ghostty.Theme) {
 	}
 	if m.dirty && !m.discardArmed {
 		m.discardArmed = true
-		m.warn("%s has unsaved edits — save keeps them, undo drops them, moving again leaves them behind", m.cur.Name)
+		m.warn("%s has unsaved edits — save keeps them, revert drops them, moving again leaves them behind", m.cur.Name)
 		return
 	}
 	m.showTheme(t)
@@ -626,7 +642,7 @@ func (m *Model) generateDraft(method int, arg string) {
 		note = "Generated · " + strings.ToLower(color.HarmonyNames[method-1]) + " harmony"
 	}
 	m.loadDraft(s, note)
-	m.info("Generated %s — Enter again for another, save <name> keeps it, undo goes back", s.Name)
+	m.info("Generated %s — Enter again for another, save <name> keeps it, revert goes back", s.Name)
 }
 
 // --- fonts ----------------------------------------------------------------
@@ -715,17 +731,14 @@ func (m *Model) findFamily(name string) (ghostty.Family, bool) {
 }
 
 // installedDownloadables is the set of downloadable families already on the
-// system, matched by the display name being a prefix of the installed one:
-// "JetBrains Mono" is installed as "JetBrainsMono Nerd Font".
+// system, by the names they are installed under: "JetBrains Mono" is
+// installed as "JetBrainsMono Nerd Font", Source Code Pro as "SauceCodePro
+// NF". See fontdl.FontDownload.Provides.
 func (m *Model) installedDownloadables() map[string]bool {
 	present := make(map[string]bool)
-	for _, candidate := range fontdl.AvailableDownloads {
-		compact := strings.ToLower(strings.ReplaceAll(candidate.Name, " ", ""))
-		for _, f := range m.families {
-			if strings.HasPrefix(strings.ToLower(strings.ReplaceAll(f.Name, " ", "")), compact) {
-				present[candidate.Name] = true
-				break
-			}
+	for _, f := range m.families {
+		if n := fontdl.Owner(f.Name); n >= 0 {
+			present[fontdl.AvailableDownloads[n].Name] = true
 		}
 	}
 	return present
@@ -734,7 +747,10 @@ func (m *Model) installedDownloadables() map[string]bool {
 // installFonts downloads each candidate in turn behind the spinner. One
 // archive failing does not stop the rest; failures are reported at the end.
 func (m *Model) installFonts(candidates []fontdl.FontDownload) tea.Cmd {
-	m.busyText = fmt.Sprintf("Downloading %d font archive(s) from Nerd Fonts…", len(candidates))
+	m.busyText = fmt.Sprintf("Downloading %d font archives…", len(candidates))
+	if len(candidates) == 1 {
+		m.busyText = fmt.Sprintf("Downloading %s from %s…", candidates[0].Name, candidates[0].Source())
+	}
 	m.overlay = overlayBusy
 	catalog := m.fonts
 	return func() tea.Msg {
@@ -753,6 +769,8 @@ func (m *Model) installFonts(candidates []fontdl.FontDownload) tea.Cmd {
 
 func (m *Model) finishInstall(msg installDoneMsg) tea.Cmd {
 	m.overlay = overlayNone
+	after := m.fx.afterInstall
+	m.fx.afterInstall = nil
 	if len(msg.installed) == 0 {
 		m.fail("Nothing installed: %s", strings.Join(msg.failed, ", "))
 		return nil
@@ -766,6 +784,9 @@ func (m *Model) finishInstall(msg installDoneMsg) tea.Cmd {
 		m.info("Installed %d font families — they are in the list now", len(msg.installed))
 	}
 	m.fontsLoaded = false
+	if after != nil && len(msg.failed) == 0 {
+		return tea.Batch(after(m), m.ensureFonts())
+	}
 	return m.ensureFonts()
 }
 

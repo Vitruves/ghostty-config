@@ -32,17 +32,20 @@ func backup(stateDir, path string, original []byte, fresh bool) error {
 		return fmt.Errorf("could not create the backup directory: %w", err)
 	}
 	stamp := time.Now().Format("20060102-150405")
-	if _, err := writeBackup(dir, filepath.Base(path), stamp, original); err != nil {
+	if _, err := writeBackup(dir, path, stamp, original); err != nil {
 		return fmt.Errorf("could not back up %s: %w", path, err)
 	}
 	backedUp[path] = true
 	return nil
 }
 
-// writeBackup creates base.stamp in dir, or base.stamp-2, -3 and so on when
-// that name is taken. On macOS the XDG and Application Support roots are both
-// called `config`, and a backup must never overwrite another one.
-func writeBackup(dir, base, stamp string, data []byte) (string, error) {
+// writeBackup copies data, the content of the file at origin, to base.stamp
+// in dir, or base.stamp-2, -3 and so on when that name is taken. On macOS the
+// XDG and Application Support roots are both called `config`, and a backup
+// must never overwrite another one. Which of them a copy was taken of goes in
+// the directory's index, since the name cannot say.
+func writeBackup(dir, origin, stamp string, data []byte) (string, error) {
+	base := filepath.Base(origin)
 	for n := 1; ; n++ {
 		name := fmt.Sprintf("%s.%s", base, stamp)
 		if n > 1 {
@@ -60,7 +63,13 @@ func writeBackup(dir, base, stamp string, data []byte) (string, error) {
 			f.Close()
 			return "", err
 		}
-		return target, f.Close()
+		if err := f.Close(); err != nil {
+			return "", err
+		}
+		if abs, err := filepath.Abs(origin); err == nil {
+			origin = abs
+		}
+		return target, recordOrigin(dir, filepath.Base(target), origin)
 	}
 }
 
@@ -78,7 +87,7 @@ func BackupNow(paths Paths) ([]string, error) {
 		if err != nil {
 			continue
 		}
-		target, err := writeBackup(dir, filepath.Base(root), stamp, data)
+		target, err := writeBackup(dir, root, stamp, data)
 		if err != nil {
 			return out, err
 		}

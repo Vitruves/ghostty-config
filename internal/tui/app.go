@@ -30,6 +30,7 @@ const (
 	overlayBusy
 	overlayMessage
 	overlayUpdate
+	overlayCapture // the shortcut editor asking for a shortcut
 )
 
 // writeDebounce is how long the highlight must rest before a font or a
@@ -153,6 +154,12 @@ type Model struct {
 	fontFamily string
 	fontStyle  string
 	fontSize   float64
+	// fx is what the font in use offers; files what the file settings found.
+	fx    fontExtras
+	files fileState
+
+	// The shortcut editor: Ghostty's actions, and the shortcut being asked for.
+	kb keyboard
 
 	// Mouse: what is clickable on the current frame, and the last click.
 	regions   []region
@@ -181,6 +188,23 @@ type Model struct {
 	// Debounced writes: only the newest scheduled write survives.
 	writeSeq  int
 	reloadSeq int
+
+	// What Ghostty said of the config when last asked, and whether it has
+	// been; validateSeq tells the newest question from older ones, whose
+	// answers describe files that changed since. checkOpened is whether the
+	// check list, open now, has asked already.
+	problems    []ghostty.Problem
+	checked     bool
+	checking    bool
+	checkErr    error
+	checkTook   time.Duration
+	checkOpened bool
+	validateSeq int
+	// startText is every config file as the session found it, which the
+	// changes command compares with.
+	startText map[string][]string
+	// restoreList is the backups the restore list was built from.
+	restoreList []restorable
 
 	reloadFailed bool
 	// top is the terminal row the editor's first row sits on: always the
@@ -223,6 +247,7 @@ func New(paths ghostty.Paths, tree *ghostty.Tree, lib *ghostty.Library, state *g
 	m.readApplied()
 	m.readFont()
 	m.landOnApplied()
+	m.startText = tree.Texts()
 	// Open on the themes, the applied one highlighted: colour is what people
 	// come for, and Esc is one keystroke from every other command.
 	m.prompt.SetValue("Theme ")
@@ -278,9 +303,17 @@ func (m *Model) ExitNote() string {
 }
 
 // Init starts the spinner and the update check, asks the terminal for its
-// colours, and asks to be told when it goes from light to dark.
+// colours, and asks to be told when it goes from light to dark. Ghostty is
+// asked about the config as it is, so that a later write is told only of the
+// problems it brought. When the config names a font, the families are
+// listed in the background, so that a family that is missing or
+// proportional can be told.
 func (m *Model) Init() tea.Cmd {
-	return tea.Batch(m.spin.Tick, m.checkUpdate(), askTerminalColours(), tea.Raw(watchScheme))
+	var fonts tea.Cmd
+	if m.fontFamily != "" {
+		fonts = m.ensureFonts()
+	}
+	return tea.Batch(m.spin.Tick, m.checkUpdate(), askTerminalColours(), tea.Raw(watchScheme), m.runCheck(checkQuiet), fonts)
 }
 
 // checkUpdate asks GitHub for the newest release in the background. The UI
@@ -333,6 +366,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.showPendingUpdate()
 	if load := m.wantSpecimen(); load != nil {
 		cmd = tea.Batch(cmd, load)
+	}
+	m.syncFontCommands()
+	m.hintFontTrouble()
+	for _, load := range []tea.Cmd{m.wantFontInfo(), m.wantThumbs()} {
+		if load != nil {
+			cmd = tea.Batch(cmd, load)
+		}
 	}
 	return model, cmd
 }
@@ -387,6 +427,14 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		return m, m.flushWrites()
+	case validateTickMsg:
+		if msg.seq != m.validateSeq {
+			return m, nil
+		}
+		return m, m.runCheck(checkWrite)
+	case validateDoneMsg:
+		m.finishCheck(msg)
+		return m, nil
 	case reloadDoneMsg:
 		if msg.seq != m.reloadSeq {
 			return m, nil
@@ -412,11 +460,36 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.recompute()
 		m.landOnCurrentValue()
+		if after := m.fx.afterFonts; after != nil {
+			m.fx.afterFonts = nil
+			return m, after(m)
+		}
+		return m, nil
+	case keysLoadedMsg:
+		m.kb.cat, m.kb.loaded, m.kb.loading = msg.cat, true, false
+		if m.cmd != nil && m.cmd.name == "keys" {
+			m.recompute()
+			if !msg.cat.DefaultsKnown {
+				m.warn("Ghostty's binary was not found: its default shortcuts are not shown")
+			}
+		}
 		return m, nil
 	case specimenMsg:
 		for k, v := range msg.fonts {
 			if _, wanted := m.specimens[k]; wanted {
 				m.specimens[k] = v
+			}
+		}
+		return m, nil
+	case fontInfoMsg:
+		if _, wanted := m.fx.infos[msg.key]; wanted {
+			m.fx.infos[msg.key] = msg.info
+		}
+		return m, nil
+	case thumbMsg:
+		for k, v := range msg.thumbs {
+			if _, wanted := m.files.thumbs[k]; wanted {
+				m.files.thumbs[k] = v
 			}
 		}
 		return m, nil
@@ -459,8 +532,21 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	case tea.MouseMsg:
+		switch msg.(type) {
+		case tea.MouseClickMsg:
+			m.tree.Checkpoint("")
+		case tea.MouseWheelMsg:
+			m.tree.Checkpoint(m.stepKey())
+		}
 		return m.updateMouse(msg)
 	case tea.KeyPressMsg:
+		// Every key the user presses begins a step of the session's history,
+		// so that whatever it writes is undone in one go.
+		m.tree.Checkpoint(m.stepKeyFor(msg.String()))
+		if m.overlay == overlayCapture && !m.peek && msg.String() != "ctrl+c" {
+			// Asking for a shortcut, every key is a candidate, ctrl+d too.
+			return m.updateCapture(msg)
+		}
 		switch msg.String() {
 		case "ctrl+c":
 			return m.abandon()
@@ -480,6 +566,9 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.String() == "f2" {
 			m.peek = true
 			return m, nil
+		}
+		if msg.String() == "ctrl+z" {
+			return m, m.undoStep()
 		}
 		if m.editing {
 			return m.updateEdit(msg)
@@ -596,7 +685,7 @@ func (m *Model) flushWrites() tea.Cmd {
 	if len(written) == 0 {
 		return nil
 	}
-	return m.reload()
+	return tea.Batch(m.reload(), m.scheduleValidate())
 }
 
 // reload asks the running Ghostty to re-read its files, when allowed. The
