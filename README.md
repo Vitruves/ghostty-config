@@ -39,6 +39,7 @@ Run `ghostty-config`. Browsing changes nothing: a theme or a font is written whe
 | `Ctrl+Z` | Undo the last change |
 | `/` or type | Search themes, settings and commands |
 | `Ctrl+T` `Ctrl+F` | Try a theme in this terminal; star it |
+| `F3` | Ghostty's own documentation of the highlighted line (Ghostty 1.4) |
 | `F1` `Esc` | Help; go back, then quit |
 
 </div>
@@ -51,7 +52,7 @@ Everything can be clicked too: sections, pills, switches, sliders, and a double 
 
 ## Sections
 
-- **Themes:** 715 themes, the 252 of the curated collection in 27 families and the 463 Ghostty ships, plus your own, each shown as a card and checked for contrast. Create, edit and save your own.
+- **Themes:** 1071 themes, the 252 of the curated collection in 27 families and the 819 Ghostty 1.4 ships, plus your own, each shown as a card and checked for contrast. Create, edit and save your own.
 - **Fonts:** family, style and size with a specimen set in the font itself, spacing, ligatures, the OpenType features and variable axes the font really has, Nerd Font icons. 70 monospace families can be downloaded in one Enter, and if your font is missing or proportional the tool offers one.
 - **Window:** title bar, opacity, blur, padding, background image, size and position at launch, with a preview.
 - **Input:** cursor, clipboard, mouse, and every keyboard shortcut: press the new one, conflicts are shown.
