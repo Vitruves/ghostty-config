@@ -31,6 +31,7 @@ const (
 	overlayMessage
 	overlayUpdate
 	overlayCapture // the shortcut editor asking for a shortcut
+	overlayExplain // Ghostty's own documentation of a setting or an action
 )
 
 // writeDebounce is how long the highlight must rest before a font or a
@@ -160,6 +161,9 @@ type Model struct {
 
 	// The shortcut editor: Ghostty's actions, and the shortcut being asked for.
 	kb keyboard
+
+	// Ghostty's own documentation of the highlighted line, while it is open.
+	ex explainView
 
 	// Mouse: what is clickable on the current frame, and the last click.
 	regions   []region
@@ -465,6 +469,9 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, after(m)
 		}
 		return m, nil
+	case explainMsg:
+		m.explainLoaded(msg)
+		return m, nil
 	case keysLoadedMsg:
 		m.kb.cat, m.kb.loaded, m.kb.loading = msg.cat, true, false
 		if m.cmd != nil && m.cmd.name == "keys" {
@@ -566,6 +573,9 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.String() == "f2" {
 			m.peek = true
 			return m, nil
+		}
+		if msg.String() == "f3" {
+			return m, m.openExplain()
 		}
 		if msg.String() == "ctrl+z" {
 			return m, m.undoStep()
