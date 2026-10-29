@@ -63,7 +63,7 @@ Everything can be clicked too: sections, pills, switches, sliders, and a double 
 
 - **Your files.** Each setting is rewritten on its own line and comments are kept. If a file changed elsewhere meanwhile, your edits there are kept too. Every file is backed up to `~/.config/ghostty-config/backups/` before its first change.
 - **Checked.** After each write the config goes through `ghostty +validate-config`, and any problem is shown with its line.
-- **Reload.** On macOS the tool sends Ghostty its reload shortcut (needs the Accessibility permission). Elsewhere, reload Ghostty yourself.
+- **Reload.** On macOS with Ghostty 1.3 or later the tool asks Ghostty to reload over AppleScript (macOS asks once, under Privacy & Security → Automation); older versions get the reload shortcut instead (needs the Accessibility permission). On Linux it activates Ghostty's `reload-config` action over D-Bus, which needs `gdbus` and a single-instance Ghostty; otherwise, reload Ghostty yourself.
 - **Display.** In Ghostty and Kitty the interface is drawn as images (Kitty graphics protocol), elsewhere and in tmux with plain text.
 - **Updates.** At most once an hour, a background check on GitHub offers new releases. Nothing else uses the network except downloads you ask for.
 

@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"slices"
 	"strings"
 	"sync"
 
@@ -98,26 +99,75 @@ var ErrReloadUnsupported = errors.New("no way to reload Ghostty from here on thi
 
 // ErrNotFrontmost is returned when Ghostty was not the app in front, so the
 // reload keystroke was not sent: it would have gone to whichever app was.
+// Only the keystroke, kept for Ghostty before 1.3, can meet it.
 var ErrNotFrontmost = errors.New("Ghostty was not in front, so it was not asked to reload")
 
-// notFrontmost is what the script answers when it sent nothing.
-const notFrontmost = "ghostty-config:not-frontmost"
+// What the scripts answer when they did nothing.
+const (
+	notFrontmost = "ghostty-config:not-frontmost"
+	noTerminal   = "ghostty-config:no-terminal"
+)
 
 // Reload asks the running Ghostty to re-read its configuration.
 //
-// Ghostty has no reload command line and does not watch its files, but it
-// has a keybinding for it. On macOS that keystroke can be sent to the app
-// through System Events, which needs the user's one-time consent under
-// Privacy & Security → Accessibility; when consent is missing the error says
-// so and the keystroke is left to the user. On Linux there is nothing to
-// call yet, and the hint is the only answer.
+// Ghostty has no reload command line and does not watch its files, but its
+// apps take the reload_config action from outside. On macOS, Ghostty 1.3 and
+// later perform it over AppleScript, which macOS allows once the user agrees
+// under Privacy & Security → Automation. Older versions, or one with
+// macos-applescript off, get the reload keystroke through System Events
+// instead, which needs Accessibility and Ghostty in front. On Linux the GTK
+// app takes it over D-Bus.
 func Reload(binary string) error {
-	if runtime.GOOS != "darwin" {
-		return ErrReloadUnsupported
+	if runtime.GOOS == "darwin" {
+		return reloadMac(binary)
 	}
+	return reloadGTK(binary)
+}
+
+func reloadMac(binary string) error {
+	id := macBundleID()
+	output, err := exec.Command("osascript", "-e", performScript(id)).CombinedOutput()
+	msg := strings.TrimSpace(string(output))
+	if err == nil && msg == "true" {
+		return nil
+	}
+	// -1743 is macOS refusing this terminal the right to script Ghostty. The
+	// keystroke needs another permission, which the user may have given.
+	denied := err != nil && strings.Contains(msg, "-1743")
+	kerr := sendReloadKeystroke(binary, id)
+	if kerr != nil && denied {
+		return fmt.Errorf("macOS blocked the reload: allow your terminal to control Ghostty under System Settings → Privacy & Security → Automation, or press %s", ReloadHint(binary))
+	}
+	return kerr
+}
+
+// macBundleID is the Ghostty to talk to. macOS hands every process an app
+// starts its bundle identifier, so a debug build reloads itself; anything
+// else gets the release app.
+func macBundleID() string {
+	if id := os.Getenv("__CFBundleIdentifier"); strings.HasPrefix(id, "com.mitchellh.ghostty") {
+		return id
+	}
+	return "com.mitchellh.ghostty"
+}
+
+// performScript is the AppleScript that has Ghostty perform reload_config.
+// The action belongs to the app, so any terminal will do. It never launches
+// a Ghostty that is not running, and an older Ghostty, whose dictionary has
+// no perform action, fails to compile it.
+func performScript(id string) string {
+	return fmt.Sprintf(`if application id %[1]q is not running then return %[2]q
+tell application id %[1]q
+	if (count of terminals) is 0 then return %[2]q
+	return perform action "reload_config" on terminal 1
+end tell`, id, noTerminal)
+}
+
+// sendReloadKeystroke types the reload binding into Ghostty through System
+// Events, the way to reach Ghostty before 1.3.
+func sendReloadKeystroke(binary, id string) error {
 	keys, mods := reloadKeystroke(binary)
-	cmd := exec.Command("osascript", "-e", reloadScript(keys, mods))
-	output, err := cmd.CombinedOutput()
+	output, err := exec.Command("osascript", "-e", reloadScript(id, keys, mods)).CombinedOutput()
 	if err != nil {
 		msg := strings.TrimSpace(string(output))
 		if strings.Contains(msg, "1002") || strings.Contains(strings.ToLower(msg), "not allowed") || strings.Contains(strings.ToLower(msg), "assistive") {
@@ -138,12 +188,74 @@ func Reload(binary string) error {
 // Events types into whichever app is in front, whatever process the tell
 // names, so the keystroke is only sent while that app is Ghostty; otherwise
 // the script answers notFrontmost and sends nothing.
-func reloadScript(keys, mods string) string {
+func reloadScript(id, keys, mods string) string {
 	return fmt.Sprintf(`tell application "System Events"
-	set ghostty to first application process whose bundle identifier is "com.mitchellh.ghostty"
+	set ghostty to first application process whose bundle identifier is %q
 	if frontmost of ghostty is false then return %q
 	tell ghostty to keystroke %q using {%s}
-end tell`, notFrontmost, keys, mods)
+end tell`, id, notFrontmost, keys, mods)
+}
+
+// reloadGTK activates the GTK app's reload-config action over D-Bus, as
+// `ghostty +new-window` reaches it. The bus name is the app id, the class
+// setting when there is one, and only names someone owns are called: D-Bus
+// would otherwise start a new Ghostty to answer.
+func reloadGTK(binary string) error {
+	gdbus, err := exec.LookPath("gdbus")
+	if err != nil {
+		return ErrReloadUnsupported
+	}
+	reloaded, failure := false, ""
+	for _, id := range gtkAppIDs(binary) {
+		owned, _ := exec.Command(gdbus, "call", "--session", "--dest", "org.freedesktop.DBus",
+			"--object-path", "/org/freedesktop/DBus", "--method", "org.freedesktop.DBus.NameHasOwner", id).Output()
+		if !strings.Contains(string(owned), "true") {
+			continue
+		}
+		output, err := exec.Command(gdbus, "call", "--session", "--dest", id, "--object-path", gtkObjectPath(id),
+			"--method", "org.gtk.Actions.Activate", "reload-config", "[]", "{}").CombinedOutput()
+		if err != nil {
+			if failure = strings.TrimSpace(string(output)); failure == "" {
+				failure = err.Error()
+			}
+			continue
+		}
+		reloaded = true
+	}
+	switch {
+	case reloaded:
+		return nil
+	case failure != "":
+		return fmt.Errorf("could not reload Ghostty: %s", failure)
+	}
+	// No Ghostty on the bus: gtk-single-instance is off, or none runs.
+	return ErrReloadUnsupported
+}
+
+// gtkAppIDs are the ids a running Ghostty may hold: the class setting, then
+// the release id and the one debug builds use.
+func gtkAppIDs(binary string) []string {
+	var ids []string
+	if binary != "" {
+		if out, err := exec.Command(binary, "+show-config").Output(); err == nil {
+			for _, line := range strings.Split(string(out), "\n") {
+				if class, ok := strings.CutPrefix(strings.TrimSpace(line), "class = "); ok && strings.Contains(class, ".") {
+					ids = append(ids, strings.TrimSpace(class))
+				}
+			}
+		}
+	}
+	for _, id := range []string{"com.mitchellh.ghostty", "com.mitchellh.ghostty-debug"} {
+		if !slices.Contains(ids, id) {
+			ids = append(ids, id)
+		}
+	}
+	return ids
+}
+
+// gtkObjectPath is where GApplication exports an app id's actions.
+func gtkObjectPath(id string) string {
+	return "/" + strings.NewReplacer(".", "/", "-", "_").Replace(id)
 }
 
 // reloadKeystroke reads the reload_config binding from `+list-keybinds` so a

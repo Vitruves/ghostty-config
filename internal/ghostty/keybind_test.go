@@ -82,8 +82,8 @@ func TestTriggersPressedTheSameWay(t *testing.T) {
 
 func TestCatalogFromTheBinaryOutput(t *testing.T) {
 	c := BuiltinKeyCatalog(true)
-	if len(c.Actions) != 85 {
-		t.Fatalf("%d actions read, want 85", len(c.Actions))
+	if len(c.Actions) != 88 {
+		t.Fatalf("%d actions read, want 88", len(c.Actions))
 	}
 	a, ok := c.Action("toggle_quick_terminal")
 	if !ok || !strings.HasPrefix(a.Summary, "Toggle the quick terminal.") || strings.Contains(a.Summary, "Quake") {
@@ -98,6 +98,23 @@ func TestCatalogFromTheBinaryOutput(t *testing.T) {
 	for _, d := range c.Defaults {
 		if strings.Contains(d.Action, `\\`) {
 			t.Fatalf("backslashes are unescaped: %q", d.Action)
+		}
+	}
+}
+
+// Ghostty 1.3 doubled every backslash in `+list-keybinds`; 1.4 prints the
+// value as written, a literal backslash `text:\\` included.
+func TestKeybindListReadsBothEscapings(t *testing.T) {
+	for name, tc := range map[string]struct{ listing, want string }{
+		"1.3": {"keybind = super+arrow_right=text:\\\\x05\nkeybind = ctrl+a=text:\\\\\\\\\n", `text:\x05 text:\\`},
+		"1.4": {"keybind = super+arrow_right=text:\\x05\nkeybind = ctrl+a=text:\\\\\n", `text:\x05 text:\\`},
+	} {
+		var got []string
+		for _, b := range ParseKeybindList(tc.listing) {
+			got = append(got, b.Action)
+		}
+		if strings.Join(got, " ") != tc.want {
+			t.Errorf("%s: %q, want %q", name, got, tc.want)
 		}
 	}
 }
@@ -118,7 +135,7 @@ func TestLoadKeyCatalogRunsTheBinary(t *testing.T) {
 	if len(c.Defaults) != 1 || c.Defaults[0].Value() != "ctrl+shift+t=new_tab" {
 		t.Fatalf("defaults from the binary: %+v", c.Defaults)
 	}
-	if c := LoadKeyCatalog(filepath.Join(dir, "missing")); c.Live || len(c.Actions) != 85 {
+	if c := LoadKeyCatalog(filepath.Join(dir, "missing")); c.Live || len(c.Actions) != 88 {
 		t.Fatalf("a missing binary should fall back to the copy built in, got %d actions", len(c.Actions))
 	}
 }
