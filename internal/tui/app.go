@@ -107,11 +107,10 @@ type Model struct {
 	// appliedHere is whether a theme was applied this session.
 	painted     bool
 	appliedHere bool
-	// interfaceWas is the interface in effect before the list of them was
-	// walked, put back unless Enter chose one; previewingInterface says a
-	// walk is under way.
-	interfaceWas        string
-	previewingInterface bool
+	// previewing names the preference of the look whose list is being
+	// walked, "" for none; prefWas is its value before, put back unless
+	// Enter chose one.
+	previewing, prefWas string
 
 	// Palette edit mode: the prompt becomes a slot editor.
 	editing  bool
@@ -777,7 +776,7 @@ func (m *Model) leave() tea.Cmd {
 	if m.cur != nil && m.cur.Name != m.applied && m.exitNote == "" && m.applied != "" {
 		m.exitNote = fmt.Sprintf("%s was only previewed; %s is still applied", m.cur.Name, m.applied)
 	}
-	m.endInterfacePreview()
+	m.endPrefPreview()
 	_ = m.state.Save()
 	m.quitting = true
 	var reload tea.Cmd
@@ -826,7 +825,7 @@ func (m *Model) abandon() (tea.Model, tea.Cmd) {
 		m.exitNote = "Left; the shader that was not kept is put back, nothing else was written"
 	}
 	m.RestoreColours()
-	m.endInterfacePreview()
+	m.endPrefPreview()
 	_ = m.state.Save()
 	m.quitting = true
 	return m, tea.Sequence(unkept, tea.Raw(unwatchScheme), m.dropPictures(), tea.Quit)

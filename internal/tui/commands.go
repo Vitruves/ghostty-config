@@ -61,6 +61,8 @@ type command struct {
 	// transient marks a command that comes and goes with what it answers,
 	// which the help and the rail beside an open command leave out.
 	transient bool
+	// hidden keeps a command out of the menu while it cannot matter.
+	hidden func(m *Model) bool
 }
 
 // title is what the command is called on screen.
@@ -450,40 +452,9 @@ func (m *Model) buildCommands() []*command {
 		},
 		preview: previewOverview,
 	})
-	add(&command{name: "interface", group: "Tool", syntax: "interface auto|midnight|graphite|paper|theme|clear", desc: "The colours of the editor itself, kept apart from the theme being looked at",
-		options: func(m *Model, arg string) []option {
-			var out []option
-			for _, n := range interfaceNames {
-				if arg != "" && !fuzzyMatch(n, strings.TrimSpace(arg)) {
-					continue
-				}
-				out = append(out, option{label: n, detail: interfaceNotes[n], value: n, current: n == m.interfaceName()})
-			}
-			return out
-		},
-		onMove: func(m *Model, opt *option) tea.Cmd {
-			if opt != nil {
-				// Walking the list shows each interface, and only Enter keeps
-				// one: remember what was in effect to put it back.
-				if !m.previewingInterface {
-					m.interfaceWas, m.previewingInterface = m.state.Interface, true
-				}
-				m.state.Interface = opt.value
-			}
-			return nil
-		},
-		run: func(m *Model, arg string, opt *option) tea.Cmd {
-			if opt == nil {
-				return nil
-			}
-			m.previewingInterface = false
-			m.state.Interface = opt.value
-			_ = m.state.Save()
-			m.info("Interface: %s", opt.value)
-			return nil
-		},
-		preview: previewOverview,
-	})
+	for _, c := range uiPrefCommands() {
+		add(c)
+	}
 	for _, c := range m.safetyCommands() {
 		add(c)
 	}
@@ -803,6 +774,9 @@ func (s *setting) shown(v string) string {
 
 // listed is whether a command belongs in the menu now.
 func (m *Model) listed(c *command) bool {
+	if c.hidden != nil && c.hidden(m) {
+		return false
+	}
 	return c.set == nil || c.set.hidden == nil || !c.set.hidden(m)
 }
 

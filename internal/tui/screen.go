@@ -371,7 +371,7 @@ func (m *Model) listRow(ui chrome, o option, selected bool, width int) string {
 	}
 	prefix, prefixW := "", 0
 	switch {
-	case o.slot != "":
+	case o.slot != "" || color.IsHex(o.swatch):
 		if color.IsHex(o.swatch) {
 			prefix = on(o.swatch, bg).Render("██") + fill.Render(" ")
 		} else {

@@ -129,6 +129,9 @@ func (m *Model) detailEditing(width int) []string {
 
 // currentValueOf reports what a command's setting is now, when it has one.
 func (m *Model) currentValueOf(cmd *command) string {
+	if p := uiPrefNamed(cmd.name); p != nil {
+		return p.value(m)
+	}
 	switch cmd.name {
 	case "theme":
 		return m.applied
@@ -147,8 +150,6 @@ func (m *Model) currentValueOf(cmd *command) string {
 		return fmt.Sprintf("%d starred", m.state.FavoriteCount())
 	case "edit":
 		return "22 slots"
-	case "interface":
-		return m.interfaceName()
 	case "shader":
 		if _, name := m.shaderNow(); name != "" {
 			return name
