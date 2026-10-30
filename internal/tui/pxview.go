@@ -531,7 +531,7 @@ func (m *Model) pxGallery(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo) {
 			m.pxRegion(c, g.bodyX, top, g.bodyW, 32, hitResult, i, "")
 		case galTile:
 			x := g.bodyX + s.x
-			m.pxCard(c, p, f, o.theme, x, top, cw, ph, i == m.sel.cursor)
+			m.pxCardMemo(c, p, f, o.theme, x, top, cw, ph, i == m.sel.cursor)
 			m.pxRegion(c, x, top, cw, ph+50, hitResult, i, "")
 		}
 	}

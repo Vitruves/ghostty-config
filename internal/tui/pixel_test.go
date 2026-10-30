@@ -21,7 +21,7 @@ import (
 
 const pixConfig = "theme = sumi-ink\nbackground-opacity = 0.85\nbackground-blur = macos-glass-regular\nmacos-titlebar-style = tabs\nwindow-padding-x = 14\nwindow-padding-color = extend\nwindow-save-state = always\n"
 
-func newPixHarness(t *testing.T, iface string) *harness {
+func newPixHarness(t testing.TB, iface string) *harness {
 	t.Helper()
 	h := newHarnessWith(t, pixConfig, Options{NoReload: true, Images: true, ImgOut: io.Discard, Pixel: true, PixCell: [2]int{17, 38}})
 	h.m.state.Interface = iface

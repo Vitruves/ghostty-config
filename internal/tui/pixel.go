@@ -4,15 +4,20 @@ import (
 	"fmt"
 	"hash/maphash"
 	"image"
+	stdcolor "image/color"
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/charmbracelet/x/term"
+	"golang.org/x/image/font"
 
+	"github.com/vitruves/ghostty-config/internal/ghostty"
+	"github.com/vitruves/ghostty-config/internal/kimg"
 	"github.com/vitruves/ghostty-config/internal/pix"
 )
 
@@ -51,10 +56,24 @@ type pixEngine struct {
 
 	// Pictures too slow to draw on every frame, by what they show.
 	pics map[string]*image.RGBA
+
+	// The cards of the wall as last drawn: a frame draws mostly the same
+	// ones, and copying one back is far cheaper than drawing it.
+	cards *pix.Memo
+	// The canvas of the last frame, drawn over by the next.
+	canvas *pix.Canvas
+	// The placeholder text of each row's picture, by the picture's number.
+	rowText map[rowKey]string
+}
+
+type rowKey struct {
+	id   uint32
+	cols int
+	bg   string
 }
 
 func newPixEngine(o Options) *pixEngine {
-	e := &pixEngine{cw: o.PixCell[0], ch: o.PixCell[1], seed: maphash.MakeSeed(), pics: map[string]*image.RGBA{}}
+	e := &pixEngine{cw: o.PixCell[0], ch: o.PixCell[1], seed: maphash.MakeSeed(), pics: map[string]*image.RGBA{}, cards: pix.NewMemo()}
 	e.viaFile = filesReachTerminal(o.ImgOut)
 	// Files an earlier run left behind, because the terminal never read
 	// them or the run was killed, would pile up in the temporary directory
@@ -138,15 +157,28 @@ func (m *Model) setPixCell(cw, ch int) bool {
 		return false
 	}
 	e.cw, e.ch = cw, ch
-	e.pics = map[string]*image.RGBA{}
+	e.forget()
 	return true
+}
+
+// forget lets go of what the engine keeps between frames.
+func (e *pixEngine) forget() {
+	e.pics = map[string]*image.RGBA{}
+	e.cards.Reset()
+	e.canvas = nil
+	e.rowText = nil
 }
 
 // tempFile writes pixels where the terminal can read them, or says it could
 // not, and they go inline instead.
 func (e *pixEngine) tempFile(p []byte) string {
 	e.seq++
-	path := filepath.Join(os.TempDir(), fmt.Sprintf("%s%d-%d", tempPrefix, os.Getpid(), e.seq))
+	return e.tempFileNumbered(e.seq, p)
+}
+
+// tempFileNumbered is tempFile under a number already taken from e.seq.
+func (e *pixEngine) tempFileNumbered(seq int, p []byte) string {
+	path := filepath.Join(os.TempDir(), fmt.Sprintf("%s%d-%d", tempPrefix, os.Getpid(), seq))
 	if err := os.WriteFile(path, p, 0o600); err != nil {
 		return ""
 	}
@@ -171,7 +203,10 @@ func (e *pixEngine) cached(key string, draw func() *image.RGBA) *image.RGBA {
 func (m *Model) renderPixel() string {
 	e := m.px
 	W := m.width * e.cw
-	c := m.pixCanvas()
+	c := pix.Renew(e.canvas, m.width*e.cw, m.height*e.ch, m.pixScale())
+	c.TextScale = pixText
+	e.canvas = c
+	e.cards.Frame()
 	m.drawScreen(c)
 
 	ui := m.panelChrome()
@@ -180,14 +215,99 @@ func (m *Model) renderPixel() string {
 		file = e.tempFile
 	}
 	rows := make([]string, m.height)
+	keys := make([]string, m.height)
+	bands := make([][]byte, m.height)
 	stride := c.Img.Stride
 	for r := 0; r < m.height; r++ {
-		band := c.Img.Pix[r*e.ch*stride : (r+1)*e.ch*stride]
-		key := fmt.Sprintf("band|%d|%d|%x", W, e.ch, maphash.Bytes(e.seed, band))
-		id := m.imgs.ensureRGBA(key, band, W, e.ch, m.width, 1, file)
-		rows[r] = pictureRows(id, m.width, 1, ui.paint())[0]
+		bands[r] = c.Img.Pix[r*e.ch*stride : (r+1)*e.ch*stride]
+		keys[r] = fmt.Sprintf("band|%d|%d|%x", W, e.ch, maphash.Bytes(e.seed, bands[r]))
+	}
+	ready := e.readyBands(m.imgs, keys, bands)
+	for r := 0; r < m.height; r++ {
+		band := bands[r]
+		id := m.imgs.ensureEncoded(keys[r], W, e.ch, m.width, 1, func() rgbaPayload {
+			if pl, ok := ready[keys[r]]; ok {
+				return pl
+			}
+			return encodeRGBA(band, file)
+		})
+		rows[r] = e.placeholders(id, m.width, ui.paint())
 	}
 	return strings.Join(rows, "\n")
+}
+
+// readyBands readies the rows the terminal does not hold, side by side:
+// compressing a row, or writing it to its file, is most of what sending it
+// costs, and a first frame sends every row. The files are numbered in the
+// order of the rows, as they would be one at a time.
+func (e *pixEngine) readyBands(s *imageStore, keys []string, bands [][]byte) map[string]rgbaPayload {
+	type job struct {
+		key  string
+		band []byte
+		seq  int
+	}
+	var jobs []job
+	seen := map[string]bool{}
+	for r, k := range keys {
+		if _, held := s.ids[k]; held || seen[k] {
+			continue
+		}
+		seen[k] = true
+		jobs = append(jobs, job{key: k, band: bands[r]})
+	}
+	if len(jobs) < 2 {
+		// A row alone is readied as fast where it is sent.
+		return nil
+	}
+	if e.viaFile {
+		for i := range jobs {
+			e.seq++
+			jobs[i].seq = e.seq
+		}
+	}
+	out := make([]rgbaPayload, len(jobs))
+	var wg sync.WaitGroup
+	next := make(chan int)
+	for w := 0; w < min(runtime.GOMAXPROCS(0), len(jobs)); w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := range next {
+				j := jobs[i]
+				var file func([]byte) string
+				if e.viaFile {
+					file = func(p []byte) string { return e.tempFileNumbered(j.seq, p) }
+				}
+				out[i] = encodeRGBA(j.band, file)
+			}
+		}()
+	}
+	for i := range jobs {
+		next <- i
+	}
+	close(next)
+	wg.Wait()
+	ready := make(map[string]rgbaPayload, len(jobs))
+	for i, j := range jobs {
+		ready[j.key] = out[i]
+	}
+	return ready
+}
+
+// placeholders is pictureRows for a picture one row tall, kept: the text
+// is the same every time, and building it again for every row is a tenth
+// of a frame that changes nothing.
+func (e *pixEngine) placeholders(id uint32, cols int, bg string) string {
+	k := rowKey{id, cols, bg}
+	if s, ok := e.rowText[k]; ok {
+		return s
+	}
+	if e.rowText == nil || len(e.rowText) >= 1024 {
+		e.rowText = map[rowKey]string{}
+	}
+	s := pictureRows(id, cols, 1, bg)[0]
+	e.rowText[k] = s
+	return s
 }
 
 // pixCanvas is a canvas the size of the window. Its scale is the cell's at
@@ -196,9 +316,43 @@ func (m *Model) renderPixel() string {
 // and nothing held by the terminal needs throwing away.
 func (m *Model) pixCanvas() *pix.Canvas {
 	e := m.px
-	c := pix.New(m.width*e.cw, m.height*e.ch, float32(e.ch)/pixUnit*m.uiScale())
+	c := pix.New(m.width*e.cw, m.height*e.ch, m.pixScale())
 	c.TextScale = pixText
 	return c
+}
+
+// pixScale is how many device pixels a logical unit is.
+func (m *Model) pixScale() float32 { return float32(m.px.ch) / pixUnit * m.uiScale() }
+
+// cardKey is everything a card of the wall is drawn from, but the pixels
+// under it.
+type cardKey struct {
+	name                     string
+	spec                     kimg.CardSpec
+	sel, applied, fav        bool
+	fg, text2, muted, accent stdcolor.NRGBA
+	aa, mono, small          font.Face
+	s, ts, x, y, w, h        float32
+}
+
+// pxCardMemo is pxCard through the memo of cards. The bounds cover the
+// shadow and ring of a highlighted card and the two lines under each, and
+// keep clear of the shadow a highlighted neighbour casts into the gap, so
+// moving the highlight draws again only the cards it leaves and lands on.
+// The memo checks the bounds.
+func (m *Model) pxCardMemo(c *pix.Canvas, p pxPal, f pxFonts, t *ghostty.Theme, x, y, w, h float32, sel bool) {
+	k := cardKey{
+		name: t.Name, spec: m.themeSpec(t),
+		sel: sel, applied: t.Name == m.applied, fav: m.state.IsFavorite(t.Name),
+		fg: p.fg, text2: p.text2, muted: p.muted, accent: p.accent,
+		aa: f.cardAa, mono: f.cardMono, small: f.small,
+		s: c.S, ts: c.TextScale, x: x, y: y, w: w, h: h,
+	}
+	side, top := float32(3), float32(3)
+	if sel {
+		side, top = 16, 8
+	}
+	m.px.cards.Draw(c, k, x-side, y-top, w+2*side, h+top+52, func() { m.pxCard(c, p, f, t, x, y, w, h, sel) })
 }
 
 // pxRegion registers a logical rectangle as clickable, as the cells whose

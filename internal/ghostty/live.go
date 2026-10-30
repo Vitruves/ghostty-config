@@ -342,8 +342,34 @@ func prettyBinding(b string) string {
 }
 
 // DarkDesktop reports whether the desktop is in dark mode, which decides
-// which half of a light:/dark: theme pair is live.
+// which half of a light:/dark: theme pair is live. The first call after
+// Prefetch takes the answer it started asking for; the others ask again.
 func DarkDesktop() bool {
+	darkAhead.Lock()
+	ahead := darkAhead.answer
+	darkAhead.answer = nil
+	darkAhead.Unlock()
+	if ahead != nil {
+		return <-ahead
+	}
+	return askDarkDesktop()
+}
+
+// darkAhead is the answer Prefetch started asking for, until taken.
+var darkAhead struct {
+	sync.Mutex
+	answer chan bool
+}
+
+func prefetchDarkDesktop() {
+	answer := make(chan bool, 1)
+	darkAhead.Lock()
+	darkAhead.answer = answer
+	darkAhead.Unlock()
+	go func() { answer <- askDarkDesktop() }()
+}
+
+func askDarkDesktop() bool {
 	switch runtime.GOOS {
 	case "darwin":
 		out, err := exec.Command("defaults", "read", "-g", "AppleInterfaceStyle").Output()

@@ -24,7 +24,7 @@ import (
 // harness builds an editor over a throwaway config tree with a small theme
 // library: two bundled themes and the curated collection.
 type harness struct {
-	t     *testing.T
+	t     testing.TB
 	m     *Model
 	dir   string
 	paths ghostty.Paths
@@ -41,7 +41,7 @@ func newHarness(t *testing.T, config string) *harness {
 	return newHarnessWith(t, config, Options{NoReload: true})
 }
 
-func newHarnessWith(t *testing.T, config string, opts Options) *harness {
+func newHarnessWith(t testing.TB, config string, opts Options) *harness {
 	t.Helper()
 	dir := t.TempDir()
 	builtin := filepath.Join(dir, "resources", "themes")
