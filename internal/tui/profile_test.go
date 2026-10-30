@@ -200,8 +200,13 @@ func TestLayoutSwitchSendsTheScreenAgain(t *testing.T) {
 	if !strings.Contains(out.String(), "a=d") {
 		t.Fatal("the pictures of the last layout were not freed")
 	}
-	if n := strings.Count(out.String(), "a=T"); n != first {
-		t.Fatalf("after a switch %d pictures were sent, want all %d of the frame", n, first)
+	// Every row of the new layout's frame, as many as that frame sent fresh.
+	n := strings.Count(out.String(), "a=T")
+	out.Reset()
+	h.m.imgs.reset()
+	h.m.View()
+	if all := strings.Count(out.String(), "a=T"); n != all {
+		t.Fatalf("after a switch %d pictures were sent, want all %d of the frame", n, all)
 	}
 }
 

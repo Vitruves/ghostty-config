@@ -222,6 +222,8 @@ func TestPixelScreens(t *testing.T) {
 	light.do("size 15", true)
 	light.do("restore", false)
 	light.shot("23-restore-light")
+
+	palettePixelScreens(t)
 }
 
 // TestReadmeShots draws the pictures of the README when
