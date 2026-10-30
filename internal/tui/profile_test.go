@@ -159,7 +159,8 @@ func TestLayoutSwitches(t *testing.T) {
 	if _, ok := h.m.profile().(*guided); !ok {
 		t.Fatalf("the profile in effect is %T", h.m.profile())
 	}
-	h.do("layout atelier", true)
+	// Guided has no prompt to type into: the command is run as Enter would.
+	h.m.runCommand(h.command("layout"), "", &option{value: ghostty.ProfileAtelier})
 	if _, ok := h.m.profile().(atelier); !ok || h.m.state.Profile != ghostty.ProfileAtelier {
 		t.Fatalf("back to Atelier: %T, %q", h.m.profile(), h.m.state.Profile)
 	}
