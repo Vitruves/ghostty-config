@@ -147,6 +147,35 @@ func TestPixelScreens(t *testing.T) {
 	h.shot("12-welcome")
 	h.m.overlay = overlayNone
 
+	// The chooser, for a new user and for one who used the tool before
+	// layouts were offered, at the size of a usual window and at 80×24, in
+	// a dark and a light scheme.
+	for _, iface := range []string{"midnight", "paper"} {
+		for _, returning := range []bool{false, true} {
+			ch := newChooserHarness(t, returning, Options{NoReload: true, Images: true, ImgOut: io.Discard, Pixel: true, PixCell: [2]int{17, 38}, Version: "v1.5.0"})
+			ch.m.state.Interface = iface
+			name := "12b-chooser-new"
+			if returning {
+				name = "12c-chooser-returning"
+			}
+			for _, size := range [][2]int{{120, 34}, {80, 24}} {
+				ch.send(tea.WindowSizeMsg{Width: size[0], Height: size[1]})
+				suffix := ""
+				if size[0] == 80 {
+					suffix = "-80x24"
+				}
+				if iface == "paper" {
+					suffix += "-light"
+				}
+				ch.shot(name + suffix)
+			}
+			if returning && iface == "midnight" {
+				ch.key("right")
+				ch.shot(name + "-palette")
+			}
+		}
+	}
+
 	h.m.setPromptText("Edit ")
 	h.key("enter")
 	h.shot("13-editor")

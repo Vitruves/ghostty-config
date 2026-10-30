@@ -32,6 +32,7 @@ const (
 	overlayUpdate
 	overlayCapture // the shortcut editor asking for a shortcut
 	overlayExplain // Ghostty's own documentation of a setting or an action
+	overlayLayout  // the choice of a profile, until one is made
 )
 
 // writeDebounce is how long the highlight must rest before a font or a
@@ -225,6 +226,13 @@ type Model struct {
 	updateLatest  string
 	updatePending bool
 	quitting      bool
+
+	// The profiles made this session, by name, and the one the chooser has
+	// highlighted; enterCmd is what entering the first one asked for, run
+	// once the program starts.
+	profs    map[string]profile
+	layoutAt int
+	enterCmd tea.Cmd
 }
 
 // New builds the editor over loaded configuration.
@@ -263,8 +271,13 @@ func New(paths ghostty.Paths, tree *ghostty.Tree, lib *ghostty.Library, state *g
 	m.lastText = "Theme "
 	m.recompute()
 	m.renderStatus()
-	if !state.Welcomed {
-		m.overlay = overlayWelcome
+	// The layout is asked for before anything else, and until one is
+	// chosen: the welcome, Atelier's, follows the choice of it.
+	if state.ProfileChosen() {
+		m.enterCmd = m.profile().enter(m)
+	} else {
+		m.overlay = overlayLayout
+		m.layoutAt = profileIndex(ghostty.ProfileAtelier)
 	}
 	return m
 }
@@ -321,7 +334,7 @@ func (m *Model) Init() tea.Cmd {
 	if m.fontFamily != "" {
 		fonts = m.ensureFonts()
 	}
-	return tea.Batch(m.spin.Tick, m.checkUpdate(), askTerminalColours(), tea.Raw(watchScheme), m.runCheck(checkQuiet), fonts)
+	return tea.Batch(m.spin.Tick, m.checkUpdate(), askTerminalColours(), tea.Raw(watchScheme), m.runCheck(checkQuiet), fonts, m.enterCmd)
 }
 
 // checkUpdate asks GitHub for the newest release in the background. The UI
@@ -584,10 +597,7 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.String() == "ctrl+z" {
 			return m, m.undoStep()
 		}
-		if m.editing {
-			return m.updateEdit(msg)
-		}
-		return m.updatePrompt(msg)
+		return m.profile().key(m, msg)
 	}
 	return m, nil
 }
@@ -632,7 +642,7 @@ func (m *Model) render() string {
 		}
 		return m.renderPixel()
 	}
-	body := m.viewMain()
+	body := m.profile().viewCells(m)
 	if m.overlay != overlayNone {
 		body = m.viewOverlay(body)
 	}

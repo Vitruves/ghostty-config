@@ -99,15 +99,14 @@ func (m *Model) updateMouse(raw tea.MouseMsg) (tea.Model, tea.Cmd) {
 	if msg.motion {
 		return m, nil
 	}
-	if msg.wheel {
-		return m.wheel(msg)
-	}
-	if !msg.press || msg.Button != tea.MouseLeft {
-		return m, nil
-	}
-	r, ok := m.hit(msg.X, msg.Y)
 	if m.overlay != overlayNone {
-		if ok && r.kind == hitButton {
+		if msg.wheel {
+			return m.wheel(msg)
+		}
+		if !msg.press || msg.Button != tea.MouseLeft {
+			return m, nil
+		}
+		if r, ok := m.hit(msg.X, msg.Y); ok && r.kind == hitButton {
 			return m.pressButton(r.name)
 		}
 		if m.overlay == overlayWelcome || m.overlay == overlayHelp || m.overlay == overlayMessage || m.overlay == overlayExplain {
@@ -115,6 +114,18 @@ func (m *Model) updateMouse(raw tea.MouseMsg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	}
+	if !msg.wheel && (!msg.press || msg.Button != tea.MouseLeft) {
+		return m, nil
+	}
+	return m.profile().mouse(m, msg)
+}
+
+// atelierMouse is Atelier's answer to a click or the wheel.
+func (m *Model) atelierMouse(msg mouseEv) (tea.Model, tea.Cmd) {
+	if msg.wheel {
+		return m.wheel(msg)
+	}
+	r, ok := m.hit(msg.X, msg.Y)
 	if !ok {
 		return m, nil
 	}
@@ -194,6 +205,16 @@ func (m *Model) clickValue(r region, x int) (tea.Model, tea.Cmd) {
 
 // pressButton runs a dialog button.
 func (m *Model) pressButton(name string) (tea.Model, tea.Cmd) {
+	if i, ok := strings.CutPrefix(name, "layout-"); ok && m.overlay == overlayLayout && len(i) == 1 {
+		// A layout of the chooser: a click picks it, and a click on the
+		// one picked goes on with it.
+		at := int(i[0] - '0')
+		if at == m.layoutAt {
+			return m.updateOverlay(tea.KeyPressMsg{Code: tea.KeyEnter})
+		}
+		m.layoutAt = at
+		return m, nil
+	}
 	switch name {
 	case "confirm-yes":
 		m.overlay = overlayNone
@@ -217,6 +238,8 @@ func (m *Model) pressButton(name string) (tea.Model, tea.Cmd) {
 		m.kb.global = !m.kb.global
 	case "update-later":
 		m.overlay = overlayNone
+	case "layout-continue":
+		return m.updateOverlay(tea.KeyPressMsg{Code: tea.KeyEnter})
 	case "enter":
 		// The footer's button does what Enter does.
 		return m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})

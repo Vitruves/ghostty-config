@@ -84,7 +84,7 @@ func (m *Model) explainTarget() (name string, action bool) {
 // openExplain opens the page of the highlighted line and asks Ghostty for
 // it in the background.
 func (m *Model) openExplain() tea.Cmd {
-	name, action := m.explainTarget()
+	name, action := m.profile().explainTarget(m)
 	if name == "" {
 		m.info("Ghostty has no page on this line: F3 reads one for a setting or a shortcut's action")
 		return nil

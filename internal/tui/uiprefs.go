@@ -25,9 +25,20 @@ type uiPref struct {
 	// pixel marks what only the picture interface can honour: the text one
 	// draws a fixed grid of cells and leaves it out of the menu.
 	pixel bool
+	// apply, when set, is how a value comes into effect: walking the list
+	// then shows nothing, and only Enter changes anything. The layout takes
+	// the whole screen, so it is never looked at from under its own menu.
+	apply func(m *Model, v string) tea.Cmd
+	// titles name the values on screen, when not by their word.
+	titles map[string]string
 }
 
 var (
+	prefLayout = &uiPref{
+		name: "layout", label: "Layout", desc: "How the editor is laid out: the same settings underneath, shown one of three ways",
+		values: []string{ghostty.ProfileAtelier, ghostty.ProfilePalette, ghostty.ProfileGuided}, def: ghostty.ProfileAtelier,
+		field: func(s *ghostty.State) *string { return &s.Profile },
+	}
 	prefInterface = &uiPref{
 		name: "interface", label: "Scheme", desc: "The colours of the editor itself, kept apart from the theme being looked at",
 		values: interfaceNames, def: "auto", notes: interfaceNotes,
@@ -82,9 +93,27 @@ var (
 )
 
 // uiPrefs are the preferences of Tool → Interface, in the order it lists them.
-// Another word of the look, a layout among several, is one more entry here
-// with a field of its own in the state.
-var uiPrefs = []*uiPref{prefInterface, prefAccent, prefContrast, prefSize, prefCards}
+var uiPrefs = []*uiPref{prefLayout, prefInterface, prefAccent, prefContrast, prefSize, prefCards}
+
+// applyLayout puts the layout chosen in effect.
+func applyLayout(m *Model, v string) tea.Cmd {
+	if v == m.state.ActiveProfile() {
+		return nil
+	}
+	// The prompt belongs to Atelier: the next profile starts from its own
+	// first screen, and Atelier from its menu.
+	m.setPromptText("")
+	return m.switchProfile(v)
+}
+
+func init() {
+	prefLayout.apply = applyLayout
+	// The layouts are named and described where they are registered.
+	prefLayout.titles, prefLayout.notes = map[string]string{}, map[string]string{}
+	for _, k := range profileKinds {
+		prefLayout.titles[k.name], prefLayout.notes[k.name] = k.title, k.blurb
+	}
+}
 
 // uiPrefNamed is the preference a command word names, nil for none.
 func uiPrefNamed(name string) *uiPref {
@@ -192,6 +221,9 @@ func uiPrefCommands() []*command {
 						continue
 					}
 					o := option{label: v, detail: p.notes[v], value: v, current: v == p.value(m)}
+					if t, ok := p.titles[v]; ok {
+						o.label = t
+					}
 					if p == prefAccent {
 						o.swatch = m.accentSample(v)
 					}
@@ -200,7 +232,7 @@ func uiPrefCommands() []*command {
 				return out
 			},
 			onMove: func(m *Model, opt *option) tea.Cmd {
-				if opt != nil {
+				if opt != nil && p.apply == nil {
 					// Walking the list shows each value, and only Enter keeps
 					// one: remember what was in effect to put it back.
 					if m.previewing != p.name {
@@ -213,6 +245,11 @@ func uiPrefCommands() []*command {
 			run: func(m *Model, arg string, opt *option) tea.Cmd {
 				if opt == nil {
 					return nil
+				}
+				if p.apply != nil {
+					cmd := p.apply(m, opt.value)
+					m.info("%s: %s", p.label, opt.label)
+					return cmd
 				}
 				if m.previewing == p.name {
 					m.previewing = ""

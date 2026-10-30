@@ -33,6 +33,8 @@ func (m *Model) updateOverlay(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.state.Welcomed = true
 		_ = m.state.Save()
 		return m, nil
+	case overlayLayout:
+		return m.updateChooser(key)
 	case overlayUpdate:
 		switch key {
 		case "enter", "y", "Y", "i", "I":
@@ -78,6 +80,8 @@ func (m *Model) viewOverlay(body string) string {
 	switch m.overlay {
 	case overlayWelcome:
 		return m.viewWelcome()
+	case overlayLayout:
+		return m.viewChooser()
 	case overlayHelp:
 		return m.viewHelp()
 	case overlayExplain:

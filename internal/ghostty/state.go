@@ -27,6 +27,10 @@ type State struct {
 	Contrast string `json:"contrast,omitempty"`
 	UISize   string `json:"ui_size,omitempty"`
 	Cards    string `json:"cards,omitempty"`
+	// Profile is how the editor is laid out: ProfileAtelier, ProfilePalette
+	// or ProfileGuided. Empty until one is chosen, which the editor asks for
+	// before anything else.
+	Profile string `json:"profile,omitempty"`
 	// UpdateCheckedAt and LatestRelease remember the last look at GitHub,
 	// so the network is asked at most once a day.
 	UpdateCheckedAt time.Time `json:"update_checked_at,omitempty"`
@@ -34,6 +38,13 @@ type State struct {
 	path            string
 	favSet          map[string]bool
 }
+
+// The layouts of the editor, as the state file names them.
+const (
+	ProfileAtelier = "atelier"
+	ProfilePalette = "palette"
+	ProfileGuided  = "guided"
+)
 
 // LoadState reads state.json, or starts fresh.
 func LoadState(paths Paths) *State {
@@ -91,3 +102,25 @@ func (s *State) MonoOnlyEnabled() bool { return s.MonoOnly == nil || *s.MonoOnly
 
 // SetMonoOnly records the preference.
 func (s *State) SetMonoOnly(v bool) { s.MonoOnly = &v }
+
+// ProfileChosen is whether a layout was chosen, one this build knows.
+func (s *State) ProfileChosen() bool {
+	switch s.Profile {
+	case ProfileAtelier, ProfilePalette, ProfileGuided:
+		return true
+	}
+	return false
+}
+
+// ActiveProfile is the layout in effect: the one chosen, Atelier until then.
+func (s *State) ActiveProfile() string {
+	if s.ProfileChosen() {
+		return s.Profile
+	}
+	return ProfileAtelier
+}
+
+// Returning is whether the editor was used before: its state carries what
+// only a session leaves behind. A state file alone does not tell, since
+// leaving from the very first screen writes one.
+func (s *State) Returning() bool { return s.Welcomed || len(s.favSet) > 0 }

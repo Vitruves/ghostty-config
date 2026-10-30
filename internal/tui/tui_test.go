@@ -30,6 +30,9 @@ type harness struct {
 	paths ghostty.Paths
 }
 
+// harnessProfile is the layout the harness starts in.
+var harnessProfile = ghostty.ProfileAtelier
+
 // harnessXDG is where, under the test's directory, the config lives.
 var harnessXDG = "xdg"
 
@@ -67,6 +70,8 @@ func newHarnessWith(t *testing.T, config string, opts Options) *harness {
 	lib := ghostty.LoadLibrary(paths)
 	state := ghostty.LoadState(paths)
 	state.Welcomed = true
+	// The layout is chosen; the chooser has its own tests.
+	state.Profile = harnessProfile
 	// Most tests were written for the clear interface, which follows the
 	// theme being shown and paints no ground; the others have their own tests.
 	state.Interface = "clear"

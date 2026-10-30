@@ -106,27 +106,16 @@ func (m *Model) drawScreen(c *pix.Canvas) {
 	p := newPxPal(m.panelChrome())
 	f := pxFaces(c)
 	c.Clear(p.bg)
-	if m.overlay == overlayWelcome {
+	switch m.overlay {
+	case overlayWelcome:
 		m.pxWelcome(c, p, f)
+		return
+	case overlayLayout:
+		m.pxChooser(c, p, f)
 		return
 	}
 	g := pxLayout(c)
-	m.pxHeader(c, p, f, g)
-	switch m.screen() {
-	case screenGallery:
-		m.pxGallery(c, p, f, g)
-	case screenMenu:
-		m.pxMenu(c, p, f, g)
-	case screenOptions:
-		if m.cmd.name == "keys" {
-			m.pxKeys(c, p, f, g)
-		} else {
-			m.pxOptions(c, p, f, g)
-		}
-	case screenEditor:
-		m.pxEditor(c, p, f, g)
-	}
-	m.pxFooter(c, p, f, g)
+	m.profile().drawPixel(m, c, p, f, g)
 	if m.overlay != overlayNone {
 		m.pxOverlay(c, p, f, g)
 	}
