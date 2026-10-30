@@ -224,6 +224,7 @@ func TestPixelScreens(t *testing.T) {
 	light.shot("23-restore-light")
 
 	palettePixelScreens(t)
+	guidedShots(t)
 }
 
 // TestReadmeShots draws the pictures of the README when
