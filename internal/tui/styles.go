@@ -21,6 +21,9 @@ type chrome struct {
 	// clear leaves the background to the terminal. bg is still what the
 	// colours are worked out against.
 	clear bool
+	// high is the high contrast chosen: the grounds of the picture interface
+	// stand further from the background too.
+	high bool
 }
 
 func defaultChrome() chrome {

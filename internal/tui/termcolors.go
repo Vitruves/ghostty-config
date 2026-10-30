@@ -118,8 +118,14 @@ func (m *Model) autoChrome() chrome {
 	return c
 }
 
-// panelChrome is the chrome of the editor itself.
+// panelChrome is the chrome of the editor itself: its scheme, with the
+// accent and the contrast chosen laid over it.
 func (m *Model) panelChrome() chrome {
+	return m.tuneChrome(m.schemeChrome())
+}
+
+// schemeChrome is the chrome of the scheme in effect, as it comes.
+func (m *Model) schemeChrome() chrome {
 	switch m.interfaceName() {
 	case "auto":
 		return m.autoChrome()
@@ -174,8 +180,12 @@ func (m *Model) dialogChrome() chrome {
 	p := m.panelChrome()
 	p.clear = false
 	p.bg = color.Blend(p.bg, p.fg, 0.07)
-	p.muted = color.EnsureContrast(p.muted, p.bg, 4.5)
-	p.faint = color.Blend(p.fg, p.bg, 0.78)
+	ratio, faint := 4.5, 0.78
+	if p.high {
+		ratio, faint = 7, 0.60
+	}
+	p.muted = color.EnsureContrast(p.muted, p.bg, ratio)
+	p.faint = color.Blend(p.fg, p.bg, faint)
 	p.selBg = color.Blend(p.accent, p.bg, 0.74)
 	return p
 }

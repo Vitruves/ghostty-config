@@ -33,20 +33,27 @@ type pxPal struct {
 
 func newPxPal(ui chrome) pxPal {
 	h := func(s string) stdcolor.NRGBA { return pix.Hex(s, 1) }
+	// tone is a ground between the text and the background, t of the way to
+	// the background; high contrast takes it further from it.
+	k := 1.0
+	if ui.high {
+		k = 1.9
+	}
+	tone := func(t float64) stdcolor.NRGBA { return h(color.Blend(ui.fg, ui.bg, 1-(1-t)*k)) }
 	on := ui.bg
 	if color.Contrast(ui.fg, ui.accent) > color.Contrast(ui.bg, ui.accent) {
 		on = ui.fg
 	}
 	return pxPal{
 		ui: ui,
-		bg: h(ui.bg), fg: h(ui.fg), text2: h(color.Blend(ui.fg, ui.bg, 0.18)), muted: h(ui.muted),
+		bg: h(ui.bg), fg: h(ui.fg), text2: tone(0.18), muted: h(ui.muted),
 		accent: h(ui.accent), onAccent: h(on),
-		field:    h(color.Blend(ui.fg, ui.bg, 0.94)),
-		rowSel:   h(color.Blend(ui.fg, ui.bg, 0.93)),
-		railSel:  h(color.Blend(ui.fg, ui.bg, 0.90)),
-		keycap:   h(color.Blend(ui.fg, ui.bg, 0.88)),
-		track:    h(color.Blend(ui.fg, ui.bg, 0.83)),
-		hairline: h(color.Blend(ui.fg, ui.bg, 0.90)),
+		field:    tone(0.94),
+		rowSel:   tone(0.93),
+		railSel:  tone(0.90),
+		keycap:   tone(0.88),
+		track:    tone(0.83),
+		hairline: tone(0.90),
 	}
 }
 
@@ -379,10 +386,8 @@ func (m *Model) pxRail(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo, title string,
 
 // --- the wall of themes --------------------------------------------------------------
 
-const (
-	cardMinW = 165
-	cardGap  = 18
-)
+// cardGap is the air between two cards; how wide they are is a preference.
+const cardGap = 18
 
 func (m *Model) pxGallery(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo) {
 	// The families, with the one the highlight is in marked.
@@ -416,7 +421,7 @@ func (m *Model) pxGallery(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo) {
 		return
 	}
 
-	cols := maxInt(int((g.bodyW+cardGap)/(cardMinW+cardGap)), 1)
+	cols := maxInt(int((g.bodyW+cardGap)/(m.cardMinW()+cardGap)), 1)
 	cw := (g.bodyW - cardGap*float32(cols-1)) / float32(cols)
 	ph := cw * 0.624
 	pitch := ph + 68
@@ -1167,7 +1172,7 @@ func (m *Model) pxOptionRow(c *pix.Canvas, p pxPal, f pxFonts, o option, sel boo
 	case o.theme != nil:
 		pxSwatch(c, o.theme, lx, y+8, 20)
 		lx += 30
-	case o.slot != "":
+	case o.slot != "" || color.IsHex(o.swatch):
 		if color.IsHex(o.swatch) {
 			c.Rect(lx, y+10, 16, 16, 4, pix.Hex(o.swatch, 1))
 		} else {

@@ -58,7 +58,7 @@ Everything can be clicked too: sections, pills, switches, sliders, and a double 
 - **Input:** cursor, clipboard, mouse, and every keyboard shortcut: press the new one, conflicts are shown.
 - **Session:** scrollback, window restore, quick terminal, bell, notifications, shell integration.
 - **Extensions:** shaders and theme packs, with their source and licence shown before install.
-- **Tool:** reload Ghostty, check the config, see the session's changes, restore a backup, the interface's own colours.
+- **Tool:** reload Ghostty, check the config, see the session's changes, restore a backup, the interface's own look: its scheme, accent colour and contrast, and when drawn as images its size and the width of theme cards.
 
 ## Good to know
 

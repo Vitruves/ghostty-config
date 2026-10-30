@@ -27,8 +27,9 @@ import (
 // that row's image, so the program that draws the screen only ever writes
 // text, and a row that changes is a row of text that changes.
 
-// pixUnit is how many logical units a row of cells is tall: the layout is
-// written in these units and scales with the terminal's font.
+// pixUnit is how many logical units a row of cells is tall at the normal
+// size: the layout is written in these units and scales with the terminal's
+// font, and with the size chosen for the interface.
 const pixUnit = 22
 
 // pixText is how much larger than the layout's own sizes the text is drawn.
@@ -169,9 +170,8 @@ func (e *pixEngine) cached(key string, draw func() *image.RGBA) *image.RGBA {
 // show it; the rows whose pixels changed are queued for the terminal.
 func (m *Model) renderPixel() string {
 	e := m.px
-	W, H := m.width*e.cw, m.height*e.ch
-	c := pix.New(W, H, float32(e.ch)/pixUnit)
-	c.TextScale = pixText
+	W := m.width * e.cw
+	c := m.pixCanvas()
 	m.drawScreen(c)
 
 	ui := m.panelChrome()
@@ -188,6 +188,17 @@ func (m *Model) renderPixel() string {
 		rows[r] = pictureRows(id, m.width, 1, ui.paint())[0]
 	}
 	return strings.Join(rows, "\n")
+}
+
+// pixCanvas is a canvas the size of the window. Its scale is the cell's at
+// the size chosen for the interface: another size changes what every row
+// shows, never the cell, so the rows are sent again by their pixels alone
+// and nothing held by the terminal needs throwing away.
+func (m *Model) pixCanvas() *pix.Canvas {
+	e := m.px
+	c := pix.New(m.width*e.cw, m.height*e.ch, float32(e.ch)/pixUnit*m.uiScale())
+	c.TextScale = pixText
+	return c
 }
 
 // pxRegion registers a logical rectangle as clickable, as the cells whose

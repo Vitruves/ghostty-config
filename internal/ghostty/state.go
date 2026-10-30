@@ -18,6 +18,15 @@ type State struct {
 	// Interface is the colour scheme of the editor's own chrome, kept apart
 	// from the theme being looked at: "clear", "paper", "graphite" or "theme".
 	Interface string `json:"interface,omitempty"`
+	// The rest of the editor's look, each empty for the look it always had:
+	// Accent is the one colour that marks what is on ("theme" or one of the
+	// tool's own), Contrast how far the quiet text and grounds stand from the
+	// background, UISize how large the picture interface draws everything,
+	// and Cards how wide a theme's card is on the wall.
+	Accent   string `json:"accent,omitempty"`
+	Contrast string `json:"contrast,omitempty"`
+	UISize   string `json:"ui_size,omitempty"`
+	Cards    string `json:"cards,omitempty"`
 	// UpdateCheckedAt and LatestRelease remember the last look at GitHub,
 	// so the network is asked at most once a day.
 	UpdateCheckedAt time.Time `json:"update_checked_at,omitempty"`

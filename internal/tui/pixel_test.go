@@ -46,8 +46,7 @@ func (h *harness) shot(name string) {
 		return
 	}
 	m.regions = m.regions[:0]
-	c := pix.New(m.width*m.px.cw, m.height*m.px.ch, float32(m.px.ch)/pixUnit)
-	c.TextScale = pixText
+	c := m.pixCanvas()
 	m.drawScreen(c)
 	var b bytes.Buffer
 	_ = png.Encode(&b, c.Img)

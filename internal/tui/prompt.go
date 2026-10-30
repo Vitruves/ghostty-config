@@ -54,9 +54,9 @@ func (m *Model) recompute() {
 	text := m.prompt.Value()
 	keep := m.selectedValue()
 	m.cmd, m.arg = m.resolve(text)
-	if m.cmd == nil || m.cmd.name != "interface" {
-		// The list of interfaces was left without Enter: what it showed goes.
-		m.endInterfacePreview()
+	if m.cmd == nil || m.cmd.name != m.previewing {
+		// The list of a look was left without Enter: what it showed goes.
+		m.endPrefPreview()
 	}
 	if m.cmd == nil || m.cmd.name != "check" {
 		// The check list asks Ghostty again the next time it is opened.
@@ -114,16 +114,6 @@ func (m *Model) recompute() {
 		m.landOnCurrentValue()
 	}
 	m.skipHeaders(1)
-}
-
-// endInterfacePreview puts back the interface that was in effect before the
-// list of them was walked, when no Enter chose one, so that a look is never
-// saved with the rest of the state.
-func (m *Model) endInterfacePreview() {
-	if m.previewingInterface {
-		m.state.Interface = m.interfaceWas
-		m.previewingInterface = false
-	}
 }
 
 // landOnCurrentValue puts the highlight on the option marked current.
