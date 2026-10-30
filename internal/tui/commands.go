@@ -418,6 +418,9 @@ func (m *Model) buildCommands() []*command {
 		s := s
 		add(settingCommand(s))
 	}
+	if m.since14() {
+		add(sshHostsCommand())
+	}
 
 	add(keysCommand())
 
@@ -973,6 +976,21 @@ func (m *Model) buildSettings() []setting {
 		blur = append(blur, "macos-glass-regular", "macos-glass-clear")
 	}
 	bl := keySetting("blur", "background-blur", "Background blur", "Only matters when opacity is below 1; the glass values need macOS 26", blur, "off")
+	if !mac {
+		// Linux takes no strength: any value turns blur on, and whether the
+		// desktop blurs is up to the compositor. On Wayland 1.3 speaks KDE's
+		// protocol, 1.4 the shared ext-background-effect-v1, through GTK's
+		// own blur from GTK 4.23.3.
+		bl.detail = "Only matters when opacity is below 1; on Linux any strength just turns it on, and the compositor draws it"
+		bl.hint = "On Wayland only KDE's KWin blurs; on X11 too, only under KWin."
+		if v14 {
+			bl.hint = "On Wayland, any compositor with ext-background-effect-v1 blurs, Niri among them; from GTK 4.23.3 GTK's own blur covers the window more exactly. On X11, only KWin."
+		}
+		bl.explain = map[string]string{"off": valueNotes["blur"]["off"]}
+		for _, v := range blur[1:] {
+			bl.explain[v] = "blur on: Linux ignores the strength"
+		}
+	}
 	bl.get = func(m *Model) string {
 		v := strings.ToLower(m.tree.Value("background-blur", "false"))
 		switch v {
@@ -1044,6 +1062,9 @@ func (m *Model) buildSettings() []setting {
 	input(boolSetting("clearselect", "selection-clear-on-typing", "Clear selection on typing", "Typing drops the selection instead of leaving it highlighted", true))
 	input(boolSetting("trimspaces", "clipboard-trim-trailing-spaces", "Trim copied spaces", "Strip trailing spaces from every copied line", true))
 	input(boolSetting("pasteguard", "clipboard-paste-protection", "Paste protection", "Ask before pasting text that looks like it would run a command", true))
+	for _, st := range clipboardAccess(v14) {
+		input(st)
+	}
 	input(boolSetting("clicktomove", "cursor-click-to-move", "Click to move the cursor", "Option-click at a shell prompt moves the cursor there", true))
 	input(boolSetting("hidemouse", "mouse-hide-while-typing", "Hide mouse while typing", "The pointer disappears when a key is pressed and returns when it moves", false))
 	input(boolSetting("focusmouse", "focus-follows-mouse", "Focus follows mouse", "Hovering a split focuses it without a click", false))
@@ -1063,7 +1084,17 @@ func (m *Model) buildSettings() []setting {
 	session(boolSetting("quitlast", "quit-after-last-window-closed", "Quit after last window", "Closing the final window quits Ghostty instead of leaving it in the dock", false))
 	if mac {
 		input(keySetting("optionalt", "macos-option-as-alt", "Option as Alt", "true makes Option behave as Alt (readline, vim, emacs); false keeps accented characters", []string{"default", "true", "left", "right", "false"}, "default"))
-		session(keySetting("savestate", "window-save-state", "Restore windows", "default follows the macOS setting; always restores windows on every launch", []string{"default", "never", "always"}, "default"))
+		ss := keySetting("savestate", "window-save-state", "Restore windows", "default follows the macOS setting; always restores windows on every launch", []string{"default", "never", "always"}, "default")
+		if v14 {
+			// 1.4's never also keeps macOS from taking the snapshots it
+			// restores windows with, which could stall a change of focus.
+			ss.explain = map[string]string{
+				"default": valueNotes["savestate"]["default"],
+				"never":   "always start with a clean window; macOS takes no window snapshots either, which could slow switching windows",
+				"always":  valueNotes["savestate"]["always"],
+			}
+		}
+		session(ss)
 		session(boolSetting("stepresize", "window-step-resize", "Resize in whole cells", "Window edges snap to the cell grid instead of pixels", false))
 	} else {
 		session(keySetting("tabbar", "window-show-tab-bar", "Tab bar", "auto shows it from two tabs up (GTK)", []string{"auto", "always", "never"}, "auto"))

@@ -209,6 +209,11 @@ type Model struct {
 	startText map[string][]string
 	// restoreList is the backups the restore list was built from.
 	restoreList []restorable
+	// sshHosts is the SSH terminfo cache as last read, when, and what went
+	// wrong reading it; the list and its panel share the one read.
+	sshHosts    []ghostty.SSHCacheEntry
+	sshHostsErr error
+	sshHostsAt  time.Time
 
 	reloadFailed bool
 	// top is the terminal row the editor's first row sits on: always the

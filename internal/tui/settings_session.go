@@ -143,8 +143,16 @@ func (m *Model) sessionExtraSettings(mac bool) []setting {
 	feature("shelltitle", "title", "Title from the shell", "The shell sets the window title to the command running, or the directory")
 	feature("shellsudo", "sudo", "Keep terminfo under sudo", "Wrap sudo so programs run through it still know the terminal")
 	feature("shellpath", "path", "Ghostty on the PATH", "Add the directory of the ghostty command to PATH, even where startup scripts reset it")
-	feature("sshenv", "ssh-env", "SSH environment", "Over ssh, TERM falls back to xterm-256color and COLORTERM and TERM_PROGRAM go along")
-	feature("sshterminfo", "ssh-terminfo", "Install terminfo over SSH", "Copy Ghostty's terminfo to hosts that lack it, once per host, with infocmp and tic")
+	// 1.4 hands both ssh features to ghostty +ssh, which wraps every ssh the
+	// shell runs: it always installs the terminfo Ghostty carries, again
+	// after an update changes it, and caches each host and port apart.
+	if m.since14() {
+		feature("sshenv", "ssh-env", "SSH environment", "Over ssh, through ghostty +ssh, TERM falls back to xterm-256color and COLORTERM and TERM_PROGRAM go along; SetEnv in ~/.ssh/config is left alone")
+		feature("sshterminfo", "ssh-terminfo", "Install terminfo over SSH", "Through ghostty +ssh, install Ghostty's own terminfo on each host and port with tic, and again after an update changes it; SSH hosts lists the cache")
+	} else {
+		feature("sshenv", "ssh-env", "SSH environment", "Over ssh, TERM falls back to xterm-256color and COLORTERM and TERM_PROGRAM go along")
+		feature("sshterminfo", "ssh-terminfo", "Install terminfo over SSH", "Copy Ghostty's terminfo to hosts that lack it, once per host, with infocmp and tic")
+	}
 	return s
 }
 

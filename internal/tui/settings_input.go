@@ -76,6 +76,33 @@ func copyOnSelect(mac, v14 bool) setting {
 	return st
 }
 
+// clipboardAccess is whether a program in the terminal may read and write
+// the clipboard. Both keys are older than 1.4; 1.4 has them govern the
+// Kitty clipboard protocol, OSC 5522, as well as OSC 52, and its prompt
+// shows what is on the clipboard before a read.
+func clipboardAccess(v14 bool) []setting {
+	via := "through OSC 52"
+	if v14 {
+		via = "through OSC 52 or the Kitty clipboard protocol, OSC 5522"
+	}
+	read := keySetting("clipread", "clipboard-read", "Programs read the clipboard", "Whether a program in the terminal, one over ssh too, may read the clipboard "+via, []string{"ask", "allow", "deny"}, "ask")
+	read.explain = map[string]string{
+		"ask":   "Ghostty asks each time a program wants what is on the clipboard (the default)",
+		"allow": "any program may read the clipboard without asking, passwords copied a moment ago included",
+		"deny":  "no program may read the clipboard; pasting yourself still works",
+	}
+	if v14 {
+		read.explain["ask"] = "Ghostty asks each time, showing a preview of what is on the clipboard, images too (the default)"
+	}
+	write := keySetting("clipwrite", "clipboard-write", "Programs set the clipboard", "Whether a program in the terminal, one over ssh too, may replace the clipboard "+via, []string{"allow", "ask", "deny"}, "allow")
+	write.explain = map[string]string{
+		"allow": "a program may copy to the clipboard without asking: vim and tmux yanks reach it (the default)",
+		"ask":   "Ghostty asks before a program replaces what is on the clipboard",
+		"deny":  "no program may set the clipboard; copying yourself still works",
+	}
+	return []setting{read, write}
+}
+
 // inputSettings14 are the Input settings Ghostty 1.4 added: the middle
 // button and OSC 8 links.
 func inputSettings14(mac bool) []setting {

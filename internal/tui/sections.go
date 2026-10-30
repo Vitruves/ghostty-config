@@ -32,7 +32,7 @@ var subsections = map[string][][2]string{
 	"Input": {
 		{"Keyboard", "keys optionalt"},
 		{"Cursor", "cursor blink cursoropacity clicktomove"},
-		{"Clipboard", "copy clearselect trimspaces pasteguard middleclick"},
+		{"Clipboard", "copy clearselect trimspaces pasteguard clipread clipwrite middleclick"},
 		{"Mouse", "hidemouse focusmouse scrollbar osc8"},
 	},
 	"Session": {
@@ -42,7 +42,7 @@ var subsections = map[string][][2]string{
 		{"Programs", "exittime vtresize cliplimit"},
 		{"Notifications", "notify"},
 		{"Bell", "bellsound bellaudio bellfile bellvolume bellbounce belltitle bellborder"},
-		{"Shell integration", "shell shellcursor shelltitle shellsudo shellpath sshenv sshterminfo"},
+		{"Shell integration", "shell shellcursor shelltitle shellsudo shellpath sshenv sshterminfo sshhosts"},
 	},
 	"Extensions": {
 		{"Shaders", "shader"},
