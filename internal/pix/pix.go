@@ -32,12 +32,25 @@ type Canvas struct {
 	TextScale float32
 	clip      image.Rectangle
 	ras       vector.Rasterizer
+	// touched, while a Memo watches, grows to cover every pixel drawn.
+	touched *image.Rectangle
 }
 
 // New makes a canvas of w by h device pixels.
 func New(w, h int, s float32) *Canvas {
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
 	return &Canvas{Img: img, S: s, TextScale: 1, clip: img.Bounds()}
+}
+
+// Renew is a canvas of w by h device pixels at scale s, made from c's
+// pixels when c has that size, as blank as a new one.
+func Renew(c *Canvas, w, h int, s float32) *Canvas {
+	if c == nil || c.Img.Rect.Dx() != w || c.Img.Rect.Dy() != h {
+		return New(w, h, s)
+	}
+	clear(c.Img.Pix)
+	c.S, c.TextScale, c.clip, c.touched = s, 1, c.Img.Bounds(), nil
+	return c
 }
 
 // W and H are the size in logical units.
@@ -47,8 +60,16 @@ func (c *Canvas) H() float32 { return float32(c.Img.Bounds().Dy()) / c.S }
 // Hex is a colour from #rrggbb with an alpha in 0..1.
 func Hex(hex string, a float64) color.NRGBA { return kimg.RGBA(hex, a) }
 
+// touch records that the pixels of b may have been drawn.
+func (c *Canvas) touch(b image.Rectangle) {
+	if c.touched != nil {
+		*c.touched = c.touched.Union(b)
+	}
+}
+
 // Clear paints the whole canvas.
 func (c *Canvas) Clear(col color.Color) {
+	c.touch(c.Img.Bounds())
 	draw.Draw(c.Img, c.Img.Bounds(), image.NewUniform(col), image.Point{}, draw.Src)
 }
 
@@ -108,6 +129,7 @@ func (c *Canvas) area(b image.Rectangle) (image.Rectangle, bool) {
 	if b.Empty() {
 		return b, false
 	}
+	c.touch(b)
 	c.ras.Reset(b.Dx(), b.Dy())
 	return b, true
 }
@@ -218,10 +240,11 @@ func (c *Canvas) FaceIn(f *Font, px float32) font.Face {
 	if face, ok := f.faces[key]; ok {
 		return face
 	}
-	face, err := opentype.NewFace(f.f, &opentype.FaceOptions{Size: float64(key) / 10, DPI: 72, Hinting: font.HintingNone})
+	of, err := opentype.NewFace(f.f, &opentype.FaceOptions{Size: float64(key) / 10, DPI: 72, Hinting: font.HintingNone})
 	if err != nil {
 		return c.Face(true, false, px)
 	}
+	face := kimg.CacheGlyphs(of)
 	if len(f.faces) >= maxFaces {
 		// Every scale the canvas is drawn at makes faces of its own, and
 		// the scale follows the terminal's font; past a bound the cache
@@ -294,6 +317,12 @@ func (c *Canvas) Text(f font.Face, x, y float32, s string, col color.Color) floa
 	d := &font.Drawer{Dst: dst, Src: image.NewUniform(col), Dot: fixed.Point26_6{X: fixed.Int26_6(x * c.S * 64), Y: fixed.Int26_6(y * c.S * 64)}}
 	for _, r := range runs(f, s) {
 		d.Face = r.f
+		if c.touched != nil {
+			// Where the glyphs land, a pixel wider all round for the
+			// rounding of their masks.
+			bb, _ := d.BoundString(r.s)
+			c.touch(image.Rect(bb.Min.X.Floor()-1, bb.Min.Y.Floor()-1, bb.Max.X.Ceil()+1, bb.Max.Y.Ceil()+1).Intersect(dst.Rect))
+		}
 		d.DrawString(r.s)
 	}
 	return float32(d.Dot.X)/64/c.S - x
@@ -356,11 +385,13 @@ func (c *Canvas) Wrap(f font.Face, text string, w float32) []string {
 func (c *Canvas) Picture(img image.Image, x, y float32) {
 	at := image.Pt(int(math.Round(float64(x*c.S))), int(math.Round(float64(y*c.S))))
 	r := img.Bounds().Sub(img.Bounds().Min).Add(at)
+	c.touch(r.Intersect(c.clip))
 	draw.Draw(c.Img, r.Intersect(c.clip), img, img.Bounds().Min.Add(r.Intersect(c.clip).Min.Sub(at)), draw.Over)
 }
 
 // Dim lays a translucent colour over the whole canvas.
 func (c *Canvas) Dim(col color.Color) {
+	c.touch(c.Img.Bounds())
 	draw.Draw(c.Img, c.Img.Bounds(), image.NewUniform(col), image.Point{}, draw.Over)
 }
 

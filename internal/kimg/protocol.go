@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/charmbracelet/x/ansi/kitty"
 )
@@ -127,15 +128,40 @@ func Unplace(id, placement uint32) string {
 // terminal reads the pixels from that temporary file and deletes it, which
 // costs nothing on the pty; without one they go inline, compressed.
 func TransmitRGBA(id uint32, pix []byte, w, h, cols, rows int, file string) string {
+	enc := ""
+	if file == "" {
+		enc = EncodeRGBA(pix)
+	}
+	return TransmitEncoded(id, enc, w, h, cols, rows, file)
+}
+
+// EncodeRGBA compresses pixels the way TransmitRGBA sends them inline. It
+// is the slow part of sending, and needs no number, so pictures can be
+// compressed side by side and sent in order after.
+func EncodeRGBA(pix []byte) string {
+	var z bytes.Buffer
+	zw := zlibWriters.Get().(*zlib.Writer)
+	zw.Reset(&z)
+	_, _ = zw.Write(pix)
+	_ = zw.Close()
+	zlibWriters.Put(zw)
+	return base64.StdEncoding.EncodeToString(z.Bytes())
+}
+
+// zlibWriters keeps compressors between pictures: each holds the best part
+// of a megabyte of tables, and a frame compresses dozens.
+var zlibWriters = sync.Pool{New: func() any {
+	zw, _ := zlib.NewWriterLevel(nil, zlib.BestSpeed)
+	return zw
+}}
+
+// TransmitEncoded is TransmitRGBA for pixels EncodeRGBA compressed, or,
+// with a file path, for pixels written to that file.
+func TransmitEncoded(id uint32, enc string, w, h, cols, rows int, file string) string {
 	ctrl := fmt.Sprintf("a=T,f=32,s=%d,v=%d,U=1,i=%d,c=%d,r=%d,q=2", w, h, id, cols, rows)
 	if file != "" {
 		return "\x1b_G" + ctrl + ",t=t;" + base64.StdEncoding.EncodeToString([]byte(file)) + "\x1b\\"
 	}
-	var z bytes.Buffer
-	zw, _ := zlib.NewWriterLevel(&z, zlib.BestSpeed)
-	_, _ = zw.Write(pix)
-	_ = zw.Close()
-	enc := base64.StdEncoding.EncodeToString(z.Bytes())
 	var b strings.Builder
 	first := true
 	for len(enc) > 0 {

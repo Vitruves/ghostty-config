@@ -167,17 +167,36 @@ func (s *imageStore) ensure(key string, cols, rows int, draw func() []byte) uint
 // ensureRGBA is ensure for raw pixels, w by h, shown on cols by rows cells.
 // file, when set, puts the pixels in a temporary file the terminal reads.
 func (s *imageStore) ensureRGBA(key string, p []byte, w, h, cols, rows int, file func([]byte) string) uint32 {
+	return s.ensureEncoded(key, w, h, cols, rows, func() rgbaPayload { return encodeRGBA(p, file) })
+}
+
+// rgbaPayload is raw pixels ready to send: compressed, or in a file.
+type rgbaPayload struct{ enc, path string }
+
+// encodeRGBA readies pixels for the terminal: in a file when file, which
+// may fail, is set, else compressed.
+func encodeRGBA(p []byte, file func([]byte) string) rgbaPayload {
+	path := ""
+	if file != nil {
+		path = file(p)
+	}
+	if path != "" {
+		return rgbaPayload{path: path}
+	}
+	return rgbaPayload{enc: kimg.EncodeRGBA(p)}
+}
+
+// ensureEncoded is ensureRGBA for pixels readied by payload, which is only
+// called when the terminal does not hold them.
+func (s *imageStore) ensureEncoded(key string, w, h, cols, rows int, payload func() rgbaPayload) uint32 {
 	if id, ok := s.ids[key]; ok {
 		s.touch(key)
 		return id
 	}
 	id := s.newID()
 	s.add(key, id, w*h*4)
-	path := ""
-	if file != nil {
-		path = file(p)
-	}
-	s.queue.WriteString(kimg.TransmitRGBA(id, p, w, h, cols, rows, path))
+	pl := payload()
+	s.queue.WriteString(kimg.TransmitEncoded(id, pl.enc, w, h, cols, rows, pl.path))
 	s.evict()
 	return id
 }

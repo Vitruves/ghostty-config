@@ -68,10 +68,11 @@ func face(mono, bold bool, px float64) font.Face {
 	if bold {
 		idx++
 	}
-	f, err := opentype.NewFace(fonts[idx], &opentype.FaceOptions{Size: float64(key.px) / 10, DPI: 72, Hinting: font.HintingNone})
+	of, err := opentype.NewFace(fonts[idx], &opentype.FaceOptions{Size: float64(key.px) / 10, DPI: 72, Hinting: font.HintingNone})
 	if err != nil {
 		panic("kimg: face: " + err.Error())
 	}
+	f := CacheGlyphs(of)
 	if len(faces) >= maxFaces {
 		// The window's preview sizes its text by the panel, so every width
 		// the terminal passes through while it is resized makes faces of
@@ -83,6 +84,24 @@ func face(mono, bold bool, px float64) font.Face {
 	}
 	faces[key] = f
 	faceInfo[f] = key
+	return f
+}
+
+// UncachedFace is a face like Face that keeps none of its glyphs, for
+// tests to compare with.
+func UncachedFace(mono, bold bool, px float64) font.Face {
+	loadFonts()
+	idx := 2
+	if mono {
+		idx = 0
+	}
+	if bold {
+		idx++
+	}
+	f, err := opentype.NewFace(fonts[idx], &opentype.FaceOptions{Size: float64(int(px*10+0.5)) / 10, DPI: 72, Hinting: font.HintingNone})
+	if err != nil {
+		panic("kimg: face: " + err.Error())
+	}
 	return f
 }
 
