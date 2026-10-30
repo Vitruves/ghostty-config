@@ -20,6 +20,10 @@ import (
 type Memo struct {
 	cur, prev map[memoKey]*memoPart
 	seed      maphash.Seed
+	frame     int
+	// free holds the pixels of parts let go, for new parts to reuse: the
+	// cards of a wall are all one size.
+	free [][]byte
 	// What became of the parts drawn: copied back, drawn, or drawn past
 	// their bounds and so not kept.
 	Hits, Misses, Refused int
@@ -32,8 +36,12 @@ type memoKey struct {
 }
 
 type memoPart struct {
-	pix []byte // the part's rows, one after the other
+	pix   []byte // the part's rows, one after the other
+	frame int    // the last frame that drew it
 }
+
+// maxFree bounds the pixels kept for reuse.
+const maxFree = 32
 
 // NewMemo is an empty memo.
 func NewMemo() *Memo {
@@ -42,12 +50,18 @@ func NewMemo() *Memo {
 
 // Frame starts a frame: what the frame before last drew is let go.
 func (mm *Memo) Frame() {
+	for _, part := range mm.prev {
+		if part.frame < mm.frame && len(mm.free) < maxFree {
+			mm.free = append(mm.free, part.pix)
+		}
+	}
+	mm.frame++
 	mm.prev, mm.cur = mm.cur, map[memoKey]*memoPart{}
 }
 
 // Reset forgets everything, as when the canvas changes scale.
 func (mm *Memo) Reset() {
-	mm.cur, mm.prev = map[memoKey]*memoPart{}, map[memoKey]*memoPart{}
+	mm.cur, mm.prev, mm.free = map[memoKey]*memoPart{}, map[memoKey]*memoPart{}, nil
 }
 
 // Draw runs draw, or copies back what it drew before. x, y, w, h are the
@@ -70,6 +84,7 @@ func (mm *Memo) Draw(c *Canvas, key any, x, y, w, h float32, draw func()) {
 	row := r.Dx() * 4
 	if ok {
 		mm.Hits++
+		part.frame = mm.frame
 		for y, i := r.Min.Y, 0; y < r.Max.Y; y, i = y+1, i+row {
 			o := img.PixOffset(r.Min.X, y)
 			copy(img.Pix[o:o+row], part.pix[i:i+row])
@@ -87,12 +102,25 @@ func (mm *Memo) Draw(c *Canvas, key any, x, y, w, h float32, draw func()) {
 		return
 	}
 	mm.Misses++
-	part = &memoPart{pix: make([]byte, row*r.Dy())}
+	part = &memoPart{pix: mm.buffer(row * r.Dy()), frame: mm.frame}
 	for y, i := r.Min.Y, 0; y < r.Max.Y; y, i = y+1, i+row {
 		o := img.PixOffset(r.Min.X, y)
 		copy(part.pix[i:i+row], img.Pix[o:o+row])
 	}
 	mm.cur[k] = part
+}
+
+// buffer is n bytes for a new part, from a part let go when one is big
+// enough.
+func (mm *Memo) buffer(n int) []byte {
+	for i, b := range mm.free {
+		if cap(b) >= n {
+			mm.free[i] = mm.free[len(mm.free)-1]
+			mm.free = mm.free[:len(mm.free)-1]
+			return b[:n]
+		}
+	}
+	return make([]byte, n)
 }
 
 // hash sums the pixels of a part of the canvas.
