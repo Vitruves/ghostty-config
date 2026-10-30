@@ -14,7 +14,15 @@ import (
 type RGB struct{ R, G, B int }
 
 // Hex renders the colour as #rrggbb, lower case.
-func (c RGB) Hex() string { return fmt.Sprintf("#%02x%02x%02x", c.R, c.G, c.B) }
+func (c RGB) Hex() string {
+	if c.R < 0 || c.R > 255 || c.G < 0 || c.G > 255 || c.B < 0 || c.B > 255 {
+		return fmt.Sprintf("#%02x%02x%02x", c.R, c.G, c.B)
+	}
+	// What Sprintf writes for a channel in range, without its cost: the
+	// wall of themes asks for a few thousand colours a frame.
+	const digits = "0123456789abcdef"
+	return string([]byte{'#', digits[c.R>>4], digits[c.R&15], digits[c.G>>4], digits[c.G&15], digits[c.B>>4], digits[c.B&15]})
+}
 
 // HSL is a colour in hue (0-360), saturation (0-1), lightness (0-1).
 type HSL struct{ H, S, L float64 }
@@ -57,11 +65,28 @@ func hexDigit(c byte) (int, bool) {
 // not parse. Themes ship a mix of casings and lengths; one form keeps the
 // columns calm and makes value comparisons meaningful.
 func Normalize(hex, fallback string) string {
+	if canonical(hex) {
+		return hex
+	}
 	c, err := ParseHex(hex)
 	if err != nil {
 		return fallback
 	}
 	return c.Hex()
+}
+
+// canonical reports whether hex is already #rrggbb in lower case, which
+// is what Normalize would make of it.
+func canonical(hex string) bool {
+	if len(hex) != 7 || hex[0] != '#' {
+		return false
+	}
+	for i := 1; i < 7; i++ {
+		if c := hex[i]; (c < '0' || c > '9') && (c < 'a' || c > 'f') {
+			return false
+		}
+	}
+	return true
 }
 
 // IsHex reports whether s parses as a colour.
@@ -182,14 +207,30 @@ func ClampInt(v, lo, hi int) int {
 // Luminance is the WCAG relative luminance of a colour.
 func (c RGB) Luminance() float64 {
 	ch := func(v int) float64 {
-		f := float64(v) / 255
-		if f <= 0.03928 {
-			return f / 12.92
+		if v >= 0 && v <= 255 {
+			return linear[v]
 		}
-		return math.Pow((f+0.055)/1.055, 2.4)
+		return toLinear(v)
 	}
 	return 0.2126*ch(c.R) + 0.7152*ch(c.G) + 0.0722*ch(c.B)
 }
+
+// toLinear is a channel of 0 to 255 as linear light.
+func toLinear(v int) float64 {
+	f := float64(v) / 255
+	if f <= 0.03928 {
+		return f / 12.92
+	}
+	return math.Pow((f+0.055)/1.055, 2.4)
+}
+
+// linear is toLinear of every channel value, worked out once.
+var linear = func() (t [256]float64) {
+	for v := range t {
+		t[v] = toLinear(v)
+	}
+	return t
+}()
 
 // Contrast returns the WCAG contrast ratio between two hex colours, 1 to 21.
 // Unparseable input counts as no contrast at all, which errs towards flagging.

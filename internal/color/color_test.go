@@ -1,6 +1,7 @@
 package color
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -249,4 +250,35 @@ func TestDescribe(t *testing.T) {
 			t.Fatalf("got %q", got)
 		}
 	})
+}
+
+// The quick paths say what the slow ones would.
+func TestQuickPathsAgree(t *testing.T) {
+	for v := -2; v < 260; v++ {
+		c := RGB{v, 255 - v, v / 2}
+		if got, want := c.Hex(), fmt.Sprintf("#%02x%02x%02x", c.R, c.G, c.B); got != want {
+			t.Fatalf("Hex(%v) = %q, want %q", c, got, want)
+		}
+		if v >= 0 && v <= 255 && linear[v] != toLinear(v) {
+			t.Fatalf("linear[%d] differs", v)
+		}
+	}
+	for _, s := range []string{"#abcdef", "#ABCDEF", "abcdef", " #abcdef", "#abc", "#abcdeg", "#abcdef0", ""} {
+		want := "fallback"
+		if c, err := ParseHex(s); err == nil {
+			want = c.Hex()
+		}
+		if got := Normalize(s, "fallback"); got != want {
+			t.Fatalf("Normalize(%q) = %q, want %q", s, got, want)
+		}
+	}
+}
+
+func BenchmarkNormalize(b *testing.B) {
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		Normalize("#1e1e2e", "")
+		Normalize("#CDD6F4", "")
+		Contrast("#cdd6f4", "#1e1e2e")
+	}
 }

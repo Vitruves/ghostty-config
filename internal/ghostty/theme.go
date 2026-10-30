@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
+	"sync"
+	"sync/atomic"
 
 	"github.com/vitruves/ghostty-config/internal/color"
 )
@@ -297,9 +300,17 @@ type Library struct {
 }
 
 // LoadLibrary scans the user themes directory and the resources directories.
+// The files, a thousand and more, are read side by side; which one wins a
+// name is settled after, in the order the directories are searched.
 func LoadLibrary(paths Paths) *Library {
 	lib := &Library{byName: make(map[string]*Theme), themesDir: paths.ThemesDir}
-	add := func(dir string, source Source) {
+	type file struct {
+		path, name string
+		source     Source
+		theme      *Theme
+	}
+	var files []file
+	list := func(dir string, source Source) {
 		entries, err := os.ReadDir(dir)
 		if err != nil {
 			return
@@ -309,20 +320,33 @@ func LoadLibrary(paths Paths) *Library {
 			if e.IsDir() || strings.HasPrefix(name, ".") {
 				continue
 			}
-			if _, taken := lib.byName[name]; taken {
-				continue
-			}
-			t, err := ParseThemeFile(filepath.Join(dir, name), source)
-			if err != nil || len(t.Colors) == 0 {
-				continue
-			}
-			lib.byName[name] = t
-			lib.Themes = append(lib.Themes, t)
+			files = append(files, file{path: filepath.Join(dir, name), name: name, source: source})
 		}
 	}
-	add(paths.ThemesDir, SourceUser)
+	list(paths.ThemesDir, SourceUser)
 	for _, dir := range paths.ResourceThemeDirs {
-		add(dir, SourceBuiltin)
+		list(dir, SourceBuiltin)
+	}
+	var next atomic.Int64
+	var wg sync.WaitGroup
+	for w := 0; w < min(runtime.GOMAXPROCS(0), 8); w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := int(next.Add(1) - 1); i < len(files); i = int(next.Add(1) - 1) {
+				if t, err := ParseThemeFile(files[i].path, files[i].source); err == nil && len(t.Colors) > 0 {
+					files[i].theme = t
+				}
+			}
+		}()
+	}
+	wg.Wait()
+	for _, f := range files {
+		if _, taken := lib.byName[f.name]; taken || f.theme == nil {
+			continue
+		}
+		lib.byName[f.name] = f.theme
+		lib.Themes = append(lib.Themes, f.theme)
 	}
 	sort.Slice(lib.Themes, func(i, j int) bool {
 		return strings.ToLower(lib.Themes[i].Name) < strings.ToLower(lib.Themes[j].Name)

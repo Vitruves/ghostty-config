@@ -58,7 +58,14 @@ func ParseVersion(out string) Version {
 // VersionTimeout bounds the one run of `ghostty --version`.
 var VersionTimeout = 5 * time.Second
 
-var versions sync.Map // binary path → Version
+var versions sync.Map // binary path → *versionAsk
+
+// versionAsk is the one run of `ghostty --version` for a path, which every
+// caller asking at the same time waits on.
+type versionAsk struct {
+	once sync.Once
+	v    Version
+}
 
 // BinaryVersion asks a ghostty binary its version, once per path: the menu
 // is rebuilt often and the answer does not change while the tool runs.
@@ -66,13 +73,22 @@ func BinaryVersion(binary string) Version {
 	if binary == "" {
 		return Version{}
 	}
-	if v, ok := versions.Load(binary); ok {
-		return v.(Version)
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), VersionTimeout)
-	defer cancel()
-	out, _ := exec.CommandContext(ctx, binary, "--version").Output()
-	v := ParseVersion(string(out))
-	versions.Store(binary, v)
-	return v
+	a, _ := versions.LoadOrStore(binary, &versionAsk{})
+	ask := a.(*versionAsk)
+	ask.once.Do(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), VersionTimeout)
+		defer cancel()
+		out, _ := exec.CommandContext(ctx, binary, "--version").Output()
+		ask.v = ParseVersion(string(out))
+	})
+	return ask.v
+}
+
+// Prefetch starts asking, in the background, what the editor needs to know
+// before its first frame and only programs can tell: the version of the
+// binary and whether the desktop is dark. Each takes a program run of
+// several milliseconds; started first, they run while the themes are read.
+func Prefetch(binary string) {
+	go BinaryVersion(binary)
+	prefetchDarkDesktop()
 }

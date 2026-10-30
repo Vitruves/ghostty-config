@@ -106,6 +106,10 @@ Keys:
 		return
 	}
 
+	// What only programs can tell is asked now, and answered while the
+	// themes are read.
+	ghostty.Prefetch(paths.Binary)
+
 	// The curated collection ships inside the binary, so a newer build
 	// brings new palettes. Refresh on every start; files the user edited are
 	// left alone, and a failure here is not worth stopping for.
@@ -115,25 +119,39 @@ Keys:
 		fmt.Printf("Installed %d curated themes into %s\n", written, paths.ThemesDir)
 	}
 
-	lib := ghostty.LoadLibrary(paths)
-	if len(lib.Themes) == 0 {
-		fail("No themes found. Ghostty ships hundreds under its resources directory; is Ghostty installed? (looked in %v)", paths.ResourceThemeDirs)
-	}
-	state := ghostty.LoadState(paths)
-
+	// The picture interface needs the exact size of a cell, which only the
+	// terminal can tell, so it is asked before anything reads the keyboard.
+	// The terminal answers while the themes are read; nothing is printed
+	// until it has, for the terminal is in raw mode meanwhile.
 	images := !*noImages && (*forceImages || tui.ImagesSupported())
+	type cell struct {
+		w, h int
+		ok   bool
+	}
+	var probe chan cell
+	if images && !*cellsOnly {
+		probe = make(chan cell, 1)
+		go func() {
+			w, h, ok := tui.ProbeCell()
+			probe <- cell{w, h, ok}
+		}()
+	}
+
+	lib := ghostty.LoadLibrary(paths)
+	state := ghostty.LoadState(paths)
 	opts := tui.Options{
 		NoReload: *noReload, Plain: *plain,
 		Images:  images,
 		Version: version, NoUpdateCheck: *noUpdateCheck,
 	}
-	// The picture interface needs the exact size of a cell, which only the
-	// terminal can tell, so it is asked before anything reads the keyboard.
-	if images && !*cellsOnly {
-		if cw, ch, ok := tui.ProbeCell(); ok {
+	if probe != nil {
+		if c := <-probe; c.ok {
 			opts.Pixel = true
-			opts.PixCell = [2]int{cw, ch}
+			opts.PixCell = [2]int{c.w, c.h}
 		}
+	}
+	if len(lib.Themes) == 0 {
+		fail("No themes found. Ghostty ships hundreds under its resources directory; is Ghostty installed? (looked in %v)", paths.ResourceThemeDirs)
 	}
 	model := tui.New(paths, tree, lib, state, opts)
 	// The alternate screen and the mouse are asked for by the view itself.

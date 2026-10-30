@@ -77,3 +77,31 @@ func TestBinaryVersion(t *testing.T) {
 		t.Fatalf("missing binary: %+v", v)
 	}
 }
+
+// Asked from several places at once, as when Prefetch has started and the
+// menu asks too, the binary is run once and every caller gets its answer.
+func TestBinaryVersionRunsOnce(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("needs a shell script")
+	}
+	dir := t.TempDir()
+	bin := filepath.Join(dir, "ghostty")
+	script := "#!/bin/sh\necho run >> '" + filepath.Join(dir, "runs") + "'\nsleep 0.05\necho 'Ghostty 1.4.0'\n"
+	if err := os.WriteFile(bin, []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	Prefetch(bin)
+	done := make(chan Version)
+	for i := 0; i < 4; i++ {
+		go func() { done <- BinaryVersion(bin) }()
+	}
+	for i := 0; i < 4; i++ {
+		if v := <-done; v != (Version{1, 4, 0, true}) {
+			t.Fatalf("BinaryVersion = %+v", v)
+		}
+	}
+	DarkDesktop() // takes the answer Prefetch started asking for
+	if runs, _ := os.ReadFile(filepath.Join(dir, "runs")); string(runs) != "run\n" {
+		t.Fatalf("the binary ran %q", runs)
+	}
+}

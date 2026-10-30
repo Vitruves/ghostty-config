@@ -145,20 +145,29 @@ func hslOf(hex string) color.HSL {
 
 // Install writes every curated theme into dir, overwriting only files the
 // collection itself wrote. It returns how many were written and how many
-// were left alone because someone else had written them.
+// were left alone because someone else had written them. A file that
+// already says what it would be written with counts as written, but is
+// not written again: every start installs the collection, and rewriting
+// two hundred and fifty files that have not changed is most of what that
+// costs.
 func Install(dir string) (written, skipped int, err error) {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return 0, 0, err
 	}
 	for _, c := range Collection {
 		path := filepath.Join(dir, c.Slug())
+		text := c.Text()
 		if existing, readErr := os.ReadFile(path); readErr == nil {
 			if !strings.HasPrefix(string(existing), ghostty.CollectionHeader) {
 				skipped++
 				continue
 			}
+			if string(existing) == text {
+				written++
+				continue
+			}
 		}
-		if writeErr := os.WriteFile(path, []byte(c.Text()), 0o644); writeErr != nil {
+		if writeErr := os.WriteFile(path, []byte(text), 0o644); writeErr != nil {
 			return written, skipped, fmt.Errorf("failed to write %s: %w", path, writeErr)
 		}
 		written++
