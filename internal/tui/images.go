@@ -196,7 +196,7 @@ func (s *imageStore) ensureEncoded(key string, w, h, cols, rows int, payload fun
 	id := s.newID()
 	s.add(key, id, w*h*4)
 	pl := payload()
-	s.queue.WriteString(kimg.TransmitEncoded(id, pl.enc, w, h, cols, rows, pl.path))
+	kimg.WriteTransmitEncoded(&s.queue, id, pl.enc, w, h, cols, rows, pl.path)
 	s.evict()
 	return id
 }
