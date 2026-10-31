@@ -142,34 +142,40 @@ func (p *palette) cellChips(m *Model, ui chrome, l palCells) string {
 }
 
 // cellList is the visible window of the list, each row registered as
-// clickable where it is.
+// clickable where it is. Only the highlighted row can open to more than a
+// line, so where every row sits is known without drawing it, and only the
+// rows in the window are drawn.
 func (p *palette) cellList(m *Model, ui chrome, l palCells) []string {
 	type block struct{ start, n int }
-	var lines []string
 	blocks := make([]block, len(p.rows))
-	controls := map[int][]cellHit{}
-	for i, r := range p.rows {
-		if r.kind == palHead && i > 0 {
-			lines = append(lines, "")
-		}
-		start := len(lines)
-		var out []string
-		var hits []cellHit
+	draw := func(i int) ([]string, []cellHit) {
+		r := p.rows[i]
 		switch r.kind {
 		case palHead:
 			head := ui.bold(ui.muted).Render(" " + strings.ToUpper(r.text))
 			if r.count != "" {
 				head += ui.faintS().Render("  " + r.count)
 			}
-			out = []string{truncate(head, l.w)}
+			return []string{truncate(head, l.w)}, nil
 		case palNote:
-			out = []string{ui.mutedS().Render(truncate(" "+r.text, l.w))}
-		default:
-			out, hits = p.cellRow(m, ui, r, i == p.sel, l.w)
+			return []string{ui.mutedS().Render(truncate(" "+r.text, l.w))}, nil
 		}
-		lines = append(lines, out...)
-		blocks[i] = block{start, len(out)}
-		controls[i] = hits
+		return p.cellRow(m, ui, r, i == p.sel, l.w)
+	}
+	var selOut []string
+	var selHits []cellHit
+	total := 0
+	for i, r := range p.rows {
+		if r.kind == palHead && i > 0 {
+			total++ // a line of air over a title
+		}
+		n := 1
+		if i == p.sel && r.kind != palHead && r.kind != palNote {
+			selOut, selHits = draw(i)
+			n = len(selOut)
+		}
+		blocks[i] = block{total, n}
+		total += n
 	}
 
 	p.page = maxInt(l.list-1, 1)
@@ -186,7 +192,30 @@ func (p *palette) cellList(m *Model, ui chrome, l palCells) []string {
 			p.topCells = b.start + b.n - l.list
 		}
 	}
-	p.topCells = clampInt(p.topCells, 0, maxInt(len(lines)-l.list, 0))
+	p.topCells = clampInt(p.topCells, 0, maxInt(total-l.list, 0))
+	top, end := p.topCells, minInt(p.topCells+l.list, total)
+
+	lines := make([]string, 0, maxInt(end-top, 0))
+	controls := map[int][]cellHit{}
+	for i, r := range p.rows {
+		b := blocks[i]
+		if r.kind == palHead && i > 0 && b.start-1 >= top && b.start-1 < end {
+			lines = append(lines, "")
+		}
+		if b.start+b.n <= top || b.start >= end {
+			continue
+		}
+		out, hits := selOut, selHits
+		if i != p.sel || r.kind == palHead || r.kind == palNote {
+			out, hits = draw(i)
+		}
+		controls[i] = hits
+		for j, line := range out {
+			if y := b.start + j; y >= top && y < end {
+				lines = append(lines, line)
+			}
+		}
+	}
 
 	for i, r := range p.rows {
 		if !r.selectable() {
@@ -204,8 +233,7 @@ func (p *palette) cellList(m *Model, ui chrome, l palCells) []string {
 			}
 		}
 	}
-	end := minInt(p.topCells+l.list, len(lines))
-	return lines[p.topCells:end]
+	return lines
 }
 
 // cellHit is a value of a control on a row: where it is, and the value.
