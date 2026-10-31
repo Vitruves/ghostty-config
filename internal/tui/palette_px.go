@@ -326,7 +326,8 @@ func rowFace(pal pxPal, f pxFonts, sel bool) (font.Face, stdcolor.NRGBA) {
 // reads, and whether it is applied or starred.
 func (p *palette) pxTheme(m *Model, c *pix.Canvas, pal pxPal, f pxFonts, t *ghostty.Theme, sel bool, x, y, w float32) {
 	pxSel(c, pal, sel, x, y, w)
-	sp := m.themeSpec(t)
+	facts := m.factsOf(t)
+	sp := facts.spec
 	cols := []string{sp.BG, sp.Pal[1], sp.Pal[2], sp.Pal[3], sp.Pal[4], sp.Pal[5], sp.Pal[6], sp.FG}
 	sw, sh := clampF(w*0.16, 80, 150), float32(16)
 	sx, sy := x+14, y+(rowH-sh)/2
@@ -349,7 +350,7 @@ func (p *palette) pxTheme(m *Model, c *pix.Canvas, pal pxPal, f pxFonts, t *ghos
 		c.Text(f.small, right-aw, tb, "applied", pal.accent)
 		right -= aw + 16
 	}
-	meta := palThemeMeta(t)
+	meta := facts.palMeta
 	mw := c.Width(f.small, meta)
 	c.Text(f.small, right-mw, tb, meta, pal.muted)
 	right -= mw + 20
@@ -572,7 +573,8 @@ func (p *palette) pxBody(m *Model, c *pix.Canvas, pal pxPal, f pxFonts, cmd *com
 // pxStrip shows the highlighted theme in its own colours: a prompt, a diff,
 // its name and how well it reads.
 func (p *palette) pxStrip(m *Model, c *pix.Canvas, pal pxPal, l palPx, t *ghostty.Theme) {
-	sp := m.themeSpec(t)
+	facts := m.factsOf(t)
+	sp := facts.spec
 	x, y, w, h := l.x, l.stripY, l.w, l.stripH
 	fg := pix.Hex(sp.FG, 1)
 	c.Rect(x, y, w, h, 14, pix.Hex(sp.BG, 1))
@@ -597,7 +599,7 @@ func (p *palette) pxStrip(m *Model, c *pix.Canvas, pal pxPal, l palPx, t *ghostt
 	end := run(tx, base+2*lh, "~/src/ghostty-config ", col(2), "main ", col(3), "› ", fg)
 	c.Rect(end, base+2*lh-12, 8, 15, 1, pix.Hex(sp.Accent, 1))
 
-	text, weak, weakName := palContrast(t)
+	text, weak, weakName := facts.ratio, facts.weak, facts.weakName
 	meta := "text " + ratioText(text)
 	if weakName != "" {
 		meta += " · weakest " + weakName + " " + ratioText(weak)

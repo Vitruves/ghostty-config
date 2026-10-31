@@ -681,28 +681,27 @@ func lastHex(arg string) string {
 
 // themeOption renders a theme as a result line.
 func (m *Model) themeOption(t *ghostty.Theme) option {
-	tone := "dark"
-	if !t.IsDark() {
-		tone = "light"
+	var detail string
+	if f := m.libFacts(t); f != nil {
+		detail = f.listed
+	} else {
+		detail = themeListed(t)
 	}
-	ratio := color.Contrast(t.Foreground(), t.Background())
-	src := "bundled"
-	switch t.Source {
-	case ghostty.SourceCollection:
-		src = "collection"
-	case ghostty.SourceOwned:
-		src = "yours"
-	case ghostty.SourceUser:
-		src = "your file"
-	}
-	// The list keeps to what tells themes apart at a glance; where a theme
-	// comes from is in the panel.
-	_ = src
-	detail := fmt.Sprintf("%s %s", tone, color.Grade(ratio))
 	if m.state.IsFavorite(t.Name) {
 		detail += " ♥"
 	}
 	return option{label: t.Name, detail: detail, value: t.Name, theme: t, current: t.Name == m.applied}
+}
+
+// themeListed is a theme's kind and grade, as the theme command's list says
+// them. The list keeps to what tells themes apart at a glance; where a theme
+// comes from is in the panel.
+func themeListed(t *ghostty.Theme) string {
+	tone := "dark"
+	if !t.IsDark() {
+		tone = "light"
+	}
+	return fmt.Sprintf("%s %s", tone, color.Grade(color.Contrast(t.Foreground(), t.Background())))
 }
 
 // reloadWord says whether Ghostty is being reloaded or needs a hand.

@@ -156,13 +156,7 @@ func (m *Model) currentValueOf(cmd *command) string {
 		}
 		return "none"
 	case "pack":
-		n := 0
-		for _, p := range extensions.Packs {
-			if p.Installed(m.paths.ThemesDir) == len(p.Files) {
-				n++
-			}
-		}
-		return fmt.Sprintf("%d of %d installed", n, len(extensions.Packs))
+		return fmt.Sprintf("%d of %d installed", m.packsInstalled(), len(extensions.Packs))
 	case "autoreload":
 		if m.state.AutoReloadEnabled() {
 			return "on"

@@ -46,7 +46,14 @@ type Tree struct {
 	steps []step
 	open  *openStep
 	mu    sync.Mutex
+	// rev counts the times the entries were indexed, every edit's last step,
+	// so that what is read off them can be kept until they change.
+	rev uint64
 }
+
+// Rev is a number that changes whenever the entries do: what is worked out
+// of them may be kept while it stays the same.
+func (t *Tree) Rev() uint64 { return t.rev }
 
 // record runs an edit and remembers it for a replay. The caller holds mu.
 func (t *Tree) record(op func(*Tree)) {
@@ -147,6 +154,7 @@ func sameFile(a, b string) bool {
 
 // index rebuilds the flat entry list from the documents.
 func (t *Tree) index() {
+	t.rev++
 	t.entries = t.entries[:0]
 	for _, doc := range t.Docs {
 		for i, l := range doc.Lines {

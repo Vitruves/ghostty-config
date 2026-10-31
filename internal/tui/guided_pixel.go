@@ -10,6 +10,7 @@ import (
 
 	"github.com/vitruves/ghostty-config/internal/color"
 	"github.com/vitruves/ghostty-config/internal/ghostty"
+	"github.com/vitruves/ghostty-config/internal/kimg"
 	"github.com/vitruves/ghostty-config/internal/pix"
 )
 
@@ -451,12 +452,32 @@ func (g *guided) pxCards(m *Model, c *pix.Canvas, p pxPal, k gpx, pg gPage, top,
 	}
 }
 
-// pxThemeSample is a theme's ground with the sample terminal in its colours.
+// sampleKey is everything a theme's sample is drawn from, for the memo.
+type sampleKey struct {
+	spec          kimg.CardSpec
+	mono          font.Face
+	monoPx, pad   float32
+	s, ts         float32
+	x, y, w, h, r float32
+}
+
+// pxThemeSample is a theme's ground with the sample terminal in its colours,
+// through the memo of cards: the cards and the mosaic draw the same samples
+// on most frames.
 func (m *Model) pxThemeSample(c *pix.Canvas, k gpx, t *ghostty.Theme, x, y, w, h, r float32) {
-	sp := m.themeSpec(t)
-	c.Rect(x, y, w, h, r, pix.Hex(sp.BG, 1))
-	c.Ring(x, y, w, h, r, 1, pix.Hex(sp.FG, 0.08))
-	m.pxTerminal(c, k.mono, k.monoPx, sp.FG, sp.Pal, sp.Accent, sp.BG, x+k.s(22, 10), y+k.s(22, 10), w-2*k.s(22, 10), h-k.s(22, 10), "block")
+	sp := m.factsOf(t).spec
+	pad := k.s(22, 10)
+	draw := func() {
+		c.Rect(x, y, w, h, r, pix.Hex(sp.BG, 1))
+		c.Ring(x, y, w, h, r, 1, pix.Hex(sp.FG, 0.08))
+		m.pxTerminal(c, k.mono, k.monoPx, sp.FG, sp.Pal, sp.Accent, sp.BG, x+pad, y+pad, w-2*pad, h-pad, "block")
+	}
+	if m.px == nil || m.px.cards == nil {
+		draw()
+		return
+	}
+	key := sampleKey{spec: sp, mono: k.mono, monoPx: k.monoPx, pad: pad, s: c.S, ts: c.TextScale, x: x, y: y, w: w, h: h, r: r}
+	m.px.cards.Draw(c, key, x, y, w, h, draw)
 }
 
 // pxTerminal writes the sample in a theme's colours, as many lines as fit,

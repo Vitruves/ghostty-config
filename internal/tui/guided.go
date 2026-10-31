@@ -41,6 +41,9 @@ type guided struct {
 	// cregs are the clickable spans of the text interface's body, relative
 	// to its first row, while it is drawn.
 	cregs []region
+	// kept are pictures of the text interface by what they were drawn
+	// from; see cellsKept.
+	kept map[string][]string
 }
 
 func newGuided() profile { return &guided{} }

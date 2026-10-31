@@ -17,11 +17,14 @@ import (
 // one through its values, and each step is written. Beside the window's own
 // settings sits a picture of the window as they draw it.
 
-// settingNow is what a setting is set to, by the word of its command.
+// settingNow is what a setting is set to, by the word of its command. The
+// commands hold every setting of the table, in its order, made from it when
+// the commands were last built: the table is not built again for one value,
+// as pictures that ask for several on every frame would have it.
 func (m *Model) settingNow(cmd string) string {
-	for _, s := range m.buildSettings() {
-		if s.cmd == cmd {
-			return s.get(m)
+	for _, c := range m.commands() {
+		if c.set != nil && c.set.cmd == cmd {
+			return c.set.get(m)
 		}
 	}
 	return ""

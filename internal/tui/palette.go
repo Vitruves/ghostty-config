@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"unicode/utf8"
 
@@ -355,12 +356,26 @@ func (p *palette) build(m *Model) []palRow {
 }
 
 // sortRows puts the best matches first and keeps the order of the rest.
+// The rows are large and a thousand themes may match: their order is found
+// on their indexes, and each row is moved once.
 func sortRows(rows []palRow) {
-	for i := 1; i < len(rows); i++ {
-		for j := i; j > 0 && rows[j].score < rows[j-1].score; j-- {
-			rows[j], rows[j-1] = rows[j-1], rows[j]
-		}
+	sorted := true
+	for i := 1; i < len(rows) && sorted; i++ {
+		sorted = rows[i].score >= rows[i-1].score
 	}
+	if sorted {
+		return
+	}
+	idx := make([]int, len(rows))
+	for i := range idx {
+		idx[i] = i
+	}
+	sort.SliceStable(idx, func(a, b int) bool { return rows[idx[a]].score < rows[idx[b]].score })
+	out := make([]palRow, len(rows))
+	for i, j := range idx {
+		out[i] = rows[j]
+	}
+	copy(rows, out)
 }
 
 // parted titles a whole kind by its parts: themes by family, settings and
@@ -393,23 +408,31 @@ func (p *palette) parted(m *Model, kind string, rows []palRow) []palRow {
 			}
 			return len(groups) * 100
 		}
-		for i := 1; i < len(rows); i++ {
-			for j := i; j > 0 && rank(rows[j]) < rank(rows[j-1]); j-- {
-				rows[j], rows[j-1] = rows[j-1], rows[j]
-			}
+		// Each row's rank is found once, and the rows moved once, in a
+		// stable order as before.
+		ranks := make([]int, len(rows))
+		idx := make([]int, len(rows))
+		for i, r := range rows {
+			ranks[i], idx[i] = rank(r), i
 		}
+		sort.SliceStable(idx, func(a, b int) bool { return ranks[idx[a]] < ranks[idx[b]] })
+		sorted := make([]palRow, len(rows))
+		for i, j := range idx {
+			sorted[i] = rows[j]
+		}
+		copy(rows, sorted)
+	}
+	parts := make([]string, len(rows))
+	count := map[string]int{}
+	for i, r := range rows {
+		parts[i] = partOf(r)
+		count[parts[i]]++
 	}
 	var out []palRow
 	last := ""
-	for _, r := range rows {
-		if part := partOf(r); part != last && r.kind != palNote {
-			n := 0
-			for _, o := range rows {
-				if partOf(o) == part {
-					n++
-				}
-			}
-			out = append(out, palRow{kind: palHead, text: part, count: itoa(n)})
+	for i, r := range rows {
+		if part := parts[i]; part != last && r.kind != palNote {
+			out = append(out, palRow{kind: palHead, text: part, count: itoa(count[part])})
 			last = part
 		}
 		out = append(out, r)
@@ -512,32 +535,39 @@ func (p *palette) homeRows(m *Model) []palRow {
 // and light find the themes of that kind.
 func (m *Model) palThemes(words []string, strict bool) []palRow {
 	var out []palRow
-	for _, o := range m.themeOptions("") {
-		if o.header || o.theme == nil {
-			continue
-		}
-		if score, ok := palThemeScore(o.theme, words, strict); ok {
-			out = append(out, palRow{kind: palTheme, theme: o.theme, score: score})
+	lower := make([]string, len(words))
+	for i, w := range words {
+		// As fuzzyMatch has them: the names are kept in lower case.
+		lower[i] = strings.ToLower(w)
+	}
+	for _, t := range m.themeOrder() {
+		if score, ok := palThemeScore(m.factsOf(t), lower, strict); ok {
+			out = append(out, palRow{kind: palTheme, theme: t, score: score})
 		}
 	}
 	return out
 }
 
-func palThemeScore(t *ghostty.Theme, words []string, strict bool) (int, bool) {
+func palThemeScore(f *themeFacts, words []string, strict bool) (int, bool) {
 	total := 0
 	for _, w := range words {
-		switch {
-		case w == "dark" || w == "light":
-			if (w == "dark") != t.IsDark() {
+		if w == "dark" || w == "light" {
+			if (w == "dark") != f.dark {
 				return 0, false
 			}
-		case fuzzyMatch(t.Name, w) && (!strict || fuzzyScore(t.Name, w) < 3):
-			total += fuzzyScore(t.Name, w)
-		case strings.Contains(strings.ToLower(themeFamily(t)+" "+t.Note), w):
-			total += 3
-		default:
-			return 0, false
+			continue
 		}
+		if fuzzyMatchLower(f.lowerName, w) {
+			if score := fuzzyScoreLower(f.lowerName, w); !strict || score < 3 {
+				total += score
+				continue
+			}
+		}
+		if strings.Contains(f.lowerFind, w) {
+			total += 3
+			continue
+		}
+		return 0, false
 	}
 	return total, true
 }
