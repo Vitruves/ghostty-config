@@ -389,7 +389,7 @@ func (g *guided) cellCards(m *Model, ui chrome, pg gPage, width, room int) []str
 	sel := g.sel(m, q)
 	cols := make([][]string, len(q.choices))
 	for i, ch := range q.choices {
-		col := cellTerminal(m.themeSpecOf(ch.theme), cw, sh, "block")
+		col := g.cellTerminal(m.themeSpecOf(ch.theme), cw, sh, "block")
 		under := ui.base().Render(strings.Repeat(" ", cw))
 		if i == sel {
 			under = ui.text(ui.accent).Render(strings.Repeat("▀", cw))
@@ -430,6 +430,27 @@ func (m *Model) themeSpecOf(t *ghostty.Theme) gTerm {
 type gTerm struct {
 	bg, fg, cursor string
 	pal            [16]string
+}
+
+// cellsKept is what draw returns, kept by key while the guide is drawn the
+// same way: the pictures beside a page come out the same on every frame
+// until an answer changes them, and the cells of each are many. The lines
+// handed back are the caller's to change.
+func (g *guided) cellsKept(key string, draw func() []string) []string {
+	lines, ok := g.kept[key]
+	if !ok {
+		if g.kept == nil || len(g.kept) >= 32 {
+			g.kept = map[string][]string{}
+		}
+		lines = draw()
+		g.kept[key] = lines
+	}
+	return append([]string(nil), lines...)
+}
+
+// cellTerminal is cellTerminal, kept.
+func (g *guided) cellTerminal(t gTerm, w, h int, shape string) []string {
+	return g.cellsKept(fmt.Sprintf("terminal|%v|%d|%d|%s", t, w, h, shape), func() []string { return cellTerminal(t, w, h, shape) })
 }
 
 // cellTerminal writes the sample in a theme's colours, w by h cells, with a
@@ -498,7 +519,7 @@ func (g *guided) cellPreview(m *Model, ui chrome, pg gPage, w, h int) []string {
 		var out []string
 		for i := 0; i < 2 && i < len(list); i++ {
 			th := list[i*len(list)/2]
-			out = append(out, cellTerminal(m.themeSpecOf(th), w, minInt(h/2, len(gSample)+2), "block")...)
+			out = append(out, g.cellTerminal(m.themeSpecOf(th), w, minInt(h/2, len(gSample)+2), "block")...)
 			out = append(out, ui.mutedS().Render(truncate(th.Name, w)))
 		}
 		return out
@@ -513,7 +534,7 @@ func (g *guided) cellPreview(m *Model, ui chrome, pg gPage, w, h int) []string {
 			}
 		}
 	}
-	return cellTerminal(t, w, minInt(h, len(gSample)+2), shape)
+	return g.cellTerminal(t, w, minInt(h, len(gSample)+2), shape)
 }
 
 // cellWindow is the window over a desktop: where it is translucent, the
@@ -538,8 +559,15 @@ func (g *guided) cellWindow(m *Model, ui chrome, pg gPage, t gTerm, w, h int) []
 			}
 		}
 	}
+	light := !color.IsDark(ui.bg)
+	key := fmt.Sprintf("window|%v|%v|%d|%v|%v|%d|%d", opacity, blur, pad, t, light, w, h)
+	return g.cellsKept(key, func() []string { return cellWindowLines(t, w, h, opacity, blur, pad, light) })
+}
+
+// cellWindowLines draws cellWindow's picture.
+func cellWindowLines(t gTerm, w, h int, opacity float64, blur bool, pad int, light bool) []string {
 	stops := []string{"#2b3a55", "#5a3d52", "#8a5a3c", "#e8a35c"}
-	if !color.IsDark(ui.bg) {
+	if light {
 		stops = []string{"#9db8e0", "#d6a9c0", "#f2c59a", "#fff1d6"}
 	}
 	desk := func(x, y int) string {
