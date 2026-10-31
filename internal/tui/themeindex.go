@@ -4,7 +4,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/vitruves/ghostty-config/internal/color"
 	"github.com/vitruves/ghostty-config/internal/ghostty"
 	"github.com/vitruves/ghostty-config/internal/kimg"
 )
@@ -27,8 +26,9 @@ type themeFacts struct {
 	// colour of the first eight, as palContrast says them.
 	ratio, weak float64
 	weakName    string
-	// palMeta is its kind and grade, as Palette's row says them.
-	palMeta string
+	// palMeta is its kind and grade, as Palette's row says them; listed the
+	// same as the theme command's list says them.
+	palMeta, listed string
 }
 
 // themeIndex is what is kept of one library.
@@ -65,17 +65,22 @@ func (m *Model) indexFor() *themeIndex {
 // changed.
 func (m *Model) themeOrder() []*ghostty.Theme {
 	themeIdx.Lock()
-	ix := m.indexFor()
-	if ix.order == nil {
-		order := make([]*ghostty.Theme, 0, len(m.lib.Themes))
-		for _, o := range m.themeOptions("") {
-			if !o.header && o.theme != nil {
-				order = append(order, o.theme)
-			}
+	order := m.indexFor().order
+	themeIdx.Unlock()
+	if order != nil {
+		return order
+	}
+	// Made without the lock, which themeOptions takes for each theme.
+	order = make([]*ghostty.Theme, 0, len(m.lib.Themes))
+	for _, o := range m.themeOptions("") {
+		if !o.header && o.theme != nil {
+			order = append(order, o.theme)
 		}
+	}
+	themeIdx.Lock()
+	if ix := m.indexFor(); ix.order == nil {
 		ix.order = order
 	}
-	order := ix.order
 	themeIdx.Unlock()
 	return order
 }
@@ -83,18 +88,25 @@ func (m *Model) themeOrder() []*ghostty.Theme {
 // factsOf is what is kept of a theme: worked out once for a theme of the
 // library, afresh for any other, such as the one being edited.
 func (m *Model) factsOf(t *ghostty.Theme) *themeFacts {
+	if f := m.libFacts(t); f != nil {
+		return f
+	}
+	return m.newFacts(t)
+}
+
+// libFacts is what is kept of a theme of the library, nil for any other.
+func (m *Model) libFacts(t *ghostty.Theme) *themeFacts {
 	themeIdx.Lock()
+	defer themeIdx.Unlock()
 	ix := m.indexFor()
 	f, in := ix.facts[t]
 	if !in {
-		themeIdx.Unlock()
-		return m.newFacts(t)
+		return nil
 	}
 	if f == nil {
 		f = m.newFacts(t)
 		ix.facts[t] = f
 	}
-	themeIdx.Unlock()
 	return f
 }
 
@@ -107,8 +119,6 @@ func (m *Model) newFacts(t *ghostty.Theme) *themeFacts {
 		palMeta:   palThemeMeta(t),
 	}
 	f.ratio, f.weak, f.weakName = palContrast(t)
+	f.listed = themeListed(t)
 	return f
 }
-
-// grade is how well a theme's text reads, as color.Grade says it.
-func (f *themeFacts) grade() string { return color.Grade(f.ratio) }
