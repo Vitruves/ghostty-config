@@ -3,6 +3,7 @@ package tui
 import (
 	"bytes"
 	"io"
+	"runtime"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
@@ -112,6 +113,38 @@ func BenchmarkTypeSearch(b *testing.B) {
 		h.pxFrame()
 		h.key("backspace")
 		h.pxFrame()
+	}
+}
+
+// BenchmarkWallMemory types, moves and pages along the themes wall, and
+// reports the heap the picture interface keeps once the frames are drawn
+// (live-MB) and the most it held while drawing them (peak-MB).
+func BenchmarkWallMemory(b *testing.B) {
+	for _, size := range []struct {
+		name       string
+		cols, rows int
+	}{{"120x34", 120, 34}, {"240x68", 240, 68}} {
+		b.Run(size.name, func(b *testing.B) {
+			h := newBenchHarness(b, size.cols, size.rows)
+			var ms runtime.MemStats
+			peak := uint64(0)
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				for _, k := range []string{"s", "backspace", "right", "down", "pgdown"} {
+					h.key(k)
+					h.pxFrame()
+					runtime.ReadMemStats(&ms)
+					peak = max(peak, ms.HeapInuse)
+				}
+			}
+			b.StopTimer()
+			runtime.GC()
+			runtime.GC() // and what pools let go at the first
+			runtime.ReadMemStats(&ms)
+			b.ReportMetric(float64(ms.HeapAlloc)/1e6, "live-MB")
+			b.ReportMetric(float64(peak)/1e6, "peak-MB")
+			runtime.KeepAlive(h)
+		})
 	}
 }
 
