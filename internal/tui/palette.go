@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"unicode/utf8"
 
@@ -355,12 +356,26 @@ func (p *palette) build(m *Model) []palRow {
 }
 
 // sortRows puts the best matches first and keeps the order of the rest.
+// The rows are large and a thousand themes may match: their order is found
+// on their indexes, and each row is moved once.
 func sortRows(rows []palRow) {
-	for i := 1; i < len(rows); i++ {
-		for j := i; j > 0 && rows[j].score < rows[j-1].score; j-- {
-			rows[j], rows[j-1] = rows[j-1], rows[j]
-		}
+	sorted := true
+	for i := 1; i < len(rows) && sorted; i++ {
+		sorted = rows[i].score >= rows[i-1].score
 	}
+	if sorted {
+		return
+	}
+	idx := make([]int, len(rows))
+	for i := range idx {
+		idx[i] = i
+	}
+	sort.SliceStable(idx, func(a, b int) bool { return rows[idx[a]].score < rows[idx[b]].score })
+	out := make([]palRow, len(rows))
+	for i, j := range idx {
+		out[i] = rows[j]
+	}
+	copy(rows, out)
 }
 
 // parted titles a whole kind by its parts: themes by family, settings and
