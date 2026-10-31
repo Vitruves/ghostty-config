@@ -31,6 +31,15 @@ type State struct {
 	// or ProfileGuided. Empty until one is chosen, which the editor asks for
 	// before anything else.
 	Profile string `json:"profile,omitempty"`
+	// What the command line can say for one launch, kept for every launch:
+	// Drawing is how the interface is drawn ("auto" or empty, "images",
+	// "cells" or "text", as -images, -cells and -no-images), Plain keeps to
+	// glyphs every font has (-plain), and UpdateCheck, nil for yes, whether
+	// GitHub is asked for a newer release (-no-update-check). A flag given
+	// wins over what is kept here.
+	Drawing     string `json:"drawing,omitempty"`
+	Plain       bool   `json:"plain,omitempty"`
+	UpdateCheck *bool  `json:"update_check,omitempty"`
 	// UpdateCheckedAt and LatestRelease remember the last look at GitHub,
 	// so the network is asked at most once a day.
 	UpdateCheckedAt time.Time `json:"update_checked_at,omitempty"`
@@ -96,6 +105,12 @@ func (s *State) AutoReloadEnabled() bool { return s.AutoReload == nil || *s.Auto
 
 // SetAutoReload records the preference.
 func (s *State) SetAutoReload(v bool) { s.AutoReload = &v }
+
+// UpdateCheckEnabled defaults to true.
+func (s *State) UpdateCheckEnabled() bool { return s.UpdateCheck == nil || *s.UpdateCheck }
+
+// SetUpdateCheck records the preference.
+func (s *State) SetUpdateCheck(v bool) { s.UpdateCheck = &v }
 
 // MonoOnlyEnabled defaults to true.
 func (s *State) MonoOnlyEnabled() bool { return s.MonoOnly == nil || *s.MonoOnly }

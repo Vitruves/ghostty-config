@@ -106,6 +106,9 @@ func (m *Model) updateMouse(raw tea.MouseMsg) (tea.Model, tea.Cmd) {
 		if !msg.press || msg.Button != tea.MouseLeft {
 			return m, nil
 		}
+		if m.overlay == overlaySettings {
+			return m.clickSettings(msg)
+		}
 		if r, ok := m.hit(msg.X, msg.Y); ok && r.kind == hitButton {
 			return m.pressButton(r.name)
 		}
@@ -256,6 +259,9 @@ func (m *Model) wheel(msg mouseEv) (tea.Model, tea.Cmd) {
 	if m.overlay == overlayExplain {
 		m.ex.scrollBy(delta * 3)
 		return m, nil
+	}
+	if m.overlay == overlaySettings {
+		return m.updateSettings(map[int]string{-1: "up", 1: "down"}[delta])
 	}
 	if m.overlay != overlayNone {
 		return m, nil

@@ -1472,6 +1472,8 @@ func (m *Model) pxOverlay(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo) {
 		m.pxCapture(c, p, f, g, card)
 	case overlayExplain:
 		m.pxExplain(c, p, f, g, card)
+	case overlaySettings:
+		m.pxSettings(c, p, f, g, card)
 	case overlayUpdate:
 		w := minF(540, g.W-40)
 		lines := c.Wrap(f.body, "Install downloads it for this system, checks it against the release checksums and replaces this binary. The new version starts next time.", w-56)

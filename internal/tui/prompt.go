@@ -54,7 +54,7 @@ func (m *Model) recompute() {
 	text := m.prompt.Value()
 	keep := m.selectedValue()
 	m.cmd, m.arg = m.resolve(text)
-	if m.cmd == nil || m.cmd.name != m.previewing {
+	if m.previewing != "" && (m.cmd == nil || m.cmd.name != m.previewing) {
 		// The list of a look was left without Enter: what it showed goes.
 		m.endPrefPreview()
 	}

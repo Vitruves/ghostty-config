@@ -583,6 +583,7 @@ Enter or →  write it and go on        ← or Backspace  the page before
 Esc  the step before        1 to 6  a step        s  skip this step
 m  three more themes        /  every theme        a  every setting of the step
 F3  Ghostty's page on the setting        Ctrl+Z  undo the last step        F2  the terminal behind
+F4  ghostty-config's own settings
 
 Fine-tune everything later in Atelier or Palette: Tool → Interface → Layout, or the last step.`
 

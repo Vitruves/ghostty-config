@@ -51,6 +51,9 @@ Options:
   -no-update-check       Never look for a newer release on GitHub
   -version               Show version
 
+What -cells, -no-images, -images, -plain and -no-update-check say can be kept
+for every launch in F4, ghostty-config's own settings; a flag given wins.
+
 Ghostty's config files are read in the order Ghostty reads them — config,
 config.ghostty, then on macOS the Application Support copies, then every
 config-file include — and a setting is rewritten in whichever file holds the
@@ -119,17 +122,22 @@ Keys:
 		fmt.Printf("Installed %d curated themes into %s\n", written, paths.ThemesDir)
 	}
 
+	// The flags given win over the preferences kept, which F4 edits.
+	given := flags{noReload: *noReload, noImages: *noImages, cells: *cellsOnly, images: *forceImages, plain: *plain, noUpdateCheck: *noUpdateCheck}
+	state := ghostty.LoadState(paths)
+	opts, cells := merge(given, state, tui.ImagesSupported())
+	opts.Version = version
+
 	// The picture interface needs the exact size of a cell, which only the
 	// terminal can tell, so it is asked before anything reads the keyboard.
 	// The terminal answers while the themes are read; nothing is printed
 	// until it has, for the terminal is in raw mode meanwhile.
-	images := !*noImages && (*forceImages || tui.ImagesSupported())
 	type cell struct {
 		w, h int
 		ok   bool
 	}
 	var probe chan cell
-	if images && !*cellsOnly {
+	if opts.Images && !cells {
 		probe = make(chan cell, 1)
 		go func() {
 			w, h, ok := tui.ProbeCell()
@@ -138,12 +146,6 @@ Keys:
 	}
 
 	lib := ghostty.LoadLibrary(paths)
-	state := ghostty.LoadState(paths)
-	opts := tui.Options{
-		NoReload: *noReload, Plain: *plain,
-		Images:  images,
-		Version: version, NoUpdateCheck: *noUpdateCheck,
-	}
 	if probe != nil {
 		if c := <-probe; c.ok {
 			opts.Pixel = true
@@ -168,13 +170,63 @@ Keys:
 		}
 		fail("%v", err)
 	}
-	if !*noImages && (*forceImages || tui.ImagesSupported()) {
+	if opts.Images {
 		// Free the pictures the terminal still holds.
 		fmt.Print("\x1b_Ga=d,d=A,q=2\x1b\\")
 	}
 	if note := model.ExitNote(); note != "" {
 		fmt.Println(note)
 	}
+}
+
+// flags are what the command line said of what the state file keeps too.
+type flags struct {
+	noReload, noImages, cells, images, plain, noUpdateCheck bool
+}
+
+// merge lays the flags given over the preferences kept: a flag wins for the
+// session, and the editor is told which so that F4 shows it as the flag set
+// it; without one, what was kept decides. supported is whether the terminal
+// is known to show pictures; cells is whether the interface is drawn from
+// cells even where it could be one picture.
+func merge(f flags, s *ghostty.State, supported bool) (opts tui.Options, cells bool) {
+	locked := map[string]tui.Lock{}
+	lock := func(name, flag, value string) { locked[name] = tui.Lock{Flag: flag, Value: value} }
+	noImages, force := f.noImages, f.images
+	cells = f.cells
+	switch {
+	case f.noImages:
+		lock("drawing", "-no-images", "text")
+	case f.cells:
+		lock("drawing", "-cells", "cells")
+	case f.images:
+		lock("drawing", "-images", "images")
+	default:
+		switch s.Drawing {
+		case "images":
+			force = true
+		case "cells":
+			cells = true
+		case "text":
+			noImages = true
+		}
+	}
+	if f.plain {
+		lock("glyphs", "-plain", "on")
+	}
+	if f.noUpdateCheck {
+		lock("updatecheck", "-no-update-check", "off")
+	}
+	if f.noReload {
+		lock("autoreload", "-no-reload", "off")
+	}
+	opts = tui.Options{
+		NoReload: f.noReload, Plain: f.plain || s.Plain,
+		Images:        !noImages && (force || supported),
+		NoUpdateCheck: f.noUpdateCheck || !s.UpdateCheckEnabled(),
+		Locked:        locked,
+	}
+	return opts, cells
 }
 
 func fail(format string, a ...interface{}) {

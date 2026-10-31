@@ -613,7 +613,8 @@ func (m *Model) keyPairs() []string {
 		}
 		pairs = append(pairs[:at], append([]string{"F3", "docs"}, pairs[at:]...)...)
 	}
-	return pairs
+	// The editor's own settings come last, where there is room for them.
+	return append(pairs, "F4", "settings")
 }
 
 // card draws a dialog as a surface laid over the screen: a ground a little

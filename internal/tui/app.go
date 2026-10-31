@@ -30,9 +30,10 @@ const (
 	overlayBusy
 	overlayMessage
 	overlayUpdate
-	overlayCapture // the shortcut editor asking for a shortcut
-	overlayExplain // Ghostty's own documentation of a setting or an action
-	overlayLayout  // the choice of a profile, until one is made
+	overlayCapture  // the shortcut editor asking for a shortcut
+	overlayExplain  // Ghostty's own documentation of a setting or an action
+	overlayLayout   // the choice of a profile, until one is made
+	overlaySettings // F4: the editor's own preferences
 )
 
 // writeDebounce is how long the highlight must rest before a font or a
@@ -60,6 +61,9 @@ type Options struct {
 	Version string
 	// NoUpdateCheck never asks GitHub for a newer release.
 	NoUpdateCheck bool
+	// Locked are the preferences a flag decided for this session, by name:
+	// F4 shows them as the flag set them.
+	Locked map[string]Lock
 }
 
 // Model is the whole editor: one prompt, a list of what it can mean, and a
@@ -109,9 +113,10 @@ type Model struct {
 	painted     bool
 	appliedHere bool
 	// previewing names the preference of the look whose list is being
-	// walked, "" for none; prefWas is its value before, put back unless
-	// Enter chose one.
-	previewing, prefWas string
+	// walked, "" for none; prefWas is the value before of every preference
+	// shown and not kept, by name, put back unless Enter chose one.
+	previewing string
+	prefWas    map[string]string
 
 	// Palette edit mode: the prompt becomes a slot editor.
 	editing  bool
@@ -164,6 +169,8 @@ type Model struct {
 
 	// Ghostty's own documentation of the highlighted line, while it is open.
 	ex explainView
+	// The editor's own preferences, while F4 has them open.
+	ps settingsView
 
 	// Mouse: what is clickable on the current frame, and the last click.
 	regions   []region
@@ -585,6 +592,11 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, m.armImages()
 		}
 		if m.overlay != overlayNone {
+			if msg.String() == "f4" && (m.overlay == overlayHelp || m.overlay == overlayExplain) {
+				// F4 is reached from the pages that only read, too.
+				m.openSettings()
+				return m, nil
+			}
 			return m.updateOverlay(msg)
 		}
 		if msg.String() == "f2" {
@@ -593,6 +605,10 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		if msg.String() == "f3" {
 			return m, m.openExplain()
+		}
+		if msg.String() == "f4" {
+			m.openSettings()
+			return m, nil
 		}
 		if msg.String() == "ctrl+z" {
 			return m, m.undoStep()

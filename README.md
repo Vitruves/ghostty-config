@@ -40,6 +40,7 @@ Run `ghostty-config`. Browsing changes nothing: a theme or a font is written whe
 | `/` or type | Search themes, settings and commands |
 | `Ctrl+T` `Ctrl+F` | Try a theme in this terminal; star it |
 | `F3` | Ghostty's own documentation of the highlighted line (Ghostty 1.4) |
+| `F4` | ghostty-config's own settings: its look, reload, update check, drawing |
 | `F1` `Esc` | Help; go back, then quit |
 
 </div>
@@ -83,6 +84,8 @@ Everything can be clicked too: sections, pills, switches, sliders, and a double 
 -paths                  print the files that are read and written
 -version                print the version
 ```
+
+`-cells`, `-no-images`, `-images`, `-plain`, `-no-reload` and `-no-update-check` hold for one launch. To keep a choice for every launch, set it in `F4` (Drawing, Simple glyphs, Reload Ghostty after each change, Check for updates); a flag given on the command line overrides the saved preference, and `F4` shows that row as set by the flag.
 
 ## Credits
 

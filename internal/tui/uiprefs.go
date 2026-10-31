@@ -13,15 +13,22 @@ import (
 // sizes. Each is a word kept in the state file, empty for the look the tool
 // always had, and each is chosen the same way as the interface: walking the
 // list shows every value at once, Enter keeps one, leaving puts back the one
-// in effect.
+// in effect. F4 lists them too, with the editor's behaviour after them.
 
-// uiPref is one preference of the editor's look.
+// uiPref is one preference of the editor's own, of its look or its
+// behaviour.
 type uiPref struct {
 	name, label, desc string
 	values            []string // in the order the arrows step them
 	def               string   // the value in effect when none is kept
 	notes             map[string]string
 	field             func(s *ghostty.State) *string
+	// read and write stand for field where the state keeps the preference
+	// otherwise than as a word; write also brings it into effect.
+	read  func(s *ghostty.State) string
+	write func(m *Model, v string)
+	// later says the value is honoured from the next launch on.
+	later bool
 	// pixel marks what only the picture interface can honour: the text one
 	// draws a fixed grid of cells and leaves it out of the menu.
 	pixel bool
@@ -95,6 +102,144 @@ var (
 // uiPrefs are the preferences of Tool → Interface, in the order it lists them.
 var uiPrefs = []*uiPref{prefLayout, prefInterface, prefAccent, prefContrast, prefSize, prefCards}
 
+// The editor's behaviour, which F4 lists after its look. Each is what a
+// flag says for one launch, but for -no-reload, which Tool → Ghostty keeps as
+// autoreload.
+var (
+	prefAutoReload = &uiPref{
+		name: "autoreload", label: "Reload Ghostty after each change", desc: "Whether every change asks the running Ghostty to re-read its files",
+		values: []string{"on", "off"}, def: "on",
+		notes: map[string]string{
+			"on":  "fonts, padding and the title bar follow at once",
+			"off": "reload Ghostty yourself to see a change",
+		},
+		read: func(s *ghostty.State) string { return onOffWord(s.AutoReloadEnabled()) },
+		write: func(m *Model, v string) {
+			m.state.SetAutoReload(v == "on")
+			m.reloadFailed = false
+		},
+	}
+	prefUpdates = &uiPref{
+		name: "updatecheck", label: "Check for updates", desc: "Whether GitHub is asked, as the editor starts and at most once a day, for a newer release",
+		values: []string{"on", "off"}, def: "on",
+		notes: map[string]string{
+			"on":  "a newer release is offered when there is one",
+			"off": "the network is never asked",
+		},
+		read:  func(s *ghostty.State) string { return onOffWord(s.UpdateCheckEnabled()) },
+		write: func(m *Model, v string) { m.state.SetUpdateCheck(v == "on") },
+		later: true,
+	}
+	prefDrawing = &uiPref{
+		name: "drawing", label: "Drawing", desc: "How the editor is drawn: as one picture, from cells with pictures of the themes, or from text alone",
+		values: []string{"auto", "images", "cells", "text"}, def: "auto",
+		titles: map[string]string{"auto": "auto", "images": "pictures", "cells": "cells", "text": "text only"},
+		notes: map[string]string{
+			"auto":   "one picture where the terminal is known to show pictures, text elsewhere",
+			"images": "one picture, even where this terminal is not known to show pictures",
+			"cells":  "cells, with pictures only for the theme cards",
+			"text":   "cells alone, no pictures at all",
+		},
+		field: func(s *ghostty.State) *string { return &s.Drawing },
+		later: true,
+	}
+	prefGlyphs = &uiPref{
+		name: "glyphs", label: "Simple glyphs", desc: "Only glyphs every terminal and font can draw: square ends where round ones would be",
+		values: []string{"off", "on"}, def: "off",
+		notes: map[string]string{
+			"off": "the round ends of pills where the terminal draws them",
+			"on":  "square ends, for a font that lacks the round ones",
+		},
+		read: func(s *ghostty.State) string { return onOffWord(s.Plain) },
+		write: func(m *Model, v string) {
+			m.state.Plain = v == "on"
+			m.caps = detectTerminal(m.state.Plain)
+		},
+	}
+)
+
+// toolPrefs are the preferences of the editor's behaviour, in F4's order.
+var toolPrefs = []*uiPref{prefAutoReload, prefUpdates, prefDrawing, prefGlyphs}
+
+func onOffWord(on bool) string {
+	if on {
+		return "on"
+	}
+	return "off"
+}
+
+// prefNamed is the preference of either kind a name names, nil for none.
+func prefNamed(name string) *uiPref {
+	if p := uiPrefNamed(name); p != nil {
+		return p
+	}
+	for _, p := range toolPrefs {
+		if p.name == name {
+			return p
+		}
+	}
+	return nil
+}
+
+// raw is the preference as the state keeps it.
+func (p *uiPref) raw(m *Model) string {
+	if p.read != nil {
+		return p.read(m.state)
+	}
+	return *p.field(m.state)
+}
+
+// put sets the preference, and brings it into effect.
+func (p *uiPref) put(m *Model, v string) {
+	if p.write != nil {
+		p.write(m, v)
+		return
+	}
+	*p.field(m.state) = v
+}
+
+// preview shows a value without keeping it: the value before is remembered
+// the first time, to be put back unless keep follows.
+func (p *uiPref) preview(m *Model, v string) {
+	if _, ok := m.prefWas[p.name]; !ok {
+		if m.prefWas == nil {
+			m.prefWas = map[string]string{}
+		}
+		m.prefWas[p.name] = p.raw(m)
+	}
+	p.put(m, v)
+}
+
+// keep makes a value the one kept, and saves it.
+func (p *uiPref) keep(m *Model, v string) {
+	delete(m.prefWas, p.name)
+	p.put(m, v)
+	m.saveState()
+}
+
+// unkept is whether the preference shows a value that was not kept, and
+// the one that was.
+func (p *uiPref) unkept(m *Model) (was string, ok bool) {
+	was, ok = m.prefWas[p.name]
+	return was, ok && was != p.raw(m)
+}
+
+// saveState writes the state as it was kept: what is only being looked at
+// is put back for the write, and shown again after it.
+func (m *Model) saveState() {
+	shown := map[string]string{}
+	for name, was := range m.prefWas {
+		if p := prefNamed(name); p != nil {
+			shown[name] = p.raw(m)
+			p.put(m, was)
+		}
+	}
+	_ = m.state.Save()
+	for name, v := range shown {
+		prefNamed(name).put(m, v)
+	}
+}
+
 // applyLayout puts the layout chosen in effect.
 func applyLayout(m *Model, v string) tea.Cmd {
 	if v == m.state.ActiveProfile() {
@@ -128,7 +273,7 @@ func uiPrefNamed(name string) *uiPref {
 // value is the preference in effect: the word kept when it is one of the
 // values, the default otherwise.
 func (p *uiPref) value(m *Model) string {
-	v := *p.field(m.state)
+	v := p.raw(m)
 	for _, x := range p.values {
 		if x == v {
 			return x
@@ -234,11 +379,9 @@ func uiPrefCommands() []*command {
 			onMove: func(m *Model, opt *option) tea.Cmd {
 				if opt != nil && p.apply == nil {
 					// Walking the list shows each value, and only Enter keeps
-					// one: remember what was in effect to put it back.
-					if m.previewing != p.name {
-						m.prefWas, m.previewing = *p.field(m.state), p.name
-					}
-					*p.field(m.state) = opt.value
+					// one: what was in effect is put back otherwise.
+					m.previewing = p.name
+					p.preview(m, opt.value)
 				}
 				return nil
 			},
@@ -254,8 +397,7 @@ func uiPrefCommands() []*command {
 				if m.previewing == p.name {
 					m.previewing = ""
 				}
-				*p.field(m.state) = opt.value
-				_ = m.state.Save()
+				p.keep(m, opt.value)
 				m.info("%s: %s", p.label, opt.value)
 				return nil
 			},
@@ -269,12 +411,14 @@ func uiPrefCommands() []*command {
 	return out
 }
 
-// endPrefPreview puts back the value of the look that was in effect before
-// its list was walked, when no Enter chose one, so that a look is never
+// endPrefPreview puts back the value of every preference that was in effect
+// before it was looked at, when no Enter chose one, so that a look is never
 // saved with the rest of the state.
 func (m *Model) endPrefPreview() {
-	if p := uiPrefNamed(m.previewing); p != nil {
-		*p.field(m.state) = m.prefWas
+	for name, was := range m.prefWas {
+		if p := prefNamed(name); p != nil {
+			p.put(m, was)
+		}
 	}
-	m.previewing = ""
+	m.prefWas, m.previewing = nil, ""
 }

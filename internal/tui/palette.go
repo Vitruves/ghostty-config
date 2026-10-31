@@ -1113,7 +1113,7 @@ func (p *palette) keyPairs(m *Model) []string {
 	case p.query != "" || p.filter != 0:
 		esc = "Clear"
 	}
-	return append(pairs, "Esc", esc, "F1", "Help")
+	return append(pairs, "Esc", esc, "F1", "Help", "F4", "Settings")
 }
 
 // statusText is the line under the list: what just happened, or else what

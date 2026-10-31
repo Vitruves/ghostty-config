@@ -188,6 +188,32 @@ func TestPixelScreens(t *testing.T) {
 	light.highlightCommand("opacity")
 	light.shot("15-window-light")
 
+	// F4, the editor's own settings, in a dark and a light scheme, at 80×24
+	// and with the values of a row listed.
+	h.m.setPromptText("Theme ")
+	h.send(f4())
+	h.shot("15b-settings")
+	h.send(f4())
+	light.send(f4())
+	light.shot("15c-settings-light")
+	light.send(f4())
+	small := newPixHarness(t, "midnight")
+	small.send(tea.WindowSizeMsg{Width: 80, Height: 24})
+	small.send(f4())
+	small.shot("15d-settings-80x24")
+	small.toRow(prefAccent)
+	small.key("enter", "down")
+	small.shot("15e-settings-list-80x24")
+	small.key("esc")
+	small.toRow(prefContrast)
+	small.key("right")
+	small.shot("15f-settings-unkept-80x24")
+	small.send(f4())
+	pl := newPixHarness(t, "paper")
+	pl.send(tea.WindowSizeMsg{Width: 80, Height: 24})
+	pl.send(f4())
+	pl.shot("15g-settings-light-80x24")
+
 	// What keeps the files safe: the session's history, what it changed, the
 	// backups, and Ghostty's own check of the config.
 	s := newPixHarness(t, "midnight")
