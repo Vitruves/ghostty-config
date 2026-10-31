@@ -263,7 +263,8 @@ func (p *palette) cellRow(m *Model, ui chrome, r palRow, sel bool, w int) ([]str
 	switch r.kind {
 	case palTheme:
 		t := r.theme
-		sp := m.themeSpec(t)
+		facts := m.factsOf(t)
+		sp := facts.spec
 		strip := ""
 		cell := " "
 		if w >= 90 {
@@ -276,7 +277,7 @@ func (p *palette) cellRow(m *Model, ui chrome, r palRow, sel bool, w int) ([]str
 		if w >= 76 {
 			left += st(ui.muted).Render(palThemeFamily(t))
 		}
-		right := st(ui.muted).Render(palThemeMeta(t))
+		right := st(ui.muted).Render(facts.palMeta)
 		if t.Name == m.applied {
 			right += st(ui.accent).Render("  applied")
 		}
@@ -464,9 +465,10 @@ func (p *palette) cellBody(m *Model, ui chrome, bg string, c *command, value str
 
 // cellStrip is the highlighted theme in its own colours.
 func (p *palette) cellStrip(m *Model, l palCells, t *ghostty.Theme) []string {
-	sp := m.themeSpec(t)
+	facts := m.factsOf(t)
+	sp := facts.spec
 	st := func(fg string) lipgloss.Style { return on(fg, sp.BG) }
-	text, weak, weakName := palContrast(t)
+	text, weak, weakName := facts.ratio, facts.weak, facts.weakName
 	meta := "text " + ratioText(text)
 	if weakName != "" {
 		meta += " · weakest " + weakName + " " + ratioText(weak)
