@@ -37,6 +37,53 @@ type keyboard struct {
 	action, text    string // the capture: for which action, what is typed
 	global          bool
 	err             string
+	// rows are the list as keyRows last built it, and users the config's
+	// own bindings, kept while rowsFor says the same.
+	rows    []*keyRow
+	users   []ghostty.Binding
+	rowsFor keyRowsKey
+}
+
+// keyRowsKey is what the list of actions is built from: the config's
+// entries, the catalog, how keys are spelled.
+type keyRowsKey struct {
+	tree              *ghostty.Tree
+	rev               uint64
+	actions, defaults int
+	firstDef          *ghostty.Binding
+	firstDoc          *ghostty.ActionDoc
+	symbols, loaded   bool
+	mac               bool
+}
+
+// keysFresh is whether the list kept is still the one keyRows would build,
+// and forgets it when not.
+func (m *Model) keysFresh() bool {
+	k := keyRowsKey{tree: m.tree, rev: m.tree.Rev(), actions: len(m.kb.cat.Actions), defaults: len(m.kb.cat.Defaults),
+		symbols: m.keySymbols(), loaded: m.kb.loaded, mac: keysMac}
+	if len(m.kb.cat.Defaults) > 0 {
+		k.firstDef = &m.kb.cat.Defaults[0]
+	}
+	if len(m.kb.cat.Actions) > 0 {
+		k.firstDoc = &m.kb.cat.Actions[0]
+	}
+	if k == m.kb.rowsFor {
+		return true
+	}
+	m.kb.rows, m.kb.users, m.kb.rowsFor = nil, nil, k
+	return false
+}
+
+// userShortcuts is the config's own bindings, m.tree.UserShortcuts() kept
+// until the config changes. The slice is shared: it is not to be changed.
+func (m *Model) userShortcuts() []ghostty.Binding {
+	if !m.keysFresh() || m.kb.users == nil {
+		m.kb.users = m.tree.UserShortcuts()
+		if m.kb.users == nil {
+			m.kb.users = []ghostty.Binding{}
+		}
+	}
+	return m.kb.users
 }
 
 // keyRow is one action of the list, with what it is bound to now.
@@ -45,6 +92,8 @@ type keyRow struct {
 	shortcuts                     []ghostty.Shortcut
 	// defaults are Ghostty's own triggers for it, in effect or not.
 	defaults []ghostty.Trigger
+	// hay is what matches searches, in lower case, once it was asked for.
+	hay string
 }
 
 // keyGroups orders the actions as Ghostty's menus do, in their common
@@ -184,6 +233,18 @@ func (m *Model) ensureKeys() tea.Cmd {
 // keyRows builds the list: every common form of every action this platform
 // has, and every form something binds, in their groups.
 func (m *Model) keyRows() []*keyRow {
+	if m.keysFresh() && m.kb.rows != nil {
+		return m.kb.rows
+	}
+	rows := m.buildKeyRows()
+	if rows == nil {
+		rows = []*keyRow{}
+	}
+	m.kb.rows = rows
+	return rows
+}
+
+func (m *Model) buildKeyRows() []*keyRow {
 	km := m.keyMap()
 	cat := m.kb.cat
 	bound := map[string]bool{}
@@ -193,7 +254,7 @@ func (m *Model) keyRows() []*keyRow {
 	for _, d := range cat.Defaults {
 		bound[d.Action] = true
 	}
-	for _, b := range m.tree.UserShortcuts() {
+	for _, b := range m.userShortcuts() {
 		bound[b.Action] = true
 	}
 	delete(bound, "unbind")
@@ -322,13 +383,16 @@ func (r *keyRow) matches(m *Model, words []string, typed ghostty.Trigger) bool {
 			}
 		}
 	}
-	var hay strings.Builder
-	hay.WriteString(strings.ToLower(r.label + " " + r.action + " " + strings.ReplaceAll(r.action, "_", " ") + " " + r.summary + " " + r.group))
-	for _, s := range r.shortcuts {
-		t := s.Trigger.String()
-		hay.WriteString(" " + t + " " + strings.ReplaceAll(t, "super+", "cmd+") + " " + strings.ToLower(m.triggerText(s.Trigger)))
+	if r.hay == "" {
+		var hay strings.Builder
+		hay.WriteString(strings.ToLower(r.label + " " + r.action + " " + strings.ReplaceAll(r.action, "_", " ") + " " + r.summary + " " + r.group))
+		for _, s := range r.shortcuts {
+			t := s.Trigger.String()
+			hay.WriteString(" " + t + " " + strings.ReplaceAll(t, "super+", "cmd+") + " " + strings.ToLower(m.triggerText(s.Trigger)))
+		}
+		r.hay = hay.String()
 	}
-	h := hay.String()
+	h := r.hay
 	for _, w := range words {
 		if !strings.Contains(h, w) {
 			return false
@@ -660,7 +724,7 @@ func (m *Model) resetKeys(r *keyRow) tea.Cmd {
 // keysCustomised reports whether the config changes an action's shortcuts:
 // it binds the action, or unbinds one of its defaults.
 func (m *Model) keysCustomised(r *keyRow) bool {
-	for _, b := range m.tree.UserShortcuts() {
+	for _, b := range m.userShortcuts() {
 		if b.Action == r.action {
 			return true
 		}
