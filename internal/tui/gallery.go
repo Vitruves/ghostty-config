@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"sync"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -385,18 +386,62 @@ func (m *Model) tileRows(ui chrome, o option, selected bool) []string {
 
 // tileCells draws a card from cells, for a terminal that shows no pictures:
 // the same specimen, the same two lines and the same sixteen colours, on the
-// theme's own ground.
+// theme's own ground. The cards are kept by the colours they are drawn in:
+// styling them is most of what a frame of the wall in cells costs.
 func tileCells(t *ghostty.Theme) []string {
-	bg, fg := t.Background(), t.Foreground()
+	k := tileCellsKey{bg: t.Background(), fg: t.Foreground(), cursor: t.Get("cursor-color")}
+	for i := range k.pal {
+		k.pal[i] = t.Get(tilePalKeys[i])
+	}
+	tileCellsMu.Lock()
+	rows, ok := tileCellsKept[k]
+	tileCellsMu.Unlock()
+	if !ok {
+		rows = drawTileCells(k)
+		tileCellsMu.Lock()
+		if len(tileCellsKept) >= maxTileCells {
+			tileCellsKept = map[tileCellsKey][]string{}
+		}
+		tileCellsKept[k] = rows
+		tileCellsMu.Unlock()
+	}
+	// Full, so that a caller appending rows gets an array of its own.
+	return rows[:len(rows):len(rows)]
+}
+
+// tileCellsKey is everything a card in cells is drawn from: the theme's
+// ground, text and cursor colours and its palette as written.
+type tileCellsKey struct {
+	bg, fg, cursor string
+	pal            [16]string
+}
+
+var (
+	tileCellsMu   sync.Mutex
+	tileCellsKept = map[tileCellsKey][]string{}
+	tilePalKeys   = func() (k [16]string) {
+		for i := range k {
+			k[i] = paletteKey(i)
+		}
+		return k
+	}()
+)
+
+// maxTileCells bounds the cards in cells kept: a library holds about a
+// thousand themes.
+const maxTileCells = 4096
+
+func drawTileCells(k tileCellsKey) []string {
+	bg, fg := k.bg, k.fg
 	pal := func(i int) string {
-		if v := t.Get(paletteKey(i)); color.IsHex(v) {
+		if v := k.pal[i]; color.IsHex(v) {
 			return color.Normalize(v, fg)
 		}
 		return fg
 	}
 	text := func(hex, s string) string { return on(hex, bg).Render(s) }
 	blank := text(fg, strings.Repeat(" ", tileW))
-	cursor := color.Normalize(t.Get("cursor-color"), fg)
+	cursor := color.Normalize(k.cursor, fg)
 
 	specimen := on(fg, bg).Bold(true).Render(" Aa ") + text(cursor, "█") + text(fg, strings.Repeat(" ", tileW-5))
 	first := text(pal(2), " › ") + text(fg, "git diff ") + text(color.Blend(fg, bg, 0.5), "--stat")

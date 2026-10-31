@@ -115,6 +115,26 @@ func BenchmarkTypeSearch(b *testing.B) {
 	}
 }
 
+// BenchmarkCellWall moves the highlight along the themes wall and back in
+// the text interface, for a terminal that shows no pictures.
+func BenchmarkCellWall(b *testing.B) {
+	h := newHarnessWith(b, pixConfig, Options{NoReload: true})
+	if lib := ghostty.LoadLibrary(ghostty.DefaultPaths("", "")); len(lib.Themes) > len(h.m.lib.Themes) {
+		h.m.lib = lib
+	}
+	h.send(tea.WindowSizeMsg{Width: 120, Height: 34})
+	h.m.setPromptText("Theme ")
+	h.m.render()
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		h.key("right")
+		h.m.render()
+		h.key("left")
+		h.m.render()
+	}
+}
+
 // BenchmarkNew builds the model, as the editor does before its first frame.
 func BenchmarkNew(b *testing.B) {
 	h := newBenchHarness(b, 120, 34)
