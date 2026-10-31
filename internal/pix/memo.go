@@ -16,7 +16,13 @@ import (
 // next time, so a wrong bound costs time, never pixels.
 //
 // What was drawn in the last frame and this one is kept, nothing older:
-// a part that stays on screen stays in the memo, one that leaves goes.
+// a part that stays on screen stays in the memo, one that leaves goes. A
+// part of the last frame goes as soon as this frame draws a part over the
+// middle of where it was: parts sit side by side, so nothing else in this
+// frame is likely to ask for it, and a wall drawn anew, as when typing or
+// scrolling, takes the place of the last one instead of being kept beside
+// it. (A part let go that is asked for after all is drawn again: it costs
+// time, never pixels.)
 type Memo struct {
 	cur, prev map[memoKey]*memoPart
 	seed      maphash.Seed
@@ -40,8 +46,9 @@ type memoPart struct {
 	frame int    // the last frame that drew it
 }
 
-// maxFree bounds the pixels kept for reuse.
-const maxFree = 32
+// maxFree bounds the pixels kept for reuse: parts are mostly let go one
+// at a time as their place is drawn over, and taken again at once.
+const maxFree = 8
 
 // NewMemo is an empty memo.
 func NewMemo() *Memo {
@@ -51,8 +58,8 @@ func NewMemo() *Memo {
 // Frame starts a frame: what the frame before last drew is let go.
 func (mm *Memo) Frame() {
 	for _, part := range mm.prev {
-		if part.frame < mm.frame && len(mm.free) < maxFree {
-			mm.free = append(mm.free, part.pix)
+		if part.frame < mm.frame {
+			mm.release(part.pix)
 		}
 	}
 	mm.frame++
@@ -78,8 +85,10 @@ func (mm *Memo) Draw(c *Canvas, key any, x, y, w, h float32, draw func()) {
 	if !ok {
 		if part, ok = mm.prev[k]; ok {
 			mm.cur[k] = part
+			part.frame = mm.frame
 		}
 	}
+	mm.letGoUnder(r)
 	img := c.Img
 	row := r.Dx() * 4
 	if ok {
@@ -110,17 +119,54 @@ func (mm *Memo) Draw(c *Canvas, key any, x, y, w, h float32, draw func()) {
 	mm.cur[k] = part
 }
 
-// buffer is n bytes for a new part, from a part let go when one is big
-// enough.
-func (mm *Memo) buffer(n int) []byte {
-	for i, b := range mm.free {
-		if cap(b) >= n {
-			mm.free[i] = mm.free[len(mm.free)-1]
-			mm.free = mm.free[:len(mm.free)-1]
-			return b[:n]
+// letGoUnder lets go of the parts of the last frame whose middle r covers
+// and that this frame has not drawn. Their edges may reach under r: the
+// highlighted card, with its shadow, reaches over its neighbours' margins.
+func (mm *Memo) letGoUnder(r image.Rectangle) {
+	for k, part := range mm.prev {
+		mid := k.r.Min.Add(k.r.Max).Div(2)
+		if part.frame < mm.frame && mid.In(r) {
+			delete(mm.prev, k)
+			mm.release(part.pix)
 		}
 	}
-	return make([]byte, n)
+}
+
+// release keeps pixels let go for a new part. Past maxFree the smallest
+// buffer kept goes: the highlighted card is drawn larger than the others,
+// and drawn anew whenever the highlight moves.
+func (mm *Memo) release(pix []byte) {
+	if len(mm.free) < maxFree {
+		mm.free = append(mm.free, pix)
+		return
+	}
+	least := 0
+	for i, b := range mm.free {
+		if cap(b) < cap(mm.free[least]) {
+			least = i
+		}
+	}
+	if cap(pix) > cap(mm.free[least]) {
+		mm.free[least] = pix
+	}
+}
+
+// buffer is n bytes for a new part, from the smallest buffer let go that
+// is big enough.
+func (mm *Memo) buffer(n int) []byte {
+	best := -1
+	for i, b := range mm.free {
+		if cap(b) >= n && (best < 0 || cap(b) < cap(mm.free[best])) {
+			best = i
+		}
+	}
+	if best < 0 {
+		return make([]byte, n)
+	}
+	b := mm.free[best]
+	mm.free[best] = mm.free[len(mm.free)-1]
+	mm.free = mm.free[:len(mm.free)-1]
+	return b[:n]
 }
 
 // hash sums the pixels of a part of the canvas.
