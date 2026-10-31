@@ -220,7 +220,9 @@ func (m *Model) renderPixel() string {
 	stride := c.Img.Stride
 	for r := 0; r < m.height; r++ {
 		bands[r] = c.Img.Pix[r*e.ch*stride : (r+1)*e.ch*stride]
-		keys[r] = fmt.Sprintf("band|%d|%d|%x", W, e.ch, maphash.Bytes(e.seed, bands[r]))
+	}
+	for r, h := range hashBands(e.seed, bands) {
+		keys[r] = fmt.Sprintf("band|%d|%d|%x", W, e.ch, h)
 	}
 	ready := e.readyBands(m.imgs, keys, bands)
 	for r := 0; r < m.height; r++ {
@@ -234,6 +236,38 @@ func (m *Model) renderPixel() string {
 		rows[r] = e.placeholders(id, m.width, ui.paint())
 	}
 	return strings.Join(rows, "\n")
+}
+
+// maxHashers bounds the goroutines hashBands starts: past four, waking
+// another thread costs about what it saves.
+const maxHashers = 4
+
+// hashBands sums the rows of a frame side by side: every frame hashes
+// every row, ten megabytes at 120x34 cells, and alone that is most of a
+// frame that changes nothing.
+func hashBands(seed maphash.Seed, bands [][]byte) []uint64 {
+	sums := make([]uint64, len(bands))
+	workers := min(runtime.GOMAXPROCS(0), maxHashers, len(bands))
+	if workers < 2 {
+		for r, b := range bands {
+			sums[r] = maphash.Bytes(seed, b)
+		}
+		return sums
+	}
+	// Every worker takes every workers-th row, rows being one size; this
+	// goroutine is one of them, which spares waking a thread.
+	stripe := func(w int) {
+		for r := w; r < len(bands); r += workers {
+			sums[r] = maphash.Bytes(seed, bands[r])
+		}
+	}
+	var wg sync.WaitGroup
+	for w := 1; w < workers; w++ {
+		wg.Go(func() { stripe(w) })
+	}
+	stripe(0)
+	wg.Wait()
+	return sums
 }
 
 // readyBands readies the rows the terminal does not hold, side by side:
