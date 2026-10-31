@@ -385,8 +385,36 @@ func (c *Canvas) Wrap(f font.Face, text string, w float32) []string {
 func (c *Canvas) Picture(img image.Image, x, y float32) {
 	at := image.Pt(int(math.Round(float64(x*c.S))), int(math.Round(float64(y*c.S))))
 	r := img.Bounds().Sub(img.Bounds().Min).Add(at)
-	c.touch(r.Intersect(c.clip))
-	draw.Draw(c.Img, r.Intersect(c.clip), img, img.Bounds().Min.Add(r.Intersect(c.clip).Min.Sub(at)), draw.Over)
+	dr := r.Intersect(c.clip)
+	c.touch(dr)
+	sp := img.Bounds().Min.Add(dr.Min.Sub(at))
+	if src, ok := img.(*image.RGBA); ok && !dr.Empty() {
+		// An opaque pixel drawn over another is itself, so a row with
+		// nothing see-through is copied; the others are composited.
+		n := dr.Dx() * 4
+		for y := dr.Min.Y; y < dr.Max.Y; y++ {
+			so := src.PixOffset(sp.X, sp.Y+y-dr.Min.Y)
+			row := src.Pix[so : so+n : so+n]
+			if opaque(row) {
+				do := c.Img.PixOffset(dr.Min.X, y)
+				copy(c.Img.Pix[do:do+n], row)
+				continue
+			}
+			draw.Draw(c.Img, image.Rect(dr.Min.X, y, dr.Max.X, y+1), src, image.Pt(sp.X, sp.Y+y-dr.Min.Y), draw.Over)
+		}
+		return
+	}
+	draw.Draw(c.Img, dr, img, sp, draw.Over)
+}
+
+// opaque is whether every pixel of an RGBA row has full alpha.
+func opaque(row []uint8) bool {
+	for i := 3; i < len(row); i += 4 {
+		if row[i] != 0xff {
+			return false
+		}
+	}
+	return true
 }
 
 // Dim lays a translucent colour over the whole canvas.
