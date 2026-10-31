@@ -408,23 +408,31 @@ func (p *palette) parted(m *Model, kind string, rows []palRow) []palRow {
 			}
 			return len(groups) * 100
 		}
-		for i := 1; i < len(rows); i++ {
-			for j := i; j > 0 && rank(rows[j]) < rank(rows[j-1]); j-- {
-				rows[j], rows[j-1] = rows[j-1], rows[j]
-			}
+		// Each row's rank is found once, and the rows moved once, in a
+		// stable order as before.
+		ranks := make([]int, len(rows))
+		idx := make([]int, len(rows))
+		for i, r := range rows {
+			ranks[i], idx[i] = rank(r), i
 		}
+		sort.SliceStable(idx, func(a, b int) bool { return ranks[idx[a]] < ranks[idx[b]] })
+		sorted := make([]palRow, len(rows))
+		for i, j := range idx {
+			sorted[i] = rows[j]
+		}
+		copy(rows, sorted)
+	}
+	parts := make([]string, len(rows))
+	count := map[string]int{}
+	for i, r := range rows {
+		parts[i] = partOf(r)
+		count[parts[i]]++
 	}
 	var out []palRow
 	last := ""
-	for _, r := range rows {
-		if part := partOf(r); part != last && r.kind != palNote {
-			n := 0
-			for _, o := range rows {
-				if partOf(o) == part {
-					n++
-				}
-			}
-			out = append(out, palRow{kind: palHead, text: part, count: itoa(n)})
+	for i, r := range rows {
+		if part := parts[i]; part != last && r.kind != palNote {
+			out = append(out, palRow{kind: palHead, text: part, count: itoa(count[part])})
 			last = part
 		}
 		out = append(out, r)

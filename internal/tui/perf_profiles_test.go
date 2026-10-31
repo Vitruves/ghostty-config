@@ -99,13 +99,24 @@ func BenchmarkPaletteMove(b *testing.B) {
 }
 
 // BenchmarkPaletteFilter walks the filters with Tab on a query, all the
-// way round.
+// way round, and on nothing typed, where each kind is listed whole.
 func BenchmarkPaletteFilter(b *testing.B) {
 	for _, r := range renderers {
 		b.Run(r.name, func(b *testing.B) {
 			h := newProfileBench(b, ghostty.ProfilePalette, r.pixel)
 			h.typeText("so")
 			h.m.render()
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				for range palFilters {
+					h.key("tab")
+					h.m.render()
+				}
+			}
+		})
+		b.Run("empty/"+r.name, func(b *testing.B) {
+			h := newProfileBench(b, ghostty.ProfilePalette, r.pixel)
 			b.ReportAllocs()
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
@@ -241,6 +252,8 @@ func TestFramesRecord(t *testing.T) {
 				keys("c", "u", "r", "s", "o", "r", "down", "down", "down", "up", "right", "tab", "tab", "down", "tab", "tab", "tab", "tab", "tab")
 				keys("ctrl+u", "s", "o", "tab", "down", "down", "tab", "tab", "down", "enter", "down", "esc", "esc", "esc")
 				keys("d", "a", "r", "k", "space", "m", "down", "down", "tab", "down")
+				// Each kind whole, nothing typed.
+				keys("ctrl+u", "tab", "down", "tab", "down", "tab", "pgdown", "down", "tab", "down", "tab", "tab", "down", "tab")
 			case ghostty.ProfileGuided:
 				g := h.guide()
 				for step := 0; step < gSteps; step++ {
