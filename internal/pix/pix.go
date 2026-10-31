@@ -34,6 +34,10 @@ type Canvas struct {
 	ras       vector.Rasterizer
 	// touched, while a Memo watches, grows to cover every pixel drawn.
 	touched *image.Rectangle
+	// whole, when set, is the picture this canvas is a part of: a Memo
+	// draws a part on a canvas of the part's pixels alone, where drawing
+	// is measured against the whole picture but done only within the part.
+	whole image.Rectangle
 }
 
 // New makes a canvas of w by h device pixels.
@@ -53,9 +57,17 @@ func Renew(c *Canvas, w, h int, s float32) *Canvas {
 	return c
 }
 
+// bounds is the whole picture's rectangle in device pixels.
+func (c *Canvas) bounds() image.Rectangle {
+	if !c.whole.Empty() {
+		return c.whole
+	}
+	return c.Img.Rect
+}
+
 // W and H are the size in logical units.
-func (c *Canvas) W() float32 { return float32(c.Img.Bounds().Dx()) / c.S }
-func (c *Canvas) H() float32 { return float32(c.Img.Bounds().Dy()) / c.S }
+func (c *Canvas) W() float32 { return float32(c.bounds().Dx()) / c.S }
+func (c *Canvas) H() float32 { return float32(c.bounds().Dy()) / c.S }
 
 // Hex is a colour from #rrggbb with an alpha in 0..1.
 func Hex(hex string, a float64) color.NRGBA { return kimg.RGBA(hex, a) }
@@ -69,17 +81,17 @@ func (c *Canvas) touch(b image.Rectangle) {
 
 // Clear paints the whole canvas.
 func (c *Canvas) Clear(col color.Color) {
-	c.touch(c.Img.Bounds())
+	c.touch(c.bounds())
 	draw.Draw(c.Img, c.Img.Bounds(), image.NewUniform(col), image.Point{}, draw.Src)
 }
 
 // Clip limits drawing to a logical rectangle until Unclip.
 func (c *Canvas) Clip(x, y, w, h float32) {
-	c.clip = c.dev(x, y, w, h).Intersect(c.Img.Bounds())
+	c.clip = c.dev(x, y, w, h).Intersect(c.bounds())
 }
 
 // Unclip lets drawing reach the whole canvas again.
-func (c *Canvas) Unclip() { c.clip = c.Img.Bounds() }
+func (c *Canvas) Unclip() { c.clip = c.bounds() }
 
 func (c *Canvas) dev(x, y, w, h float32) image.Rectangle {
 	s := c.S
@@ -130,6 +142,11 @@ func (c *Canvas) area(b image.Rectangle) (image.Rectangle, bool) {
 		return b, false
 	}
 	c.touch(b)
+	if !b.In(c.Img.Rect) {
+		// A part's canvas, drawn past the part: the Memo draws it again
+		// on the whole picture.
+		return b, false
+	}
 	c.ras.Reset(b.Dx(), b.Dy())
 	return b, true
 }
@@ -311,7 +328,7 @@ func runs(f font.Face, s string) []run {
 // Text draws a string with its baseline at y and returns its logical width.
 func (c *Canvas) Text(f font.Face, x, y float32, s string, col color.Color) float32 {
 	dst := c.Img
-	if c.clip != c.Img.Bounds() {
+	if c.clip != c.Img.Rect {
 		dst = c.Img.SubImage(c.clip).(*image.RGBA)
 	}
 	d := &font.Drawer{Dst: dst, Src: image.NewUniform(col), Dot: fixed.Point26_6{X: fixed.Int26_6(x * c.S * 64), Y: fixed.Int26_6(y * c.S * 64)}}
@@ -321,7 +338,7 @@ func (c *Canvas) Text(f font.Face, x, y float32, s string, col color.Color) floa
 			// Where the glyphs land, a pixel wider all round for the
 			// rounding of their masks.
 			bb, _ := d.BoundString(r.s)
-			c.touch(image.Rect(bb.Min.X.Floor()-1, bb.Min.Y.Floor()-1, bb.Max.X.Ceil()+1, bb.Max.Y.Ceil()+1).Intersect(dst.Rect))
+			c.touch(image.Rect(bb.Min.X.Floor()-1, bb.Min.Y.Floor()-1, bb.Max.X.Ceil()+1, bb.Max.Y.Ceil()+1).Intersect(c.clip))
 		}
 		d.DrawString(r.s)
 	}
@@ -387,6 +404,7 @@ func (c *Canvas) Picture(img image.Image, x, y float32) {
 	r := img.Bounds().Sub(img.Bounds().Min).Add(at)
 	dr := r.Intersect(c.clip)
 	c.touch(dr)
+	dr = dr.Intersect(c.Img.Rect)
 	sp := img.Bounds().Min.Add(dr.Min.Sub(at))
 	if src, ok := img.(*image.RGBA); ok && !dr.Empty() {
 		// An opaque pixel drawn over another is itself, so a row with
@@ -419,7 +437,7 @@ func opaque(row []uint8) bool {
 
 // Dim lays a translucent colour over the whole canvas.
 func (c *Canvas) Dim(col color.Color) {
-	c.touch(c.Img.Bounds())
+	c.touch(c.bounds())
 	draw.Draw(c.Img, c.Img.Bounds(), image.NewUniform(col), image.Point{}, draw.Over)
 }
 

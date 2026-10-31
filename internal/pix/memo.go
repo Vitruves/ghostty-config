@@ -30,6 +30,9 @@ type Memo struct {
 	// free holds the pixels of parts let go, for new parts to reuse: the
 	// cards of a wall are all one size.
 	free [][]byte
+	// drawers are the canvases a Batch draws parts on side by side.
+	drawers []*Canvas
+	batch   *Batch
 	// What became of the parts drawn: copied back, drawn, or drawn past
 	// their bounds and so not kept.
 	Hits, Misses, Refused int
@@ -75,48 +78,81 @@ func (mm *Memo) Reset() {
 // logical bounds of everything draw touches; key must be comparable and
 // tell apart every way draw can come out.
 func (mm *Memo) Draw(c *Canvas, key any, x, y, w, h float32, draw func()) {
+	mm.draw(c, key, x, y, w, h, draw)
+}
+
+// draw is Draw, and returns what it may have drawn.
+func (mm *Memo) draw(c *Canvas, key any, x, y, w, h float32, draw func()) image.Rectangle {
 	r := c.dev(x, y, w, h).Intersect(c.clip)
 	if r.Empty() {
-		draw()
-		return
+		return watch(c, draw)
 	}
 	k := memoKey{key: key, r: r, under: mm.hash(c, r)}
-	part, ok := mm.cur[k]
-	if !ok {
-		if part, ok = mm.prev[k]; ok {
-			mm.cur[k] = part
-			part.frame = mm.frame
-		}
-	}
+	part, ok := mm.lookup(k)
 	mm.letGoUnder(r)
-	img := c.Img
-	row := r.Dx() * 4
 	if ok {
 		mm.Hits++
-		part.frame = mm.frame
-		for y, i := r.Min.Y, 0; y < r.Max.Y; y, i = y+1, i+row {
-			o := img.PixOffset(r.Min.X, y)
-			copy(img.Pix[o:o+row], part.pix[i:i+row])
-		}
-		return
+		mm.put(c, r, part.pix)
+		return r
 	}
+	return mm.drawMiss(c, k, draw)
+}
+
+// drawMiss draws a part the memo lacks, and keeps it unless it drew past
+// its bounds.
+func (mm *Memo) drawMiss(c *Canvas, k memoKey, draw func()) image.Rectangle {
+	r := k.r
+	touched := watch(c, draw)
+	if !touched.In(r) {
+		mm.Refused++
+		return touched
+	}
+	mm.Misses++
+	part := &memoPart{pix: mm.buffer(r.Dx() * 4 * r.Dy()), frame: mm.frame}
+	img := c.Img
+	row := r.Dx() * 4
+	for y, i := r.Min.Y, 0; y < r.Max.Y; y, i = y+1, i+row {
+		o := img.PixOffset(r.Min.X, y)
+		copy(part.pix[i:i+row], img.Pix[o:o+row])
+	}
+	mm.cur[k] = part
+	return touched
+}
+
+// watch runs draw and returns what it may have drawn, which the canvas
+// records as drawn as well.
+func watch(c *Canvas, draw func()) image.Rectangle {
 	outer := c.touched
 	touched := image.Rectangle{}
 	c.touched = &touched
 	draw()
 	c.touched = outer
 	c.touch(touched)
-	if !touched.In(r) {
-		mm.Refused++
-		return
+	return touched
+}
+
+// lookup finds a part drawn this frame or the last, and keeps it for the
+// next.
+func (mm *Memo) lookup(k memoKey) (*memoPart, bool) {
+	part, ok := mm.cur[k]
+	if !ok {
+		if part, ok = mm.prev[k]; ok {
+			mm.cur[k] = part
+		}
 	}
-	mm.Misses++
-	part = &memoPart{pix: mm.buffer(row * r.Dy()), frame: mm.frame}
+	if ok {
+		part.frame = mm.frame
+	}
+	return part, ok
+}
+
+// put copies a part's rows onto the canvas at r.
+func (mm *Memo) put(c *Canvas, r image.Rectangle, pix []byte) {
+	row := r.Dx() * 4
 	for y, i := r.Min.Y, 0; y < r.Max.Y; y, i = y+1, i+row {
-		o := img.PixOffset(r.Min.X, y)
-		copy(part.pix[i:i+row], img.Pix[o:o+row])
+		o := c.Img.PixOffset(r.Min.X, y)
+		copy(c.Img.Pix[o:o+row], pix[i:i+row])
 	}
-	mm.cur[k] = part
 }
 
 // letGoUnder lets go of the parts of the last frame whose middle r covers

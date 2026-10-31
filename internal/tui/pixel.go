@@ -373,8 +373,9 @@ type cardKey struct {
 // shadow and ring of a highlighted card and the two lines under each, and
 // keep clear of the shadow a highlighted neighbour casts into the gap, so
 // moving the highlight draws again only the cards it leaves and lands on.
-// The memo checks the bounds.
-func (m *Model) pxCardMemo(c *pix.Canvas, p pxPal, f pxFonts, t *ghostty.Theme, x, y, w, h float32, sel bool) {
+// The memo checks the bounds. The card is queued on b, which may draw it
+// on another goroutine: pxCard only reads the model.
+func (m *Model) pxCardMemo(b *pix.Batch, c *pix.Canvas, p pxPal, f pxFonts, t *ghostty.Theme, x, y, w, h float32, sel bool) {
 	k := cardKey{
 		name: t.Name, spec: m.themeSpec(t),
 		sel: sel, applied: t.Name == m.applied, fav: m.state.IsFavorite(t.Name),
@@ -386,7 +387,7 @@ func (m *Model) pxCardMemo(c *pix.Canvas, p pxPal, f pxFonts, t *ghostty.Theme, 
 	if sel {
 		side, top = 16, 8
 	}
-	m.px.cards.Draw(c, k, x-side, y-top, w+2*side, h+top+52, func() { m.pxCard(c, p, f, t, x, y, w, h, sel) })
+	b.Draw(k, x-side, y-top, w+2*side, h+top+52, func(c *pix.Canvas) { m.pxCard(c, p, f, t, x, y, w, h, sel) })
 }
 
 // pxRegion registers a logical rectangle as clickable, as the cells whose
