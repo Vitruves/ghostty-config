@@ -95,3 +95,39 @@ func TestCachedGlyphsDrawTheSame(t *testing.T) {
 		t.Fatal("text drawn from kept glyphs differs")
 	}
 }
+
+// TestMemoKeepsOneWall draws a row of cards, then other cards in their
+// places, as typing in the search does: the memo keeps the new cards, not
+// both rows, and the cards that stay are still copied back.
+func TestMemoKeepsOneWall(t *testing.T) {
+	c := New(450, 120, 1.7)
+	mm := NewMemo()
+	xs := []float32{5, 95, 185}
+	frame := func(keys ...int) {
+		c.Clear(color.NRGBA{10, 10, 10, 255})
+		mm.Frame()
+		for i, x := range xs {
+			mm.Draw(c, keys[i], x-2, 8, 84, 54, func() { card(c, x, 10) })
+		}
+	}
+	held := func() int {
+		n := 0
+		for k, part := range mm.prev {
+			if _, ok := mm.cur[k]; !ok && part.frame < mm.frame {
+				n++
+			}
+		}
+		return n + len(mm.cur)
+	}
+	frame(1, 2, 3)
+	frame(4, 5, 3)
+	if mm.Hits != 1 || mm.Misses != 5 {
+		t.Fatalf("hits %d misses %d, want 1 5", mm.Hits, mm.Misses)
+	}
+	if n := held(); n != 3 {
+		t.Fatalf("the memo holds %d parts after a new row, want 3", n)
+	}
+	if len(mm.free) != 0 {
+		t.Fatalf("%d buffers left over, want the 2 let go taken by the 2 new cards", len(mm.free))
+	}
+}

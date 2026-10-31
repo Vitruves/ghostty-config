@@ -143,10 +143,40 @@ func Covers(f font.Face, r rune) bool {
 	if k.bold {
 		idx++
 	}
+	ck := coverKey{idx, r}
+	coverMu.Lock()
+	has, known := covered[ck]
+	coverMu.Unlock()
+	if known {
+		return has
+	}
 	var b sfnt.Buffer
 	i, err := fonts[idx].GlyphIndex(&b, r)
-	return err == nil && i != 0
+	has = err == nil && i != 0
+	coverMu.Lock()
+	if len(covered) >= maxCovered {
+		covered = map[coverKey]bool{}
+	}
+	covered[ck] = has
+	coverMu.Unlock()
+	return has
 }
+
+// covered keeps what Covers found, by font and character: the text of a
+// frame asks about the same few symbols thousands of times, and looking
+// one up in the font takes a buffer of its own.
+var (
+	coverMu sync.Mutex
+	covered = map[coverKey]bool{}
+)
+
+type coverKey struct {
+	font int
+	r    rune
+}
+
+// maxCovered bounds what covered keeps.
+const maxCovered = 4096
 
 // MonoOf is the monospace face of the same size and weight, which has the
 // arrows the sans faces lack.

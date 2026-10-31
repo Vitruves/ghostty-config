@@ -1,10 +1,18 @@
 package kimg
 
 import (
+	"bytes"
+	"encoding/base64"
+	"fmt"
+	"image"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
+
+	"golang.org/x/image/font"
+	"golang.org/x/image/math/fixed"
 
 	"github.com/charmbracelet/x/ansi/kitty"
 )
@@ -114,4 +122,70 @@ func TestWritePreviews(t *testing.T) {
 		win := Window(48, 9, 20, 42, WindowSpec{BG: "#0c1c31", FG: "#d6dae0", Cursor: "#e2cb9c", Pal: p, Screen: "#101014", Behind: [2]string{"#7aa2f7", "#e0af68"}, Titlebar: bar, Shadow: true, Opacity: 0.85, Blur: true, PadX: 14, PadY: 12})
 		os.WriteFile(filepath.Join(dir, "window-"+bar+".png"), win.PNG(), 0o644)
 	}
+}
+
+// TestTransmitEncodedChunks wants the escapes the protocol has always been
+// sent in: the control data with the first chunk, 4096 bytes a chunk, m=1
+// on every chunk but the last.
+func TestTransmitEncodedChunks(t *testing.T) {
+	want := func(id uint32, enc string, w, h, cols, rows int) string {
+		ctrl := fmt.Sprintf("a=T,f=32,s=%d,v=%d,U=1,i=%d,c=%d,r=%d,q=2", w, h, id, cols, rows)
+		var b strings.Builder
+		for first := true; len(enc) > 0; first = false {
+			n := min(chunk, len(enc))
+			part := enc[:n]
+			enc = enc[n:]
+			more := 0
+			if len(enc) > 0 {
+				more = 1
+			}
+			if first {
+				fmt.Fprintf(&b, "\x1b_G%s,o=z,m=%d;%s\x1b\\", ctrl, more, part)
+			} else {
+				fmt.Fprintf(&b, "\x1b_Gm=%d;%s\x1b\\", more, part)
+			}
+		}
+		return b.String()
+	}
+	for _, n := range []int{0, 1, chunk - 1, chunk, chunk + 1, 3*chunk + 17} {
+		enc := strings.Repeat("A", n)
+		if got, w := TransmitEncoded(77, enc, 2040, 38, 120, 1, ""), want(77, enc, 2040, 38, 120, 1); got != w {
+			t.Fatalf("%d bytes: got %q..., want %q...", n, got[:min(len(got), 80)], w[:min(len(w), 80)])
+		}
+	}
+	file := TransmitEncoded(5, "", 4, 2, 1, 1, "/tmp/x")
+	if file != "\x1b_Ga=T,f=32,s=4,v=2,U=1,i=5,c=1,r=1,q=2,t=t;"+base64.StdEncoding.EncodeToString([]byte("/tmp/x"))+"\x1b\\" {
+		t.Fatalf("by file: %q", file)
+	}
+}
+
+// TestFacesAreSafeToShare draws and measures text in one face on several
+// goroutines at once, and wants what one goroutine alone makes.
+func TestFacesAreSafeToShare(t *testing.T) {
+	texts := []string{"Aa git diff --stat", "app.go +12 −3", "Tokyo Night · AAA 12.4", "›→ fi"}
+	draw := func(f font.Face) ([]byte, fixed.Int26_6) {
+		img := image.NewRGBA(image.Rect(0, 0, 400, 40*len(texts)))
+		var w fixed.Int26_6
+		for i, s := range texts {
+			d := &font.Drawer{Dst: img, Src: image.White, Face: f, Dot: fixed.P(3, 30+40*i)}
+			b, _ := d.BoundString(s)
+			w += d.MeasureString(s) + b.Max.X
+			d.DrawString(s)
+		}
+		return img.Pix, w
+	}
+	want, wantW := draw(UncachedFace(false, false, 21.5))
+	f := Face(false, false, 21.5)
+	var wg sync.WaitGroup
+	for range 8 {
+		wg.Go(func() {
+			for range 5 {
+				if got, w := draw(f); !bytes.Equal(got, want) || w != wantW {
+					t.Error("text drawn on several goroutines differs")
+					return
+				}
+			}
+		})
+	}
+	wg.Wait()
 }

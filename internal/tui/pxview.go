@@ -509,6 +509,10 @@ func (m *Model) pxGallery(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo) {
 
 	c.Clip(0, g.bodyY-6, g.W, g.viewEnd-g.bodyY+6)
 	defer c.Unclip()
+	// The cards are drawn side by side when many are new, the titles
+	// between them in their turn.
+	batch := e.cards.Batch(c)
+	defer batch.Run()
 	for i, s := range spots {
 		top := g.bodyY + s.y - e.galTop
 		// Only what fits whole is drawn: no half cards at the edges, and no
@@ -523,15 +527,19 @@ func (m *Model) pxGallery(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo) {
 		o := m.results[i]
 		switch s.kind {
 		case galHead:
-			w := c.Text(f.h1, g.bodyX, top+21, o.label, p.fg)
-			c.Text(f.body, g.bodyX+w+12, top+21, o.detail, p.muted)
+			batch.Do(func() {
+				w := c.Text(f.h1, g.bodyX, top+21, o.label, p.fg)
+				c.Text(f.body, g.bodyX+w+12, top+21, o.detail, p.muted)
+			})
 		case galRow:
-			c.Text(f.row, g.bodyX, top+20, o.label, p.fg)
-			c.Text(f.small, g.bodyX+c.Width(f.row, o.label)+12, top+20, o.detail, p.muted)
+			batch.Do(func() {
+				c.Text(f.row, g.bodyX, top+20, o.label, p.fg)
+				c.Text(f.small, g.bodyX+c.Width(f.row, o.label)+12, top+20, o.detail, p.muted)
+			})
 			m.pxRegion(c, g.bodyX, top, g.bodyW, 32, hitResult, i, "")
 		case galTile:
 			x := g.bodyX + s.x
-			m.pxCardMemo(c, p, f, o.theme, x, top, cw, ph, i == m.sel.cursor)
+			m.pxCardMemo(batch, c, p, f, o.theme, x, top, cw, ph, i == m.sel.cursor)
 			m.pxRegion(c, x, top, cw, ph+50, hitResult, i, "")
 		}
 	}

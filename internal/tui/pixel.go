@@ -220,7 +220,9 @@ func (m *Model) renderPixel() string {
 	stride := c.Img.Stride
 	for r := 0; r < m.height; r++ {
 		bands[r] = c.Img.Pix[r*e.ch*stride : (r+1)*e.ch*stride]
-		keys[r] = fmt.Sprintf("band|%d|%d|%x", W, e.ch, maphash.Bytes(e.seed, bands[r]))
+	}
+	for r, h := range hashBands(e.seed, bands) {
+		keys[r] = fmt.Sprintf("band|%d|%d|%x", W, e.ch, h)
 	}
 	ready := e.readyBands(m.imgs, keys, bands)
 	for r := 0; r < m.height; r++ {
@@ -234,6 +236,38 @@ func (m *Model) renderPixel() string {
 		rows[r] = e.placeholders(id, m.width, ui.paint())
 	}
 	return strings.Join(rows, "\n")
+}
+
+// maxHashers bounds the goroutines hashBands starts: past four, waking
+// another thread costs about what it saves.
+const maxHashers = 4
+
+// hashBands sums the rows of a frame side by side: every frame hashes
+// every row, ten megabytes at 120x34 cells, and alone that is most of a
+// frame that changes nothing.
+func hashBands(seed maphash.Seed, bands [][]byte) []uint64 {
+	sums := make([]uint64, len(bands))
+	workers := min(runtime.GOMAXPROCS(0), maxHashers, len(bands))
+	if workers < 2 {
+		for r, b := range bands {
+			sums[r] = maphash.Bytes(seed, b)
+		}
+		return sums
+	}
+	// Every worker takes every workers-th row, rows being one size; this
+	// goroutine is one of them, which spares waking a thread.
+	stripe := func(w int) {
+		for r := w; r < len(bands); r += workers {
+			sums[r] = maphash.Bytes(seed, bands[r])
+		}
+	}
+	var wg sync.WaitGroup
+	for w := 1; w < workers; w++ {
+		wg.Go(func() { stripe(w) })
+	}
+	stripe(0)
+	wg.Wait()
+	return sums
 }
 
 // readyBands readies the rows the terminal does not hold, side by side:
@@ -339,8 +373,9 @@ type cardKey struct {
 // shadow and ring of a highlighted card and the two lines under each, and
 // keep clear of the shadow a highlighted neighbour casts into the gap, so
 // moving the highlight draws again only the cards it leaves and lands on.
-// The memo checks the bounds.
-func (m *Model) pxCardMemo(c *pix.Canvas, p pxPal, f pxFonts, t *ghostty.Theme, x, y, w, h float32, sel bool) {
+// The memo checks the bounds. The card is queued on b, which may draw it
+// on another goroutine: pxCard only reads the model.
+func (m *Model) pxCardMemo(b *pix.Batch, c *pix.Canvas, p pxPal, f pxFonts, t *ghostty.Theme, x, y, w, h float32, sel bool) {
 	k := cardKey{
 		name: t.Name, spec: m.themeSpec(t),
 		sel: sel, applied: t.Name == m.applied, fav: m.state.IsFavorite(t.Name),
@@ -352,7 +387,7 @@ func (m *Model) pxCardMemo(c *pix.Canvas, p pxPal, f pxFonts, t *ghostty.Theme, 
 	if sel {
 		side, top = 16, 8
 	}
-	m.px.cards.Draw(c, k, x-side, y-top, w+2*side, h+top+52, func() { m.pxCard(c, p, f, t, x, y, w, h, sel) })
+	b.Draw(k, x-side, y-top, w+2*side, h+top+52, func(c *pix.Canvas) { m.pxCard(c, p, f, t, x, y, w, h, sel) })
 }
 
 // pxRegion registers a logical rectangle as clickable, as the cells whose

@@ -3,6 +3,7 @@ package tui
 import (
 	"bytes"
 	"io"
+	"runtime"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
@@ -26,8 +27,15 @@ func newBenchHarness(b *testing.B, cols, rows int) *harness {
 	h.send(tea.WindowSizeMsg{Width: cols, Height: rows})
 	h.m.imgReady = true
 	h.m.setPromptText("Theme ")
-	h.m.render()
+	h.pxFrame()
 	return h
+}
+
+// pxFrame draws a frame and sends the pictures it queued, as View does: the
+// queue left to grow would be timed and kept as well.
+func (h *harness) pxFrame() {
+	h.m.render()
+	h.m.imgs.flush()
 }
 
 // BenchmarkFirstFrame draws every row of the themes wall from nothing, as
@@ -44,7 +52,7 @@ func BenchmarkFirstFrame(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				h.m.imgs.dropAll()
 				h.m.px.forget()
-				h.m.render()
+				h.pxFrame()
 			}
 		})
 	}
@@ -60,11 +68,11 @@ func BenchmarkSameFrame(b *testing.B) {
 				h.m.setPromptText("")
 				h.m.jumpToGroup("Window")
 			}
-			h.m.render()
+			h.pxFrame()
 			b.ReportAllocs()
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				h.m.render()
+				h.pxFrame()
 			}
 		})
 	}
@@ -86,9 +94,9 @@ func BenchmarkMove(b *testing.B) {
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				h.key(there)
-				h.m.render()
+				h.pxFrame()
 				h.key(back)
-				h.m.render()
+				h.pxFrame()
 			}
 		})
 	}
@@ -102,8 +110,60 @@ func BenchmarkTypeSearch(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		h.key("s")
-		h.m.render()
+		h.pxFrame()
 		h.key("backspace")
+		h.pxFrame()
+	}
+}
+
+// BenchmarkWallMemory types, moves and pages along the themes wall, and
+// reports the heap the picture interface keeps once the frames are drawn
+// (live-MB) and the most it held while drawing them (peak-MB).
+func BenchmarkWallMemory(b *testing.B) {
+	for _, size := range []struct {
+		name       string
+		cols, rows int
+	}{{"120x34", 120, 34}, {"240x68", 240, 68}} {
+		b.Run(size.name, func(b *testing.B) {
+			h := newBenchHarness(b, size.cols, size.rows)
+			var ms runtime.MemStats
+			peak := uint64(0)
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				for _, k := range []string{"s", "backspace", "right", "down", "pgdown"} {
+					h.key(k)
+					h.pxFrame()
+					runtime.ReadMemStats(&ms)
+					peak = max(peak, ms.HeapInuse)
+				}
+			}
+			b.StopTimer()
+			runtime.GC()
+			runtime.GC() // and what pools let go at the first
+			runtime.ReadMemStats(&ms)
+			b.ReportMetric(float64(ms.HeapAlloc)/1e6, "live-MB")
+			b.ReportMetric(float64(peak)/1e6, "peak-MB")
+			runtime.KeepAlive(h)
+		})
+	}
+}
+
+// BenchmarkCellWall moves the highlight along the themes wall and back in
+// the text interface, for a terminal that shows no pictures.
+func BenchmarkCellWall(b *testing.B) {
+	h := newHarnessWith(b, pixConfig, Options{NoReload: true})
+	if lib := ghostty.LoadLibrary(ghostty.DefaultPaths("", "")); len(lib.Themes) > len(h.m.lib.Themes) {
+		h.m.lib = lib
+	}
+	h.send(tea.WindowSizeMsg{Width: 120, Height: 34})
+	h.m.setPromptText("Theme ")
+	h.m.render()
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		h.key("right")
+		h.m.render()
+		h.key("left")
 		h.m.render()
 	}
 }

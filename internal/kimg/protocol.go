@@ -139,30 +139,49 @@ func TransmitRGBA(id uint32, pix []byte, w, h, cols, rows int, file string) stri
 // is the slow part of sending, and needs no number, so pictures can be
 // compressed side by side and sent in order after.
 func EncodeRGBA(pix []byte) string {
-	var z bytes.Buffer
-	zw := zlibWriters.Get().(*zlib.Writer)
-	zw.Reset(&z)
-	_, _ = zw.Write(pix)
-	_ = zw.Close()
-	zlibWriters.Put(zw)
-	return base64.StdEncoding.EncodeToString(z.Bytes())
+	z := compressors.Get().(*compressor)
+	z.out.Reset()
+	z.zw.Reset(&z.out)
+	_, _ = z.zw.Write(pix)
+	_ = z.zw.Close()
+	enc := base64.StdEncoding.EncodeToString(z.out.Bytes())
+	compressors.Put(z)
+	return enc
 }
 
-// zlibWriters keeps compressors between pictures: each holds the best part
-// of a megabyte of tables, and a frame compresses dozens.
-var zlibWriters = sync.Pool{New: func() any {
+// compressor is a zlib writer and the buffer it writes to, kept between
+// pictures: the writer holds the best part of a megabyte of tables, a frame
+// compresses dozens of pictures, and the buffer would otherwise grow anew
+// for each of them.
+type compressor struct {
+	zw  *zlib.Writer
+	out bytes.Buffer
+}
+
+var compressors = sync.Pool{New: func() any {
 	zw, _ := zlib.NewWriterLevel(nil, zlib.BestSpeed)
-	return zw
+	return &compressor{zw: zw}
 }}
 
 // TransmitEncoded is TransmitRGBA for pixels EncodeRGBA compressed, or,
 // with a file path, for pixels written to that file.
 func TransmitEncoded(id uint32, enc string, w, h, cols, rows int, file string) string {
+	var b strings.Builder
+	WriteTransmitEncoded(&b, id, enc, w, h, cols, rows, file)
+	return b.String()
+}
+
+// WriteTransmitEncoded is TransmitEncoded written to b, which grows once
+// to take it.
+func WriteTransmitEncoded(b *strings.Builder, id uint32, enc string, w, h, cols, rows int, file string) {
 	ctrl := fmt.Sprintf("a=T,f=32,s=%d,v=%d,U=1,i=%d,c=%d,r=%d,q=2", w, h, id, cols, rows)
 	if file != "" {
-		return "\x1b_G" + ctrl + ",t=t;" + base64.StdEncoding.EncodeToString([]byte(file)) + "\x1b\\"
+		b.WriteString("\x1b_G" + ctrl + ",t=t;" + base64.StdEncoding.EncodeToString([]byte(file)) + "\x1b\\")
+		return
 	}
-	var b strings.Builder
+	// Each chunk is wrapped in at most "\x1b_Gm=1;" and "\x1b\\", the
+	// first in the control data as well.
+	b.Grow(len(enc) + (len(enc)/chunk+1)*len("\x1b_Gm=1;\x1b\\") + len(ctrl) + len(",o=z,"))
 	first := true
 	for len(enc) > 0 {
 		n := chunk
@@ -171,16 +190,21 @@ func TransmitEncoded(id uint32, enc string, w, h, cols, rows int, file string) s
 		}
 		part := enc[:n]
 		enc = enc[n:]
-		more := 0
+		more := "0"
 		if len(enc) > 0 {
-			more = 1
+			more = "1"
 		}
 		if first {
-			fmt.Fprintf(&b, "\x1b_G%s,o=z,m=%d;%s\x1b\\", ctrl, more, part)
+			b.WriteString("\x1b_G")
+			b.WriteString(ctrl)
+			b.WriteString(",o=z,m=")
 			first = false
 		} else {
-			fmt.Fprintf(&b, "\x1b_Gm=%d;%s\x1b\\", more, part)
+			b.WriteString("\x1b_Gm=")
 		}
+		b.WriteString(more)
+		b.WriteString(";")
+		b.WriteString(part)
+		b.WriteString("\x1b\\")
 	}
-	return b.String()
 }
