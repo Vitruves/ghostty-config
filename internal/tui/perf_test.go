@@ -26,8 +26,15 @@ func newBenchHarness(b *testing.B, cols, rows int) *harness {
 	h.send(tea.WindowSizeMsg{Width: cols, Height: rows})
 	h.m.imgReady = true
 	h.m.setPromptText("Theme ")
-	h.m.render()
+	h.pxFrame()
 	return h
+}
+
+// pxFrame draws a frame and sends the pictures it queued, as View does: the
+// queue left to grow would be timed and kept as well.
+func (h *harness) pxFrame() {
+	h.m.render()
+	h.m.imgs.flush()
 }
 
 // BenchmarkFirstFrame draws every row of the themes wall from nothing, as
@@ -44,7 +51,7 @@ func BenchmarkFirstFrame(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				h.m.imgs.dropAll()
 				h.m.px.forget()
-				h.m.render()
+				h.pxFrame()
 			}
 		})
 	}
@@ -60,11 +67,11 @@ func BenchmarkSameFrame(b *testing.B) {
 				h.m.setPromptText("")
 				h.m.jumpToGroup("Window")
 			}
-			h.m.render()
+			h.pxFrame()
 			b.ReportAllocs()
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				h.m.render()
+				h.pxFrame()
 			}
 		})
 	}
@@ -86,9 +93,9 @@ func BenchmarkMove(b *testing.B) {
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				h.key(there)
-				h.m.render()
+				h.pxFrame()
 				h.key(back)
-				h.m.render()
+				h.pxFrame()
 			}
 		})
 	}
@@ -102,9 +109,9 @@ func BenchmarkTypeSearch(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		h.key("s")
-		h.m.render()
+		h.pxFrame()
 		h.key("backspace")
-		h.m.render()
+		h.pxFrame()
 	}
 }
 
