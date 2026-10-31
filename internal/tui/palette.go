@@ -512,32 +512,39 @@ func (p *palette) homeRows(m *Model) []palRow {
 // and light find the themes of that kind.
 func (m *Model) palThemes(words []string, strict bool) []palRow {
 	var out []palRow
-	for _, o := range m.themeOptions("") {
-		if o.header || o.theme == nil {
-			continue
-		}
-		if score, ok := palThemeScore(o.theme, words, strict); ok {
-			out = append(out, palRow{kind: palTheme, theme: o.theme, score: score})
+	lower := make([]string, len(words))
+	for i, w := range words {
+		// As fuzzyMatch has them: the names are kept in lower case.
+		lower[i] = strings.ToLower(w)
+	}
+	for _, t := range m.themeOrder() {
+		if score, ok := palThemeScore(m.factsOf(t), lower, strict); ok {
+			out = append(out, palRow{kind: palTheme, theme: t, score: score})
 		}
 	}
 	return out
 }
 
-func palThemeScore(t *ghostty.Theme, words []string, strict bool) (int, bool) {
+func palThemeScore(f *themeFacts, words []string, strict bool) (int, bool) {
 	total := 0
 	for _, w := range words {
-		switch {
-		case w == "dark" || w == "light":
-			if (w == "dark") != t.IsDark() {
+		if w == "dark" || w == "light" {
+			if (w == "dark") != f.dark {
 				return 0, false
 			}
-		case fuzzyMatch(t.Name, w) && (!strict || fuzzyScore(t.Name, w) < 3):
-			total += fuzzyScore(t.Name, w)
-		case strings.Contains(strings.ToLower(themeFamily(t)+" "+t.Note), w):
-			total += 3
-		default:
-			return 0, false
+			continue
 		}
+		if fuzzyMatchLower(f.lowerName, w) {
+			if score := fuzzyScoreLower(f.lowerName, w); !strict || score < 3 {
+				total += score
+				continue
+			}
+		}
+		if strings.Contains(f.lowerFind, w) {
+			total += 3
+			continue
+		}
+		return 0, false
 	}
 	return total, true
 }

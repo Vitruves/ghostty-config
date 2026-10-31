@@ -1,6 +1,9 @@
 package tui
 
-import "strings"
+import (
+	"strings"
+	"unicode/utf8"
+)
 
 // scroller keeps a cursor inside a window of rows, the way every list in the
 // editor scrolls.
@@ -56,24 +59,35 @@ func (s *scroller) window(count, height int, render func(i int, selected bool) s
 // fuzzyMatch reports whether every rune of needle appears in order in
 // haystack, so "ctpmoc" finds "catppuccin-mocha" without an exact substring.
 func fuzzyMatch(haystack, needle string) bool {
-	haystack, needle = strings.ToLower(haystack), strings.ToLower(needle)
+	return fuzzyMatchLower(strings.ToLower(haystack), strings.ToLower(needle))
+}
+
+// fuzzyMatchLower is fuzzyMatch of a haystack and a needle already in lower
+// case.
+func fuzzyMatchLower(haystack, needle string) bool {
 	if needle == "" || strings.Contains(haystack, needle) {
 		return true
 	}
-	i := 0
-	runes := []rune(needle)
 	for _, r := range haystack {
-		if i < len(runes) && runes[i] == r {
-			i++
+		if needle == "" {
+			break
+		}
+		if n, size := utf8.DecodeRuneInString(needle); n == r {
+			needle = needle[size:]
 		}
 	}
-	return i == len(runes)
+	return needle == ""
 }
 
 // fuzzyScore ranks matches: exact substring beats prefix-of-words beats
 // scattered letters, so the best hit sits at the top of a filtered list.
 func fuzzyScore(haystack, needle string) int {
-	h, n := strings.ToLower(haystack), strings.ToLower(needle)
+	return fuzzyScoreLower(strings.ToLower(haystack), strings.ToLower(needle))
+}
+
+// fuzzyScoreLower is fuzzyScore of a haystack and a needle already in lower
+// case.
+func fuzzyScoreLower(h, n string) int {
 	switch {
 	case n == "":
 		return 0
