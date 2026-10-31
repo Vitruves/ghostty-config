@@ -26,6 +26,7 @@ package vector
 // https://people.gnome.org/~mathieu/libart/internals.html#INTERNALS-SCANLINE
 
 import (
+	"encoding/binary"
 	"image"
 	"image/color"
 	"image/draw"
@@ -549,16 +550,17 @@ func (u *uniformOver) span(p []uint8, ma uint32) {
 		// What a pixel becomes depends on the pixel and ma alone, and a
 		// span mostly lies over one colour: a pixel like the one before
 		// becomes what that one became.
-		var in, out [4]uint8
+		var in, out uint32
 		for i := 0; i+4 <= len(p); i += 4 {
 			q := p[i : i+4 : i+4]
-			if i > 0 && q[0] == in[0] && q[1] == in[1] && q[2] == in[2] && q[3] == in[3] {
-				q[0], q[1], q[2], q[3] = out[0], out[1], out[2], out[3]
+			v := binary.LittleEndian.Uint32(q)
+			if i > 0 && v == in {
+				binary.LittleEndian.PutUint32(q, out)
 				continue
 			}
-			in = [4]uint8{q[0], q[1], q[2], q[3]}
+			in = v
 			u.pixel(q, ma)
-			out = [4]uint8{q[0], q[1], q[2], q[3]}
+			out = binary.LittleEndian.Uint32(q)
 		}
 	}
 }
