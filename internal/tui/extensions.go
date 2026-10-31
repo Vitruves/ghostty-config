@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/vitruves/ghostty-config/internal/extensions"
+	"github.com/vitruves/ghostty-config/internal/ghostty"
 )
 
 // The Extensions section holds what other people have made for Ghostty and
@@ -217,6 +219,36 @@ func (m *Model) dropUnkeptShader() (tea.Cmd, bool) {
 		m.overlay = overlayNone
 	}
 	return cmd, true
+}
+
+// packsSeen is how many packs are wholly installed, as packsInstalled last
+// counted them, and when.
+var packsSeen struct {
+	sync.Mutex
+	lib       *ghostty.Library
+	dir       string
+	statusSeq int
+	n         int
+}
+
+// packsInstalled is how many packs are wholly installed. Counting looks for
+// every file of every pack, and the menu and Palette ask on every frame:
+// the count is kept until the library is read again or the status line says
+// something new, as it does after every command.
+func (m *Model) packsInstalled() int {
+	packsSeen.Lock()
+	defer packsSeen.Unlock()
+	if packsSeen.lib == m.lib && packsSeen.lib != nil && packsSeen.dir == m.paths.ThemesDir && packsSeen.statusSeq == m.statusSeq {
+		return packsSeen.n
+	}
+	n := 0
+	for _, p := range extensions.Packs {
+		if p.Installed(m.paths.ThemesDir) == len(p.Files) {
+			n++
+		}
+	}
+	packsSeen.lib, packsSeen.dir, packsSeen.statusSeq, packsSeen.n = m.lib, m.paths.ThemesDir, m.statusSeq, n
+	return n
 }
 
 // packOptions lists the packs with how much of each is installed.
