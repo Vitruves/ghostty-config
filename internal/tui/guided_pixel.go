@@ -133,6 +133,10 @@ func (g *guided) bottomItems(m *Model, pg gPage, pages []gPage) ([]gButton, []gB
 	if g.step > 0 || g.page > 0 {
 		left = append(left, gButton{label: "← Back", name: "g-back", kind: 1})
 	}
+	// Help and the editor's own settings answer on every page, as F1 and F4
+	// do everywhere else; they go only after the page's own links.
+	left = append(left, gButton{label: "F1 Help", name: "g-help", drop: 1},
+		gButton{label: "F4 Settings", name: "g-settings", drop: 1})
 	if pg.qs[0].kind == gCards {
 		left = append(left, gButton{label: "Three more like these", name: "g-more", drop: 2},
 			gButton{label: "·", kind: 3, drop: 3},

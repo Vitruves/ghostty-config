@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/vitruves/ghostty-config/internal/ghostty"
@@ -244,5 +245,38 @@ func TestEveryProfileWorks(t *testing.T) {
 				h.send(tea.MouseWheelMsg{X: 10, Y: 10, Button: tea.MouseWheelDown})
 			}
 		}
+	}
+}
+
+// TestGlobalKeysKeepTheirRoom: a busy footer, the wall of themes above all,
+// drops its own keys before help, docs and the editor's settings.
+func TestGlobalKeysKeepTheirRoom(t *testing.T) {
+	ui := defaultChrome()
+	pairs := []string{"←↓↑→", "move", "^T", "try here", "^F", "favourite", "^X", "delete", "Tab", "section", "F1", "help", "F4", "settings"}
+	for _, width := range []int{120, 60, 40} {
+		got := ui.keyHintFitGlobal(width, "   ", pairs)
+		for _, want := range []string{"F1", "F4"} {
+			if !strings.Contains(got, want) {
+				t.Errorf("width %d: %q lacks %s", width, got, want)
+			}
+		}
+		if w := lipgloss.Width(got); w > width {
+			t.Errorf("width %d: hints are %d wide", width, w)
+		}
+	}
+}
+
+// TestGuidedOffersSettings: the guide's bar opens help and the editor's
+// settings, as F1 and F4 do elsewhere.
+func TestGuidedOffersSettings(t *testing.T) {
+	was := harnessProfile
+	harnessProfile = "guided"
+	h := newHarnessWith(t, pixConfig, Options{NoReload: true})
+	harnessProfile = was
+	h.send(tea.WindowSizeMsg{Width: 120, Height: 34})
+	g := h.m.profile().(*guided)
+	g.press(h.m, "g-settings", 0)
+	if h.m.overlay != overlaySettings {
+		t.Fatalf("g-settings opened overlay %v", h.m.overlay)
 	}
 }

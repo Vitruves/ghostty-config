@@ -542,10 +542,44 @@ func (m *Model) viewKeys(ui chrome) string {
 
 // keyLine is what you can press here, most useful first, as many as fit.
 func (m *Model) keyLine(ui chrome, width int) string {
-	return ui.keyHintFitSep(width, "   ", m.keyPairs()...)
+	return ui.keyHintFitGlobal(width, "   ", m.keyPairs())
 }
 
 // keyPairs is what can be pressed here, as key and word, most useful first.
+// globalKeys answer on every screen: help, Ghostty's docs and the editor's
+// own settings. The footer keeps room for them first, so the keys of a busy
+// screen, the wall of themes above all, cannot push them out.
+var globalKeys = map[string]bool{"F1": true, "F3": true, "F4": true}
+
+// splitGlobalKeys parts key pairs into the screen's own and the global ones,
+// each in its original order.
+func splitGlobalKeys(pairs []string) (local, global []string) {
+	for i := 0; i+1 < len(pairs); i += 2 {
+		if globalKeys[pairs[i]] {
+			global = append(global, pairs[i], pairs[i+1])
+		} else {
+			local = append(local, pairs[i], pairs[i+1])
+		}
+	}
+	return local, global
+}
+
+// keyHintFitGlobal is keyHintFitSep that keeps room for the global keys
+// first, then fits the screen's own before them, each in their order.
+func (c chrome) keyHintFitGlobal(width int, sep string, pairs []string) string {
+	local, global := splitGlobalKeys(pairs)
+	right := c.keyHintFitSep(width, sep, global...)
+	room := width - lipgloss.Width(right)
+	if right != "" {
+		room -= lipgloss.Width(sep)
+	}
+	left := c.keyHintFitSep(room, sep, local...)
+	if left == "" || right == "" {
+		return left + right
+	}
+	return left + c.base().Render(sep) + right
+}
+
 func (m *Model) keyPairs() []string {
 	var pairs []string
 	switch {

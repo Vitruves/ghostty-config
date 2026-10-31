@@ -1305,22 +1305,34 @@ func (m *Model) pxFooter(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo) {
 		key, word string
 		w         float32
 	}
-	var caps []cap
+	// The global keys (help, docs, settings) are kept first; up to four of
+	// the screen's own fill the room left before them.
+	var local, global []cap
 	for _, k := range keys {
 		kw := pxKeyLabel(c, f.monoS, 0, 0, k[0], p.fg, false) + 14
-		caps = append(caps, cap{k[0], k[1], kw + 6 + c.Width(f.small, title(k[1]))})
+		cp := cap{k[0], k[1], kw + 6 + c.Width(f.small, title(k[1]))}
+		if globalKeys[k[0]] {
+			global = append(global, cp)
+		} else {
+			local = append(local, cp)
+		}
 	}
 	total := float32(0)
-	n := 0
-	for _, k := range caps {
-		if right-total-k.w-16 < leftEnd+24 || n == 4 {
-			break
+	fit := func(list []cap, max int) []cap {
+		n := 0
+		for _, k := range list {
+			if right-total-k.w-16 < leftEnd+24 || n == max {
+				break
+			}
+			total += k.w + 16
+			n++
 		}
-		total += k.w + 16
-		n++
+		return list[:n]
 	}
+	global = fit(global, len(global))
+	caps := append(fit(local, 4), global...)
 	kx := right - total + 16
-	for _, k := range caps[:n] {
+	for _, k := range caps {
 		kw := pxKeyLabel(c, f.monoS, 0, 0, k.key, p.fg, false) + 14
 		c.Rect(kx, cy-10, kw, 20, 5, p.keycap)
 		pxKeyLabel(c, f.monoS, kx+7, mid(cy-10, 20, 11.5), k.key, p.fg, true)

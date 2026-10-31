@@ -504,7 +504,7 @@ func (p *palette) cellStatus(m *Model, ui chrome, l palCells) string {
 func (p *palette) cellFooter(m *Model, ui chrome) string {
 	brand := ui.mutedS().Render("ghostty-config · ") + ui.text(palQuiet(ui)).Render("Palette")
 	room := m.width - 4 - lipgloss.Width(brand) - 3
-	keys := ui.keyHintFitSep(room, "   ", p.keyPairs(m)...)
+	keys := ui.keyHintFitGlobal(room, "   ", p.keyPairs(m))
 	gap := maxInt(m.width-4-lipgloss.Width(brand)-lipgloss.Width(keys), 1)
 	return ui.base().Render("  ") + brand + ui.base().Render(strings.Repeat(" ", gap)) + keys
 }

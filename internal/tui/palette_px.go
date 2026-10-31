@@ -660,17 +660,25 @@ func (p *palette) pxFooter(m *Model, c *pix.Canvas, pal pxPal, f pxFonts, l palP
 		key, word string
 		kw, w     float32
 	}
-	var caps []keycap
+	// The global keys (help, docs, settings) are given room first, then the
+	// screen's own, in their order, while they fit.
 	total := float32(0)
-	for i := 0; i+1 < len(pairs); i += 2 {
-		kw := pxKeyLabel(c, f.monoS, 0, 0, pairs[i], pal.fg, false) + 14
-		k := keycap{pairs[i], pairs[i+1], kw, kw + 6 + c.Width(f.small, pairs[i+1])}
-		if W-16-total-k.w < x+32 {
-			break
+	fit := func(list []string) []keycap {
+		var out []keycap
+		for i := 0; i+1 < len(list); i += 2 {
+			kw := pxKeyLabel(c, f.monoS, 0, 0, list[i], pal.fg, false) + 14
+			k := keycap{list[i], list[i+1], kw, kw + 6 + c.Width(f.small, list[i+1])}
+			if W-16-total-k.w < x+32 {
+				break
+			}
+			out = append(out, k)
+			total += k.w + 18
 		}
-		caps = append(caps, k)
-		total += k.w + 18
+		return out
 	}
+	local, global := splitGlobalKeys(pairs)
+	globalCaps := fit(global)
+	caps := append(fit(local), globalCaps...)
 	kx := W - 16 - total + 18
 	for _, k := range caps {
 		c.Rect(kx, cy-10, k.kw, 20, 5, pal.keycap)

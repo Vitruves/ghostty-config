@@ -619,6 +619,10 @@ func (g *guided) press(m *Model, name string, index int) tea.Cmd {
 		return g.back(m)
 	case name == "g-skip":
 		return g.skip(m)
+	case name == "g-help":
+		m.openMessage(guidedHelp)
+	case name == "g-settings":
+		m.openSettings()
 	case name == "g-more":
 		g.more++
 		delete(g.picks, "theme")
