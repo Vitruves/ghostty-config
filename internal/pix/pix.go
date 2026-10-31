@@ -19,9 +19,9 @@ import (
 	"golang.org/x/image/font/opentype"
 	"golang.org/x/image/font/sfnt"
 	"golang.org/x/image/math/fixed"
-	"golang.org/x/image/vector"
 
 	"github.com/vitruves/ghostty-config/internal/kimg"
+	"github.com/vitruves/ghostty-config/internal/pix/vector"
 )
 
 // Canvas is an RGBA picture drawn in logical units.
