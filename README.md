@@ -9,6 +9,7 @@
   <a href="https://github.com/vitruves/ghostty-config/tags"><img src="https://img.shields.io/github/v/tag/vitruves/ghostty-config?sort=semver&label=release&style=flat-square&color=3d6fd6" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/macOS%20%C2%B7%20Linux-555?style=flat-square" alt="macOS and Linux">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-555?style=flat-square" alt="MIT licence"></a>
+  <a href="https://cli.masoko.net/tools/ghostty-config/"><img src="https://img.shields.io/badge/terminal%20index-listed-555?style=flat-square" alt="Listed on The Terminal Index"></a>
 </p>
 
 <p align="center">
