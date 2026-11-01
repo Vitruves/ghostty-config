@@ -17,7 +17,7 @@ import (
 )
 
 // version is overridden at build time with -ldflags "-X main.version=...".
-var version = "1.2.0"
+var version = "2.0.0"
 
 func main() {
 	configPath := flag.String("config", "", "Ghostty config file to edit instead of the default ones")
