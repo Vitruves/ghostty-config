@@ -27,6 +27,26 @@ The script puts a checksum-verified binary for your system (macOS or Linux, Inte
 
 Run `ghostty-config`. Browsing changes nothing: a theme or a font is written when you press `Enter` on it, a setting when you change its value.
 
+## Layouts
+
+The same settings, three ways to reach them. A chooser asks for one at first launch; switch any time with `F4` or in Tool → Interface → Layout.
+
+- **Atelier:** sections in a sidebar, the wall of themes, every setting in its place (the screenshots above and below).
+- **Palette:** one search line over themes, fonts, settings, shortcuts and commands, with filters. The highlighted setting opens in place; a theme previews in a strip drawn in its colours.
+- **Guided:** six plain questions, one page at a time (Colours, Font, Window, Cursor, Copy & paste, Done), with large previews and a link to all the settings of each step.
+
+<p align="center">
+  <img src="img/atelier.png" alt="The Palette layout: one search line over everything" width="820">
+</p>
+
+<p align="center">
+  <img src="img/guide.png" alt="The Guided layout: one question at a time" width="820">
+</p>
+
+## Keys
+
+The keys of Atelier; Palette and Guided show theirs in the footer.
+
 <div align="center">
 
 | Key | Action |
@@ -40,7 +60,7 @@ Run `ghostty-config`. Browsing changes nothing: a theme or a font is written whe
 | `/` or type | Search themes, settings and commands |
 | `Ctrl+T` `Ctrl+F` | Try a theme in this terminal; star it |
 | `F3` | Ghostty's own documentation of the highlighted line (Ghostty 1.4) |
-| `F4` | ghostty-config's own settings: its look, reload, update check, drawing |
+| `F4` | ghostty-config's own settings: layout, look, reload, update check, drawing |
 | `F1` `Esc` | Help; go back, then quit |
 
 </div>
@@ -59,7 +79,9 @@ Everything can be clicked too: sections, pills, switches, sliders, and a double 
 - **Input:** cursor, clipboard, mouse, and every keyboard shortcut: press the new one, conflicts are shown.
 - **Session:** scrollback, window restore, quick terminal, bell, notifications, shell integration.
 - **Extensions:** shaders and theme packs, with their source and licence shown before install.
-- **Tool:** reload Ghostty, check the config, see the session's changes, restore a backup, the interface's own look: its scheme, accent colour and contrast, and when drawn as images its size and the width of theme cards.
+- **Tool:** reload Ghostty, check the config, see the session's changes, restore a backup, the interface's own layout and look: its scheme, accent colour and contrast, and when drawn as images its size and the width of theme cards.
+
+Settings follow the Ghostty you have: 1.4's new ones (scrollback in bytes, clipboard access and limits, `link-osc8`, the SSH terminfo cache…) are offered to 1.4, and 1.3 keeps working. See [CHANGELOG.md](CHANGELOG.md) for what changed in each version.
 
 ## Good to know
 
