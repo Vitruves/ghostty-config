@@ -1,7 +1,7 @@
 BINARY_NAME=ghostty-config
 BUILD_DIR=build
 
-.PHONY: build clean install local-install test run export-collection shots readme-shots
+.PHONY: build clean install local-install test run export-collection shots readme-shots site-shots
 
 build:
 	@mkdir -p $(BUILD_DIR)
@@ -43,3 +43,14 @@ readme-shots:
 	rm -rf build/readme
 	GHOSTTY_CONFIG_README=$(CURDIR)/build/readme go test ./internal/tui -run TestReadmeShots -count=1
 	for n in themes window; do $${PYTHON:-python3} tools/frame.py build/readme/$$n.png img/$$n.png 1600; done
+
+# Draw the website's pictures (docs/, served by GitHub Pages) and frame them
+# as windows. Needs Pillow, like shots.
+SITE_SHOTS=12b-chooser-new 12b-chooser-new-light 31-palette-themes 31-palette-themes-light 32-palette-setting 32-palette-setting-light 24-guided-2a 24-guided-2a-light 24-guided-3a 24-guided-3a-light
+site-shots: readme-shots
+	rm -rf build/pxshots
+	GHOSTTY_CONFIG_PXSHOTS=$(CURDIR)/build/pxshots go test ./internal/tui -run TestPixelScreens -count=1
+	@mkdir -p docs/img
+	for n in themes themes-light window window-dark input input-light font-list font-list-light editor editor-light help help-light; do $${PYTHON:-python3} tools/frame.py build/readme/$$n.png docs/img/$$n.webp 1600; done
+	for n in $(SITE_SHOTS); do $${PYTHON:-python3} tools/frame.py build/pxshots/$$n.png docs/img/$$n.webp 1600; done
+	cp img/logo.png docs/img/logo.png

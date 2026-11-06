@@ -278,6 +278,11 @@ func TestReadmeShots(t *testing.T) {
 		h.m.jumpToGroup("Window")
 		h.highlightCommand("opacity")
 	})
+	shoot("midnight", "window-dark", func(h *harness) {
+		h.m.setPromptText("")
+		h.m.jumpToGroup("Window")
+		h.highlightCommand("opacity")
+	})
 	shoot("midnight", "input", func(h *harness) {
 		h.m.setPromptText("")
 		h.m.jumpToGroup("Input")
@@ -287,6 +292,41 @@ func TestReadmeShots(t *testing.T) {
 		h.m.setPromptText("Theme ")
 		h.highlightTheme("sakura-fade")
 	})
+
+	// The website shows each screen in the scheme its switch picks.
+	shoot("paper", "input-light", func(h *harness) {
+		h.m.setPromptText("")
+		h.m.jumpToGroup("Input")
+		h.highlightCommand("cursor")
+	})
+	for _, iface := range []string{"midnight", "paper"} {
+		suffix := ""
+		if iface == "paper" {
+			suffix = "-light"
+		}
+		shoot(iface, "font-list"+suffix, func(h *harness) {
+			// The specimen is set in the family's own file; the embedded
+			// faces stand in for one on disk.
+			dir := filepath.Join("..", "kimg", "fonts")
+			h.m.families[0].Files = map[string]ghostty.FontFile{
+				"Regular": {Path: filepath.Join(dir, "sans-regular.ttf")},
+				"Bold":    {Path: filepath.Join(dir, "sans-bold.ttf")},
+			}
+			h.m.setPromptText("Font ")
+			if load := h.m.wantSpecimen(); load != nil {
+				h.send(load())
+			}
+		})
+		shoot(iface, "editor"+suffix, func(h *harness) {
+			h.m.setPromptText("Edit ")
+			h.key("enter")
+		})
+		shoot(iface, "help"+suffix, func(h *harness) {
+			h.m.setPromptText("")
+			h.m.jumpToGroup("Window")
+			h.m.overlay = overlayHelp
+		})
+	}
 }
 
 // The renderer clears the whole screen after a resize, and the terminal

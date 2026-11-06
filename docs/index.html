@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ghostty-config — every Ghostty setting, inside the terminal</title>
+<meta name="description" content="Themes, fonts, shortcuts and every everyday setting of Ghostty, in a full-screen interface inside the terminal. A single binary, installed with one command.">
+<meta name="theme-color" content="#0b0b10">
+<meta property="og:title" content="ghostty-config">
+<meta property="og:description" content="Themes, fonts, shortcuts and every everyday setting of Ghostty, in a full-screen interface inside the terminal.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://vitruves.github.io/ghostty-config/">
+<meta property="og:image" content="https://vitruves.github.io/ghostty-config/img/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" href="img/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@400..700&family=Google+Sans+Code:wght@400..600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0b0b10;
+  --bg-2: #101017;
+  --surface: #15151d;
+  --surface-2: #1b1b25;
+  --line: rgba(255, 255, 255, .08);
+  --line-2: rgba(255, 255, 255, .14);
+  --text: #ececf2;
+  --muted: #a0a0b0;
+  --faint: #6c6c7c;
+  --accent: #7c9cf5;
+  --accent-2: #a9bdfb;
+  --accent-ink: #0d1430;
+  --green: #8fd694;
+  --radius: 18px;
+  --sans: "Google Sans Flex", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "Google Sans Code", ui-monospace, "SF Mono", Menlo, monospace;
+  --stripe: linear-gradient(90deg, #e2675a, #f0a04b, #e8d36a, #8fd694, #5fc9c0, #6f9cf0, #b18cf0, #e27ab8);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 17px/1.6 var(--sans); -webkit-font-smoothing: antialiased; overflow-x: hidden;
+}
+img { max-width: 100%; height: auto; display: block; }
+a { color: inherit; text-decoration: none; }
+code, kbd, pre { font-family: var(--mono); }
+::selection { background: var(--accent); color: var(--accent-ink); }
+.wrap { width: min(1180px, 100% - 32px); margin-inline: auto; }
+
+/* Nav */
+.nav {
+  position: sticky; top: 0; z-index: 50;
+  backdrop-filter: saturate(160%) blur(16px); -webkit-backdrop-filter: saturate(160%) blur(16px);
+  background: rgba(11, 11, 16, .72); border-bottom: 1px solid transparent; transition: border-color .2s;
+}
+.nav.scrolled { border-bottom-color: var(--line); }
+.nav .wrap { display: flex; align-items: center; gap: 28px; height: 64px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 650; letter-spacing: -.01em; }
+.brand img { width: 28px; height: 28px; border-radius: 7px; }
+.nav-links { display: flex; gap: 22px; margin-left: auto; font-size: 15px; color: var(--muted); }
+.nav-links a:hover { color: var(--text); }
+.gh {
+  display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px;
+  border: 1px solid var(--line-2); font-size: 14px; font-weight: 550; transition: background .2s, border-color .2s;
+}
+.gh:hover { background: var(--surface-2); border-color: rgba(255, 255, 255, .24); }
+.gh svg { width: 17px; height: 17px; }
+
+/* Hero */
+.hero { position: relative; padding: 88px 0 40px; text-align: center; }
+.hero::before {
+  content: ""; position: absolute; inset: -120px 0 auto; height: 720px; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(600px 300px at 30% 30%, rgba(124, 156, 245, .20), transparent 70%),
+    radial-gradient(500px 280px at 72% 22%, rgba(177, 140, 240, .16), transparent 70%),
+    radial-gradient(520px 260px at 50% 70%, rgba(95, 201, 192, .10), transparent 70%);
+}
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 10px; padding: 6px 14px 6px 8px; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--line); font-size: 14px; color: var(--muted);
+}
+.eyebrow b { background: var(--accent); color: var(--accent-ink); font-weight: 650; padding: 2px 9px; border-radius: 999px; font-size: 12.5px; }
+.eyebrow:hover { border-color: var(--line-2); color: var(--text); }
+h1 {
+  font-size: clamp(40px, 7vw, 76px); line-height: 1.02; letter-spacing: -.035em; font-weight: 680;
+  margin: 26px auto 20px; max-width: 14ch;
+}
+h1 .grad { background: var(--stripe); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lede { font-size: clamp(17px, 2.1vw, 20px); color: var(--muted); max-width: 640px; margin: 0 auto 34px; }
+
+.install {
+  display: flex; align-items: center; gap: 12px; max-width: 820px; margin: 0 auto;
+  padding: 8px 8px 8px 20px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line-2);
+  box-shadow: 0 10px 40px -12px rgba(0, 0, 0, .6); text-align: left;
+}
+.install code { flex: 1; min-width: 0; font-size: 15px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
+.install .p { color: var(--green); user-select: none; margin-right: 10px; }
+.copy {
+  flex: none; display: inline-flex; align-items: center; gap: 7px; border: 0; cursor: pointer;
+  background: var(--accent); color: var(--accent-ink); font: 600 14px var(--sans); padding: 10px 16px; border-radius: 9px;
+  transition: transform .15s, background .2s;
+}
+.copy:hover { background: var(--accent-2); }
+.copy:active { transform: scale(.97); }
+.copy svg { width: 16px; height: 16px; }
+.or { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 14px 0 0; font-size: 14.5px; color: var(--faint); }
+.or code { font-size: 13.5px; color: var(--text); background: var(--surface); border: 1px solid var(--line); padding: 3px 9px; border-radius: 7px; }
+.copy-mini { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 7px; border: 1px solid var(--line); background: none; color: var(--muted); cursor: pointer; transition: color .2s, border-color .2s; }
+.copy-mini:hover { color: var(--text); border-color: var(--line-2); }
+.copy-mini.done { color: var(--green); border-color: var(--green); }
+.copy-mini svg { width: 14px; height: 14px; }
+.hero-meta { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 22px; margin-top: 18px; font-size: 14px; color: var(--faint); }
+.hero-meta span { display: inline-flex; align-items: center; gap: 7px; }
+.hero-meta svg { width: 15px; height: 15px; color: var(--green); }
+
+.stage { position: relative; margin-top: 56px; }
+.switch {
+  display: inline-flex; padding: 4px; gap: 2px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line);
+  margin-bottom: 18px; font-size: 14px;
+}
+.switch button {
+  border: 0; background: none; color: var(--muted); font: 550 14px var(--sans); padding: 7px 16px; border-radius: 999px; cursor: pointer;
+  transition: background .2s, color .2s;
+}
+.switch button[aria-pressed="true"] { background: var(--surface-2); color: var(--text); box-shadow: inset 0 0 0 1px var(--line-2); }
+.shot-hero img { width: 100%; cursor: zoom-in; }
+img[data-light] { transition: opacity .25s ease; }
+img[data-light].fading { opacity: .25; }
+.nav .switch { margin: 0; padding: 3px; }
+.nav .switch button { padding: 5px 12px; font-size: 13px; }
+
+/* Stats */
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); border-block: 1px solid var(--line); margin-top: 40px; }
+.stat { padding: 30px 12px; text-align: center; }
+.stat + .stat { border-left: 1px solid var(--line); }
+.stat b { display: block; font-size: clamp(28px, 4vw, 40px); letter-spacing: -.03em; font-weight: 650; line-height: 1.1; }
+.stat span { color: var(--muted); font-size: 14.5px; }
+
+/* Sections */
+section { padding: 110px 0 0; }
+.kicker { font: 600 13px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+h2 { font-size: clamp(32px, 4.6vw, 50px); line-height: 1.08; letter-spacing: -.03em; font-weight: 650; margin: 12px 0 16px; max-width: 18ch; }
+.sub { color: var(--muted); font-size: 18px; max-width: 620px; margin: 0; }
+.head { margin-bottom: 44px; }
+.head.center { text-align: center; }
+.head.center h2, .head.center .sub { margin-inline: auto; }
+
+/* Layouts */
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 26px; }
+.tab {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; flex: 1 1 220px; text-align: left; cursor: pointer;
+  padding: 16px 18px; border-radius: 14px; background: var(--bg-2); border: 1px solid var(--line); color: var(--muted);
+  font: 15px/1.45 var(--sans); transition: border-color .2s, background .2s, color .2s;
+}
+.tab strong { color: var(--text); font-size: 17px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.tab kbd { font-size: 11.5px; padding: 1px 6px; border-radius: 5px; background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); }
+.tab:hover { border-color: var(--line-2); }
+.tab[aria-selected="true"] { background: var(--surface); border-color: rgba(124, 156, 245, .55); box-shadow: 0 0 0 3px rgba(124, 156, 245, .12); }
+.panel { display: none; }
+.panel.on { display: block; animation: rise .45s ease both; }
+.panel img { cursor: zoom-in; }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+.chooser { display: grid; grid-template-columns: 1fr 1.25fr; gap: 48px; align-items: center; margin-top: 70px; }
+.chooser p { color: var(--muted); margin: 0 0 14px; }
+.chooser h3 { font-size: 26px; letter-spacing: -.02em; margin: 0 0 12px; font-weight: 620; }
+.chooser img { cursor: zoom-in; }
+
+/* Bento */
+.bento { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; }
+.card {
+  position: relative; display: flex; flex-direction: column; overflow: hidden; border-radius: var(--radius);
+  background: linear-gradient(180deg, var(--surface), var(--bg-2)); border: 1px solid var(--line);
+  transition: border-color .25s, transform .25s;
+}
+.card:hover { border-color: var(--line-2); transform: translateY(-2px); }
+.card .txt { padding: 26px 26px 18px; }
+.card h3 { margin: 0 0 6px; font-size: 20px; font-weight: 620; letter-spacing: -.015em; }
+.card p { margin: 0; color: var(--muted); font-size: 15.5px; }
+.card .pic { margin-top: auto; padding: 4px 14px 14px; cursor: zoom-in; }
+.card .pic img { width: 100%; transition: transform .5s ease; }
+.card:hover .pic img { transform: scale(1.01); }
+.span-4 { grid-column: span 4; }
+.span-3 { grid-column: span 3; }
+.span-2 { grid-column: span 2; }
+.chip { display: inline-block; font: 600 12px var(--mono); padding: 3px 8px; border-radius: 6px; margin-bottom: 12px; background: rgba(124, 156, 245, .14); color: var(--accent-2); }
+
+/* Go */
+.gogo { display: grid; grid-template-columns: 220px 1fr; gap: 48px; align-items: center; padding: 48px; border-radius: 28px;
+  background: radial-gradient(500px 260px at 0% 50%, rgba(0, 173, 216, .16), transparent 70%), var(--bg-2); border: 1px solid var(--line); }
+.go-logo { display: grid; place-items: center; aspect-ratio: 1; border-radius: 28px; color: #00add8;
+  background: rgba(0, 173, 216, .08); border: 1px solid rgba(0, 173, 216, .3); }
+.go-logo svg { width: 70%; }
+.go-txt h2 { max-width: 20ch; }
+.go-facts { list-style: none; padding: 0; margin: 28px 0 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.go-facts li { padding: 14px 16px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); font-size: 14.5px; }
+.go-facts b { display: block; color: var(--text); font-weight: 600; font-size: 15.5px; margin-bottom: 2px; }
+
+/* Trust */
+.trust { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.trust div { background: var(--bg); padding: 30px 28px; }
+.trust svg { width: 24px; height: 24px; color: var(--accent); margin-bottom: 14px; }
+.trust h3 { margin: 0 0 6px; font-size: 18px; font-weight: 620; }
+.trust p { margin: 0; color: var(--muted); font-size: 15px; }
+.trust code { font-size: 13.5px; color: var(--text); background: var(--surface-2); padding: 1px 6px; border-radius: 5px; }
+
+/* Keys */
+.keys-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.key { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 12px; background: var(--bg-2); border: 1px solid var(--line); font-size: 15px; color: var(--muted); }
+.key .caps { display: flex; gap: 5px; flex: none; min-width: 92px; }
+kbd.k {
+  display: inline-grid; place-items: center; min-width: 30px; height: 30px; padding: 0 8px; border-radius: 7px;
+  font-size: 13px; font-weight: 550; color: var(--text); background: var(--surface-2);
+  border: 1px solid var(--line-2); box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .35);
+}
+
+/* Options + CTA */
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.term, .split > *, .bento > *, .chooser > * { min-width: 0; }
+.term { border-radius: var(--radius); background: #08080c; border: 1px solid var(--line); overflow: hidden; }
+.term .bar { display: flex; gap: 7px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+.term .bar i { width: 11px; height: 11px; border-radius: 50%; background: #3a3a46; }
+.term .bar i:nth-child(1) { background: #ff5f57; } .term .bar i:nth-child(2) { background: #febc2e; } .term .bar i:nth-child(3) { background: #28c840; }
+.term pre { margin: 0; padding: 20px 22px; font-size: 14px; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--muted); }
+.term pre b { color: var(--text); font-weight: 500; }
+.term pre .c { color: var(--faint); }
+.term pre .g { color: var(--green); }
+
+.cta {
+  position: relative; margin-top: 110px; padding: 72px 32px; border-radius: 28px; text-align: center; overflow: hidden;
+  background: radial-gradient(700px 300px at 50% 0%, rgba(124, 156, 245, .22), transparent 70%), var(--surface);
+  border: 1px solid var(--line-2);
+}
+.cta::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--stripe); opacity: .8; }
+.cta h2 { margin-inline: auto; }
+.cta .sub { margin: 0 auto 32px; }
+.cta .alt { margin-top: 16px; font-size: 14px; color: var(--faint); }
+.cta .alt code { color: var(--muted); font-size: 13px; }
+
+footer { padding: 56px 0 48px; color: var(--faint); font-size: 14px; }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 14px 28px; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 28px; }
+footer a { color: var(--muted); } footer a:hover { color: var(--text); }
+footer nav { display: flex; gap: 20px; flex-wrap: wrap; }
+
+/* Lightbox */
+dialog.lb { border: 0; padding: 0; background: transparent; max-width: 96vw; max-height: 94vh; }
+dialog.lb::backdrop { background: rgba(4, 4, 8, .86); backdrop-filter: blur(6px); }
+dialog.lb img { max-width: 96vw; max-height: 90vh; width: auto; cursor: zoom-out; }
+dialog.lb p { margin: 8px 0 0; text-align: center; color: var(--muted); font-size: 14px; }
+
+.reveal { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s ease; }
+.reveal.in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .panel.on { animation: none; }
+}
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+
+@media (max-width: 900px) {
+  .nav-links { display: none; }
+  .nav .switch { margin-left: auto; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .stat:nth-child(3) { border-left: 0; }
+  .stat:nth-child(n+3) { border-top: 1px solid var(--line); }
+  .chooser, .split { grid-template-columns: 1fr; gap: 28px; }
+  .bento { grid-template-columns: 1fr; }
+  .span-4, .span-3, .span-2 { grid-column: auto; }
+  .card.tall { min-height: 0; }
+  .trust { grid-template-columns: 1fr; }
+  .gogo { grid-template-columns: 1fr; padding: 28px; gap: 24px; }
+  .go-logo { width: 120px; }
+  .go-facts { grid-template-columns: 1fr; }
+  section { padding-top: 80px; }
+}
+@media (max-width: 560px) {
+  body { font-size: 16px; }
+  .hero { padding-top: 56px; }
+  .install { padding-left: 14px; }
+  .nav .switch { display: none; }
+  .nav .gh { margin-left: auto; }
+  .install code { font-size: 13px; }
+  .copy span { display: none; }
+  .cta { padding: 52px 20px; }
+}
+</style>
+</head>
+<body>
+
+<header class="nav" id="nav">
+  <div class="wrap">
+    <a class="brand" href="#top"><img src="img/logo.png" alt="">ghostty-config</a>
+    <nav class="nav-links" aria-label="Sections">
+      <a href="#layouts">Layouts</a>
+      <a href="#features">Features</a>
+      <a href="#keys">Keys</a>
+      <a href="#install">Install</a>
+    </nav>
+    <div class="switch" role="group" aria-label="Screenshots scheme">
+      <button aria-pressed="true" data-scheme="dark">Dark</button>
+      <button aria-pressed="false" data-scheme="light">Light</button>
+    </div>
+    <a class="gh" href="https://github.com/vitruves/ghostty-config">
+      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      GitHub
+    </a>
+  </div>
+</header>
+
+<main id="top">
+  <div class="hero">
+    <div class="wrap">
+      <a class="eyebrow" href="https://github.com/vitruves/ghostty-config/blob/main/CHANGELOG.md"><b id="ver">v2.1.0</b>Three layouts: Atelier, Palette, Guided →</a>
+      <h1>Configure <span class="grad">Ghostty</span> without leaving it.</h1>
+      <p class="lede">Themes, fonts, shortcuts and every everyday setting of Ghostty, in a full-screen interface inside the terminal. A single binary, installed with one command.</p>
+
+      <div class="install">
+        <code><span class="p">$</span>curl -fsSL https://ghostty-config.vitruves.workers.dev/install.sh | sh</code>
+        <button class="copy" data-copy="curl -fsSL https://ghostty-config.vitruves.workers.dev/install.sh | sh" aria-label="Copy the install command">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span>Copy</span>
+        </button>
+      </div>
+      <p class="or">or <code>pip install ghostty-config</code><button class="copy-mini" data-copy="pip install ghostty-config" aria-label="Copy the pip command"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button></p>
+      <div class="hero-meta">
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>macOS &amp; Linux, Intel &amp; ARM</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Checksum-verified, no dependencies</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>MIT licence</span>
+      </div>
+
+      <div class="stage">
+        <div class="switch" role="group" aria-label="Screenshots scheme">
+          <button aria-pressed="true" data-scheme="dark">Dark</button>
+          <button aria-pressed="false" data-scheme="light">Light</button>
+        </div>
+        <div class="shot-hero">
+          <img src="img/themes.webp" data-light="img/themes-light.webp" width="1600" height="1084" alt="The wall of themes: families in a sidebar, each theme a card with its contrast grade" data-full>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="stats reveal">
+      <div class="stat"><b>1071</b><span>themes, contrast-checked</span></div>
+      <div class="stat"><b>70</b><span>fonts, one Enter to install</span></div>
+      <div class="stat"><b>3</b><span>layouts, same settings</span></div>
+      <div class="stat"><b>1</b><span>binary, zero dependencies</span></div>
+    </div>
+  </div>
+
+  <section id="go">
+    <div class="wrap">
+      <div class="gogo reveal">
+        <div class="go-logo"><svg viewBox="0 0 24 24" fill="currentColor" role="img" aria-label="Go"><path d="M1.811 10.231c-.047 0-.058-.023-.035-.059l.246-.315c.023-.035.081-.058.128-.058h4.172c.046 0 .058.035.035.07l-.199.303c-.023.036-.082.07-.117.07zM.047 11.306c-.047 0-.059-.023-.035-.058l.245-.316c.023-.035.082-.058.129-.058h5.328c.047 0 .07.035.058.07l-.093.28c-.012.047-.058.07-.105.07zm2.828 1.075c-.047 0-.059-.035-.035-.07l.163-.292c.023-.035.07-.07.117-.07h2.337c.047 0 .07.035.07.082l-.023.28c0 .047-.047.082-.082.082zm12.129-2.36c-.736.187-1.239.327-1.963.514-.176.046-.187.058-.34-.117-.174-.199-.303-.327-.548-.444-.737-.362-1.45-.257-2.115.175-.795.514-1.204 1.274-1.192 2.22.011.935.654 1.706 1.577 1.835.795.105 1.46-.175 1.987-.77.105-.13.198-.27.315-.434H10.47c-.245 0-.304-.152-.222-.35.152-.362.432-.97.596-1.274a.315.315 0 01.292-.187h4.253c-.023.316-.023.631-.07.947a4.983 4.983 0 01-.958 2.29c-.841 1.11-1.94 1.8-3.33 1.986-1.145.152-2.209-.07-3.143-.77-.865-.655-1.356-1.52-1.484-2.595-.152-1.274.222-2.419.993-3.424.83-1.086 1.928-1.776 3.272-2.02 1.098-.2 2.15-.07 3.096.571.62.41 1.063.97 1.356 1.648.07.105.023.164-.117.2m3.868 6.461c-1.064-.024-2.034-.328-2.852-1.029a3.665 3.665 0 01-1.262-2.255c-.21-1.32.152-2.489.947-3.529.853-1.122 1.881-1.706 3.272-1.95 1.192-.21 2.314-.095 3.33.595.923.63 1.496 1.484 1.648 2.605.198 1.578-.257 2.863-1.344 3.962-.771.783-1.718 1.273-2.805 1.495-.315.06-.63.07-.934.106zm2.78-4.72c-.011-.153-.011-.27-.034-.387-.21-1.157-1.274-1.81-2.384-1.554-1.087.245-1.788.935-2.045 2.033-.21.912.234 1.835 1.075 2.21.643.28 1.285.244 1.905-.07.923-.48 1.425-1.228 1.484-2.233z"/></svg></div>
+        <div class="go-txt">
+          <div class="kicker" style="color:#00add8">Built with Go</div>
+          <h2>The power of Go. None of the Python baggage.</h2>
+          <p class="sub">Many Ghostty helpers are Python packages: an interpreter, a virtual environment, dependencies to resolve, a pause at every launch. ghostty-config is written in Go and compiled to one native binary. It opens instantly, redraws the whole screen as images without a stutter, and needs nothing else on your machine.</p>
+          <ul class="go-facts">
+            <li><b>Instant start</b>Native code, no interpreter to boot.</li>
+            <li><b>One static file</b>No runtime, no venv, nothing to break on upgrade.</li>
+            <li><b>Fast and light</b>Compiled, concurrent, small memory footprint.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="layouts">
+    <div class="wrap">
+      <div class="head reveal">
+        <div class="kicker">Layouts</div>
+        <h2>Three ways in. The same settings underneath.</h2>
+        <p class="sub">Browse, search, or be guided. A chooser asks at first launch; switch any time with <kbd class="k">F4</kbd>.</p>
+      </div>
+
+      <div class="tabs reveal" role="tablist" aria-label="Layouts">
+        <button class="tab" role="tab" aria-selected="true" aria-controls="p-atelier" id="t-atelier"><strong>Atelier</strong>Sections in a sidebar, every setting in its place, a live preview beside it.</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="p-palette" id="t-palette" tabindex="-1"><strong>Palette</strong>One search line over themes, fonts, settings, shortcuts and commands.</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="p-guided" id="t-guided" tabindex="-1"><strong>Guided</strong>Six plain questions, one page at a time, with large previews.</button>
+      </div>
+      <div class="panel on" role="tabpanel" id="p-atelier" aria-labelledby="t-atelier">
+        <img src="img/window-dark.webp" data-light="img/window.webp" width="1600" height="1084" alt="Atelier: the Window section, with opacity, blur and padding beside a live preview" loading="lazy" data-full>
+      </div>
+      <div class="panel" role="tabpanel" id="p-palette" aria-labelledby="t-palette">
+        <img src="img/31-palette-themes.webp" data-light="img/31-palette-themes-light.webp" width="1600" height="1084" alt="Palette: a search for 'warm dark' lists matching themes, each drawn in its own colours" loading="lazy" data-full>
+      </div>
+      <div class="panel" role="tabpanel" id="p-guided" aria-labelledby="t-guided">
+        <img src="img/24-guided-3a.webp" data-light="img/24-guided-3a-light.webp" width="1600" height="1084" alt="Guided: step 3 of 6, 'See through the window?', with solid, translucent and frosted glass choices and a preview" loading="lazy" data-full>
+      </div>
+
+      <div class="chooser reveal">
+        <div>
+          <div class="kicker">First launch</div>
+          <h3>Pick the one that suits you.</h3>
+          <p>The first time it runs, and after an update that brings something new, ghostty-config shows its three layouts side by side. Nothing is locked in: Tool → Interface → Layout changes it later.</p>
+          <p>Everything can be clicked too: sections, pills, switches, sliders. A double click on a theme card applies it.</p>
+        </div>
+        <img src="img/12b-chooser-new.webp" data-light="img/12b-chooser-new-light.webp" width="1600" height="1084" alt="The layout chooser: Atelier, Palette and Guided side by side" loading="lazy" data-full>
+      </div>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="wrap">
+      <div class="head center reveal">
+        <div class="kicker">Features</div>
+        <h2>Everything you'd edit by hand, with a preview.</h2>
+        <p class="sub">Browsing changes nothing. A theme or a font is written when you press Enter on it, a setting when you change its value.</p>
+      </div>
+
+      <div class="bento">
+        <article class="card span-3 reveal">
+          <div class="txt">
+            <span class="chip">Fonts</span>
+            <h3>A specimen set in the font itself</h3>
+            <p>Family, style and size, spacing, ligatures, the OpenType features and variable axes the font really has. 70 monospace families download in one Enter; a missing or proportional font gets a suggestion.</p>
+          </div>
+          <div class="pic"><img src="img/font-list.webp" data-light="img/font-list-light.webp" width="1600" height="1084" alt="The font list with a specimen of Hack and popular fonts to download" loading="lazy" data-full></div>
+        </article>
+        <article class="card span-3 reveal">
+          <div class="txt">
+            <span class="chip">Themes</span>
+            <h3>Make your own</h3>
+            <p>Every colour slot with its contrast ratio, edited by hue, saturation and lightness while the terminal behind changes.</p>
+          </div>
+          <div class="pic"><img src="img/editor.webp" data-light="img/editor-light.webp" width="1600" height="1084" alt="The theme editor: colour slots with hex values and contrast grades" loading="lazy" data-full></div>
+        </article>
+        <article class="card span-3 reveal">
+          <div class="txt">
+            <span class="chip">Input</span>
+            <h3>Cursor, clipboard, mouse, every shortcut</h3>
+            <p>Press the new shortcut; conflicts are shown before anything is written.</p>
+          </div>
+          <div class="pic"><img src="img/input.webp" data-light="img/input-light.webp" width="1600" height="1084" alt="The Input section: cursor style, blink, clipboard settings" loading="lazy" data-full></div>
+        </article>
+        <article class="card span-3 reveal">
+          <div class="txt">
+            <span class="chip">Palette</span>
+            <h3>Each setting opens in place</h3>
+            <p>Search "padding", change it right there, and see the line it will write in your config.</p>
+          </div>
+          <div class="pic"><img src="img/32-palette-setting.webp" data-light="img/32-palette-setting-light.webp" width="1600" height="1084" alt="Palette: the padding settings, one opened with its explanation and the line it will write" loading="lazy" data-full></div>
+        </article>
+        <article class="card span-3 reveal">
+          <div class="txt">
+            <span class="chip">Guided</span>
+            <h3>Plain questions</h3>
+            <p>Light or dark? Which typeface? Big previews, no jargon.</p>
+          </div>
+          <div class="pic"><img src="img/24-guided-2a.webp" data-light="img/24-guided-2a-light.webp" width="1600" height="1084" alt="Guided step 2: Which typeface?" loading="lazy" data-full></div>
+        </article>
+        <article class="card span-3 reveal">
+          <div class="txt">
+            <span class="chip">Help</span>
+            <h3>Every key and command, one keystroke away</h3>
+            <p><kbd class="k">F1</kbd> lists them all; <kbd class="k">F3</kbd> opens Ghostty's own documentation for the highlighted line.</p>
+          </div>
+          <div class="pic"><img src="img/help.webp" data-light="img/help-light.webp" width="1600" height="1084" alt="The help overlay listing keys and commands" loading="lazy" data-full></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="safe">
+    <div class="wrap">
+      <div class="head reveal">
+        <div class="kicker">Good to know</div>
+        <h2>Your config stays yours.</h2>
+        <p class="sub">ghostty-config edits the file you already have, line by line, and checks every write.</p>
+      </div>
+      <div class="trust reveal">
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M9 13h6M9 17h4"/></svg>
+          <h3>Your files, kept</h3>
+          <p>Each setting is rewritten on its own line; comments stay. Edits made elsewhere meanwhile are kept too.</p>
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M21 3v6h-6"/><path d="M21 9a9 9 0 0 0-3-3.5"/></svg>
+          <h3>Backed up</h3>
+          <p>Every file is copied to <code>~/.config/ghostty-config/backups/</code> before its first change. <kbd class="k">Ctrl</kbd>+<kbd class="k">Z</kbd> undoes the last one.</p>
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg>
+          <h3>Validated</h3>
+          <p>After each write the config goes through <code>ghostty +validate-config</code>; any problem is shown with its line.</p>
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 14-5.3L20 9"/><path d="M20 4v5h-5"/><path d="M20 12a8 8 0 0 1-14 5.3L4 15"/><path d="M4 20v-5h5"/></svg>
+          <h3>Live reload</h3>
+          <p>Ghostty reloads after each change: AppleScript on macOS, D-Bus <code>reload-config</code> on Linux.</p>
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M7 20h10"/><path d="M7 9l3 2-3 2M12 13h4"/></svg>
+          <h3>Drawn with care</h3>
+          <p>In Ghostty and Kitty the interface is drawn as images; elsewhere, and in tmux, with plain text.</p>
+        </div>
+        <div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+          <h3>Quiet on the network</h3>
+          <p>An hourly check for a new release at most, and the downloads you ask for. Nothing else.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="keys">
+    <div class="wrap">
+      <div class="head reveal">
+        <div class="kicker">Keys</div>
+        <h2>A handful of keys.</h2>
+        <p class="sub">The keys of Atelier; Palette and Guided show theirs in the footer.</p>
+      </div>
+      <div class="keys-grid reveal">
+        <div class="key"><span class="caps"><kbd class="k">Tab</kbd></span>Next section</div>
+        <div class="key"><span class="caps"><kbd class="k">↑</kbd><kbd class="k">↓</kbd></span>Move through the list</div>
+        <div class="key"><span class="caps"><kbd class="k">←</kbd><kbd class="k">→</kbd></span>Change the highlighted setting</div>
+        <div class="key"><span class="caps"><kbd class="k">Enter</kbd></span>Apply, or open all values</div>
+        <div class="key"><span class="caps"><kbd class="k">Delete</kbd></span>Back to Ghostty's default</div>
+        <div class="key"><span class="caps"><kbd class="k">⌃Z</kbd></span>Undo the last change</div>
+        <div class="key"><span class="caps"><kbd class="k">/</kbd></span>Search themes, settings, commands</div>
+        <div class="key"><span class="caps"><kbd class="k">⌃T</kbd><kbd class="k">⌃F</kbd></span>Try a theme here; star it</div>
+        <div class="key"><span class="caps"><kbd class="k">F3</kbd></span>Ghostty's docs for the line</div>
+        <div class="key"><span class="caps"><kbd class="k">F4</kbd></span>Layout, look, reload, updates</div>
+        <div class="key"><span class="caps"><kbd class="k">F1</kbd></span>Help</div>
+        <div class="key"><span class="caps"><kbd class="k">Esc</kbd></span>Go back, then quit</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="install">
+    <div class="wrap">
+      <div class="head reveal">
+        <div class="kicker">Install</div>
+        <h2>One command. Then <code style="font-size:.82em">ghostty-config</code>.</h2>
+        <p class="sub">The script puts a checksum-verified binary for your system in <code>~/.local/bin</code>. No Go, no git, no dependencies. Prefer a package manager? <code>pip install ghostty-config</code> installs the same binary. Works with Ghostty 1.3 and 1.4.</p>
+      </div>
+      <div class="split reveal">
+        <div class="term">
+          <div class="bar"><i></i><i></i><i></i></div>
+<pre><span class="c"># install</span>
+<span class="g">$</span> <b>curl -fsSL https://ghostty-config.vitruves.workers.dev/install.sh | sh</b>
+
+<span class="c"># or with pip (pipx and uv work too)</span>
+<span class="g">$</span> <b>pip install ghostty-config</b>
+
+<span class="c"># run</span>
+<span class="g">$</span> <b>ghostty-config</b>
+
+<span class="c"># or from source</span>
+<span class="g">$</span> <b>git clone https://github.com/vitruves/ghostty-config.git</b>
+<span class="g">$</span> <b>cd ghostty-config &amp;&amp; make build &amp;&amp; make local-install</b></pre>
+        </div>
+        <div class="term">
+          <div class="bar"><i></i><i></i><i></i></div>
+<pre><b>-config file</b>     edit this file, not the default
+<b>-themes dir</b>      user themes directory
+<b>-cells</b>           draw with terminal text
+<b>-no-images</b>       never draw images
+<b>-plain</b>           only characters every terminal has
+<b>-no-reload</b>       never ask Ghostty to reload
+<b>-no-update-check</b> never check GitHub for releases
+<b>-paths</b>           print the files read and written
+<b>-version</b>         print the version</pre>
+        </div>
+      </div>
+
+      <div class="cta reveal">
+        <h2>Make Ghostty yours in a minute.</h2>
+        <p class="sub">1071 themes, 70 fonts, every setting. Nothing written until you say so.</p>
+        <div class="install">
+          <code><span class="p">$</span>curl -fsSL https://ghostty-config.vitruves.workers.dev/install.sh | sh</code>
+          <button class="copy" data-copy="curl -fsSL https://ghostty-config.vitruves.workers.dev/install.sh | sh" aria-label="Copy the install command">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span>Copy</span>
+          </button>
+        </div>
+        <p class="alt">Or <code>pip install ghostty-config</code> · star it on <a href="https://github.com/vitruves/ghostty-config" style="color:var(--accent-2)">GitHub</a> to follow new releases.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>MIT licence · by <a href="https://github.com/vitruves">Johan H.G. Natter</a> · <a href="https://ghostty.org">Ghostty</a> is by Mitchell Hashimoto and its contributors.</div>
+    <nav aria-label="Links">
+      <a href="https://github.com/vitruves/ghostty-config">Source</a>
+      <a href="https://github.com/vitruves/ghostty-config/blob/main/CHANGELOG.md">Changelog</a>
+      <a href="https://github.com/vitruves/ghostty-config/issues">Issues</a>
+      <a href="https://cli.masoko.net/tools/ghostty-config/">The Terminal Index</a>
+    </nav>
+  </div>
+</footer>
+
+<dialog class="lb" id="lb" aria-label="Screenshot">
+  <img alt="">
+  <p></p>
+</dialog>
+
+<script>
+// Sticky nav border once scrolled.
+const nav = document.getElementById('nav');
+addEventListener('scroll', () => nav.classList.toggle('scrolled', scrollY > 8), { passive: true });
+
+// Copy buttons.
+document.querySelectorAll('.copy').forEach(b => b.addEventListener('click', async () => {
+  const label = b.querySelector('span');
+  try { await navigator.clipboard.writeText(b.dataset.copy); label.textContent = 'Copied'; }
+  catch { label.textContent = 'Select it'; }
+  setTimeout(() => label.textContent = 'Copy', 1600);
+}));
+
+document.querySelectorAll('.copy-mini').forEach(b => b.addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(b.dataset.copy); b.classList.add('done'); setTimeout(() => b.classList.remove('done'), 1600); } catch {}
+}));
+
+// Dark / light: every screenshot follows the switch, and the choice is kept.
+const shots = [...document.querySelectorAll('img[data-light]')];
+shots.forEach(i => i.dataset.dark = i.getAttribute('src'));
+function scheme(name) {
+  document.querySelectorAll('.switch button').forEach(x => x.setAttribute('aria-pressed', x.dataset.scheme === name));
+  shots.forEach(i => {
+    const src = name === 'light' ? i.dataset.light : i.dataset.dark;
+    if (i.getAttribute('src') === src) return;
+    i.classList.add('fading');
+    const pre = new Image();
+    pre.onload = pre.onerror = () => { i.src = src; i.classList.remove('fading'); };
+    pre.src = src;
+  });
+  try { localStorage.setItem('scheme', name); } catch {}
+}
+document.querySelectorAll('.switch button').forEach(b => b.addEventListener('click', () => scheme(b.dataset.scheme)));
+try { if (localStorage.getItem('scheme') === 'light') scheme('light'); } catch {}
+
+// Layout tabs, with arrow keys.
+const tabs = [...document.querySelectorAll('.tab')];
+function select(t) {
+  tabs.forEach(x => {
+    const on = x === t;
+    x.setAttribute('aria-selected', on); x.tabIndex = on ? 0 : -1;
+    document.getElementById(x.getAttribute('aria-controls')).classList.toggle('on', on);
+  });
+}
+tabs.forEach((t, i) => {
+  t.addEventListener('click', () => select(t));
+  t.addEventListener('keydown', e => {
+    const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+    if (d) { const n = tabs[(i + d + tabs.length) % tabs.length]; select(n); n.focus(); }
+  });
+});
+
+// Lightbox for every screenshot.
+const lb = document.getElementById('lb');
+document.querySelectorAll('img[data-full]').forEach(img => img.addEventListener('click', () => {
+  lb.querySelector('img').src = img.currentSrc || img.src;
+  lb.querySelector('img').alt = img.alt;
+  lb.querySelector('p').textContent = img.alt;
+  lb.showModal();
+}));
+lb.addEventListener('click', () => lb.close());
+
+// Reveal on scroll.
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+}), { rootMargin: '0px 0px -8% 0px' });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+// Latest release in the eyebrow.
+fetch('https://api.github.com/repos/vitruves/ghostty-config/tags?per_page=1')
+  .then(r => r.ok ? r.json() : [])
+  .then(t => { if (t[0]) document.getElementById('ver').textContent = t[0].name; })
+  .catch(() => {});
+</script>
+</body>
+</html>

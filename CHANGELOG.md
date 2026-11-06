@@ -2,6 +2,17 @@
 
 All notable changes to ghostty-config are documented here. Versions follow [Semantic Versioning](https://semver.org).
 
+## [2.1.0] - 2026-11-06
+
+### Added
+
+- **`pip install ghostty-config`:** the same checksum-built binaries, published on [PyPI](https://pypi.org/project/ghostty-config/) as one wheel per system (macOS 12+ Intel and ARM, Linux x86_64 and aarch64, glibc and musl). pip, pipx and uv put `ghostty-config` straight on the PATH, with no Python in between. The release workflow publishes them with each tag, by trusted publishing.
+- **Website** in `docs/`, served by GitHub Pages; `make site-shots` draws its pictures.
+
+### Changed
+
+- README and website pictures redrawn.
+
 ## [2.0.0] - 2026-11-01
 
 ### Added
@@ -35,4 +46,5 @@ All notable changes to ghostty-config are documented here. Versions follow [Sema
 
 - Footer: `F1`, `F3` and `F4` keep their place on every screen, narrow ones included; Guided shows Help and Settings.
 
+[2.1.0]: https://github.com/vitruves/ghostty-config/compare/2.0.0...2.1.0
 [2.0.0]: https://github.com/vitruves/ghostty-config/compare/1.2.0...2.0.0

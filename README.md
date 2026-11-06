@@ -22,6 +22,8 @@
 curl -fsSL https://ghostty-config.vitruves.workers.dev/install.sh | sh
 ```
 
+Or with pip (pipx and uv work too): `pip install ghostty-config`.
+
 The script puts a checksum-verified binary for your system (macOS or Linux, Intel or ARM) in `~/.local/bin`. No Go, no git, no dependencies. From source: `git clone https://github.com/vitruves/ghostty-config.git && cd ghostty-config && make build && make local-install`.
 
 ## Use
