@@ -57,10 +57,19 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ github.ref_name }}
         run: |
+          # The notes are this version's section of CHANGELOG.md.
+          awk -v v="$VERSION" '
+            index($0, "## [" v "]") == 1 { on = 1; next }
+            on && /^## \[/ { exit }
+            on { print }
+          ' CHANGELOG.md > notes.md
+          grep -q '[^[:space:]]' notes.md || { echo "CHANGELOG.md has no section for $VERSION" >&2; exit 1; }
+          printf '\n**Install or update:** `curl -fsSL https://ghostty-config.vitruves.workers.dev/install.sh | sh` or `pip install -U ghostty-config`\n' >> notes.md
           if gh release view "$VERSION" >/dev/null 2>&1; then
             gh release upload "$VERSION" dist/* --clobber
+            gh release edit "$VERSION" --notes-file notes.md
           else
-            gh release create "$VERSION" dist/* --title "Version $VERSION" --generate-notes --verify-tag
+            gh release create "$VERSION" dist/* --title "Version $VERSION" --notes-file notes.md --verify-tag
           fi
 
       - uses: actions/upload-artifact@v4
