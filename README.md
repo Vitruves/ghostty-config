@@ -2,7 +2,7 @@
 
 <h1 align="center">ghostty-config</h1>
 
-<p align="center">Themes, fonts, shortcuts and every everyday setting of <a href="https://ghostty.org">Ghostty</a>, in a full-screen interface inside the terminal.<br>A single binary, installed with one command.</p>
+<p align="center">Themes, fonts, shortcuts and every everyday setting of <a href="https://ghostty.org">Ghostty</a>, in a full-screen interface inside the terminal.<br>A single binary, installed with one command. <a href="https://vitruves.github.io/ghostty-config/">Website</a>.</p>
 
 <p align="center">
   <a href="#install"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fghostty-config.vitruves.workers.dev%2Fbadge.json&style=flat-square" alt="Installs"></a>

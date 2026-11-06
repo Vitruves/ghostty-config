@@ -21,6 +21,7 @@ from pathlib import Path
 NAME = "ghostty-config"
 DIST = "ghostty_config"
 REPO = "https://github.com/vitruves/ghostty-config"
+SITE = "https://vitruves.github.io/ghostty-config/"
 RAW = "https://raw.githubusercontent.com/vitruves/ghostty-config"
 
 # Go 1.26 needs macOS 12 or newer. The Linux binaries are static
@@ -54,7 +55,8 @@ def metadata(root: Path, version: str) -> str:
         "Author: Johan H.G. Natter",
         "License-Expression: MIT",
         "License-File: LICENSE",
-        f"Project-URL: Homepage, {REPO}",
+        f"Project-URL: Homepage, {SITE}",
+        f"Project-URL: Source, {REPO}",
         f"Project-URL: Changelog, {REPO}/blob/main/CHANGELOG.md",
         f"Project-URL: Issues, {REPO}/issues",
         "Keywords: ghostty,terminal,config,themes,tui",
