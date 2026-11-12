@@ -157,6 +157,8 @@ func (m *Model) currentValueOf(cmd *command) string {
 		return "none"
 	case "pack":
 		return fmt.Sprintf("%d of %d installed", m.packsInstalled(), len(extensions.Packs))
+	case "program":
+		return fmt.Sprintf("%d installed", m.programs().installedCount())
 	case "autoreload":
 		if m.state.AutoReloadEnabled() {
 			return "on"

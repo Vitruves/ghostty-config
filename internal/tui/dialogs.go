@@ -329,7 +329,7 @@ func welcomeFeatures() [][3]string {
 		{"Tab", "The sections", "Themes, Fonts, Window, Input, Session, Extensions, Tool"},
 		{"← →", "Change a setting", "where it is listed; Enter shows every value and what it means"},
 		{"font", "Pick or install a font", "the families Ghostty can load, and under them the ones to download"},
-		{"shader", "Extensions", "shaders and packs of themes, fetched and switched on for you"},
+		{"shader", "Extensions", "shaders, packs of themes and programs, fetched and switched on for you"},
 		{"", "", ""},
 		{"Ctrl+T", "Try a theme here", "paints this terminal and writes nothing; F2 steps aside to look"},
 		{"Esc", "Back", "to the section's list, and from there out; leaving applies nothing"},

@@ -73,6 +73,30 @@ func writeBackup(dir, origin, stamp string, data []byte) (string, error) {
 	}
 }
 
+// WriteOther rewrites a file that is not a Ghostty config, such as a shell's
+// start file, the way configs are rewritten: its content as it was is copied
+// into the backups first, once per session, then the new one replaces it in
+// one rename. Empty data removes the file, after the same backup.
+func WriteOther(paths Paths, path string, data []byte) error {
+	path = resolveLink(path)
+	original, err := os.ReadFile(path)
+	switch {
+	case err == nil:
+		if err := backup(paths.StateDir, path, original, false); err != nil {
+			return err
+		}
+	case !errors.Is(err, fs.ErrNotExist):
+		return err
+	}
+	if len(data) == 0 {
+		if err := os.Remove(path); err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return err
+		}
+		return nil
+	}
+	return writeFileAtomic(path, data, 0o644)
+}
+
 // BackupNow copies every existing root config into the backups directory,
 // unconditionally, and returns the paths written.
 func BackupNow(paths Paths) ([]string, error) {

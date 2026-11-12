@@ -14,9 +14,9 @@ import (
 )
 
 // The Extensions section holds what other people have made for Ghostty and
-// this tool can fetch: shaders and packs of themes. Ghostty has no plugins as
-// such; these are files, put where Ghostty looks for them, with the one line
-// of config a shader needs.
+// this tool can fetch: shaders and packs of themes, which are files put where
+// Ghostty looks for them, with the one line of config a shader needs, and
+// programs that put Ghostty to use, in programs.go.
 
 // keepDelay is how long a shader that was just switched on stays without an
 // answer before it is put back: a shader that does not compile can leave the
@@ -74,6 +74,7 @@ func (m *Model) extensionCommands() []*command {
 			},
 			preview: previewPackPanel,
 		},
+		m.programCommand(),
 	}
 }
 

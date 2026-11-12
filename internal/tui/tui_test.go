@@ -1096,8 +1096,8 @@ func TestExtensionsInstallShadersAndThemePacks(t *testing.T) {
 			names = append(names, c.name)
 		}
 	}
-	if strings.Join(names, " ") != "shader pack" {
-		t.Fatalf("Extensions should hold shaders and theme packs, and nothing about fonts: %v", names)
+	if strings.Join(names, " ") != "shader pack program" {
+		t.Fatalf("Extensions should hold shaders, theme packs and programs, and nothing about fonts: %v", names)
 	}
 	if !strings.Contains(h.view(), " Extensions ") {
 		t.Fatalf("the section should be among the others at the top:\n%s", h.view())
@@ -1111,7 +1111,7 @@ func TestExtensionsInstallShadersAndThemePacks(t *testing.T) {
 		}
 	}
 	h.typeText("bloom")
-	if v := h.view(); !strings.Contains(v, "0xhckr/ghostty-shaders") || !strings.Contains(v, "none stated") {
+	if v := h.view(); !strings.Contains(v, "hackrdotsh/ghostty-shaders") || !strings.Contains(v, "none stated") {
 		t.Fatalf("a shader whose repository states no licence should say so:\n%s", v)
 	}
 	h.key("esc")
@@ -1130,7 +1130,7 @@ func TestExtensionsInstallShadersAndThemePacks(t *testing.T) {
 	if _, err := os.Stat(file); err != nil {
 		t.Fatalf("the shader should be installed beside the config: %v", err)
 	}
-	if len(asked) != 1 || asked[0] != "https://raw.githubusercontent.com/KroneCorylus/ghostty-shader-playground/main/public/shaders/cursor_blaze.glsl" {
+	if len(asked) != 1 || asked[0] != "https://raw.githubusercontent.com/KroneCorylus/ghostty-shader-playground/HEAD/public/shaders/cursor_blaze.glsl" {
 		t.Fatalf("exactly that file should have been fetched: %v", asked)
 	}
 	if !strings.Contains(h.config(), "custom-shader = "+file+"\n") {
@@ -1157,9 +1157,9 @@ func TestExtensionsInstallShadersAndThemePacks(t *testing.T) {
 
 	// A pack of themes lands in the themes directory and on the wall.
 	h.key("esc")
-	h.typeText("pack catp")
+	h.typeText("pack cyberd")
 	h.key("enter")
-	for _, name := range []string{"catppuccin-latte", "catppuccin-frappe", "catppuccin-macchiato", "catppuccin-mocha"} {
+	for _, name := range []string{"cyberdream", "cyberdream-light", "cyberdream-muted"} {
 		if _, err := os.Stat(filepath.Join(h.paths.ThemesDir, name)); err != nil {
 			t.Fatalf("the pack should have written %s: %v", name, err)
 		}
@@ -1167,7 +1167,7 @@ func TestExtensionsInstallShadersAndThemePacks(t *testing.T) {
 			t.Fatalf("%s should be in the library at once", name)
 		}
 	}
-	if o := h.m.results[0]; o.label != "catppuccin" || o.detail != "installed" {
+	if o := h.m.results[0]; o.label != "cyberdream" || o.detail != "installed" {
 		t.Fatalf("the pack should be listed as installed, is %+v", o)
 	}
 }

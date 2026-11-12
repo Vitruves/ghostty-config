@@ -47,6 +47,7 @@ var subsections = map[string][][2]string{
 	"Extensions": {
 		{"Shaders", "shader"},
 		{"Theme packs", "pack"},
+		{"Programs", "program"},
 	},
 	"Tool": {
 		{"Ghostty", "reload autoreload"},

@@ -532,6 +532,10 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.expireShader(msg)
 	case packDoneMsg:
 		return m, m.finishPack(msg)
+	case programDoneMsg:
+		return m, m.finishProgram(msg)
+	case programSetupMsg:
+		return m, m.finishProgramSetup(msg)
 	case updateMsg:
 		if msg.err != nil {
 			// Offline or rate limited: try again next start.

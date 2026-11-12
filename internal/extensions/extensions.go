@@ -45,8 +45,10 @@ const (
 	cursorEffects = "Cursor effects"
 	screenEffects = "Screen effects"
 
-	krone = "KroneCorylus/ghostty-shader-playground"
-	hckr  = "0xhckr/ghostty-shaders"
+	krone  = "KroneCorylus/ghostty-shader-playground"
+	hckr   = "hackrdotsh/ghostty-shaders" // was 0xhckr/ghostty-shaders
+	sahaj  = "sahaj-b/cursor-shaders"
+	trails = "hced/ghostty-cursor-trails"
 )
 
 // Shaders is the list on offer: a few that follow the cursor and a few that
@@ -55,27 +57,53 @@ var Shaders = []Shader{
 	{"cursor_smear", cursorEffects, "The cursor stretches towards where it jumps", krone, "public/shaders/cursor_smear.glsl", "MIT"},
 	{"cursor_smear_fade", cursorEffects, "A smear that fades out along its length", krone, "public/shaders/cursor_smear_fade.glsl", "MIT"},
 	{"cursor_blaze", cursorEffects, "A bright trail behind the cursor", krone, "public/shaders/cursor_blaze.glsl", "MIT"},
+	{"cursor_tail", cursorEffects, "A comet-like trail, as Kitty's cursor trail", sahaj, "ghostty/cursor_tail.glsl", "MIT"},
+	{"cursor_warp", cursorEffects, "A trail stretched behind the cursor, as in Neovide", sahaj, "ghostty/cursor_warp.glsl", "MIT"},
+	{"cursor_sweep", cursorEffects, "A trail that shrinks from where the cursor was to where it is", sahaj, "ghostty/cursor_sweep.glsl", "MIT"},
+	{"ripple_cursor", cursorEffects, "A ring that spreads out where the cursor lands", sahaj, "ghostty/ripple_cursor.glsl", "MIT"},
+	{"sonic_boom_cursor", cursorEffects, "A filled circle that spreads out where the cursor lands", sahaj, "ghostty/sonic_boom_cursor.glsl", "MIT"},
+	{"wisp-cursor", cursorEffects, "A soft trail, the tuned version of the Tinkle shader of the same project", trails, "wisp-cursor.glsl", "MIT"},
 	{"bloom", screenEffects, "Soft glow around bright text", hckr, "bloom.glsl", ""},
 	{"crt", screenEffects, "Curved glass and scanlines", hckr, "crt.glsl", ""},
 	{"retro-terminal", screenEffects, "Scanlines and a phosphor tint", hckr, "retro-terminal.glsl", ""},
 	{"starfield", screenEffects, "Stars drifting behind the text", hckr, "starfield.glsl", ""},
 	{"underwater", screenEffects, "Slow ripples over the whole window", hckr, "underwater.glsl", ""},
 	{"vhs", screenEffects, "Tape noise and colour bleed", hckr, "vhs.glsl", ""},
+	{"blackhole", screenEffects, "A ray-traced black hole bending the light behind the text", "s0xDk/ghostty-blackhole", "blackhole.glsl", "MIT"},
 }
 
 // Packs is the list of theme packs on offer.
 var Packs = []Pack{
-	{"catppuccin", "Latte, Frappé, Macchiato and Mocha", "catppuccin/ghostty", "MIT", []PackFile{
-		{"themes/catppuccin-latte.conf", "catppuccin-latte"},
-		{"themes/catppuccin-frappe.conf", "catppuccin-frappe"},
-		{"themes/catppuccin-macchiato.conf", "catppuccin-macchiato"},
-		{"themes/catppuccin-mocha.conf", "catppuccin-mocha"},
+	{"cyberdream", "Cyberdream, Light and Muted: vivid neon on near black", "scottmckendry/cyberdream.nvim", "MIT", []PackFile{
+		{"extras/ghostty/cyberdream", "cyberdream"},
+		{"extras/ghostty/cyberdream-light", "cyberdream-light"},
+		{"extras/ghostty/cyberdream-muted", "cyberdream-muted"},
 	}},
-	{"rose-pine", "Rosé Pine, Moon and Dawn", "rose-pine/ghostty", "MIT", []PackFile{
-		{"dist/rose-pine", "rose-pine"},
-		{"dist/rose-pine-moon", "rose-pine-moon"},
-		{"dist/rose-pine-dawn", "rose-pine-dawn"},
+	{"onedarkpro", "One Dark Pro: Onedark, Dark, Vivid, Onelight and Vaporwave", "olimorris/onedarkpro.nvim", "MIT", []PackFile{
+		{"extras/ghostty/onedarkpro_onedark", "onedarkpro_onedark"},
+		{"extras/ghostty/onedarkpro_onedark_dark", "onedarkpro_onedark_dark"},
+		{"extras/ghostty/onedarkpro_onedark_vivid", "onedarkpro_onedark_vivid"},
+		{"extras/ghostty/onedarkpro_onelight", "onedarkpro_onelight"},
+		{"extras/ghostty/onedarkpro_vaporwave", "onedarkpro_vaporwave"},
 	}},
+	{"nightfly", "Nightfly: deep blue for late nights", "bluz71/vim-nightfly-colors", "MIT", []PackFile{
+		{"extras/nightfly-ghostty.conf", "nightfly"},
+	}},
+	{"vscode", "The Dark+ and Light+ colours of VS Code", "Mofiqul/vscode.nvim", "MIT", []PackFile{
+		{"extra/ghostty/vscode-dark", "vscode-dark"},
+		{"extra/ghostty/vscode-light", "vscode-light"},
+	}},
+	{"oasis", "Oasis: sixteen dark desert palettes, from Abyss to Twilight", "uhs-robert/oasis.nvim", "MIT", oasis()},
+}
+
+// oasis lists the dark themes of oasis.nvim, which are named alike.
+func oasis() []PackFile {
+	var out []PackFile
+	for _, n := range []string{"abyss", "cactus", "canyon", "desert", "dune", "lagoon", "luna", "midnight", "mirage", "moonlight", "night", "rose", "scorpion", "sol", "starlight", "twilight"} {
+		theme := "oasis_" + n + "_dark"
+		out = append(out, PackFile{"extras/ghostty/themes/dark/" + theme, theme})
+	}
+	return out
 }
 
 // maxSize bounds a download: a shader or a theme is a few kilobytes.
@@ -102,8 +130,10 @@ var Get = func(url string) ([]byte, error) {
 	return data, nil
 }
 
+// rawURL is a file of a repository's default branch, whatever it is called:
+// raw.githubusercontent.com reads HEAD as that branch.
 func rawURL(repo, path string) string {
-	return "https://raw.githubusercontent.com/" + repo + "/main/" + path
+	return "https://raw.githubusercontent.com/" + repo + "/HEAD/" + path
 }
 
 // URL is where the shader is downloaded from.

@@ -2,6 +2,26 @@
 
 All notable changes to ghostty-config are documented here. Versions follow [Semantic Versioning](https://semver.org).
 
+## [Unreleased]
+
+### Added
+
+- **Extensions → Programs:** command-line tools that put Ghostty to use, installed in one Enter after a yes, and started with your shell.
+  - Shell: starship, zoxide, fzf, atuin, carapace, and lig (IDE-style completion; it sets itself up with `lig install`, and keeps Ghostty's shell integration since 1.2.2).
+  - Images in the terminal, through the Kitty graphics protocol: yazi, superfile, presenterm, fastfetch, kitten (`kitten icat`).
+  - Clickable links (OSC 8): ripgrep (`rg` alias with `--hyperlink-format=default`), eza (`ll` alias with `--hyperlink`).
+  - Sessions: zmx, built on libghostty-vt.
+  - Installed with Homebrew when it is there and the program is in homebrew/core; otherwise from the project's latest GitHub release into `~/.local/bin`, refused unless the file matches the SHA-256 GitHub gives for it. Never as root.
+  - The line that starts a program goes in a marked block of `~/.zshrc`, `~/.bashrc` (`~/.bash_profile` on macOS) or `conf.d/ghostty-config.fish`, backed up before its first change and placed above lig's closing line. Switching a program off takes its line out and leaves the program installed; a line of your own that already starts it is left alone.
+- **Shaders:** cursor_tail, cursor_warp, cursor_sweep, ripple_cursor and sonic_boom_cursor from sahaj-b/cursor-shaders, wisp-cursor from hced/ghostty-cursor-trails, blackhole from s0xDk/ghostty-blackhole (all MIT).
+- **Theme packs** not shipped with Ghostty: cyberdream, onedarkpro, nightfly, vscode, oasis (16 dark palettes), all MIT.
+
+### Changed
+
+- The catppuccin and rose-pine theme packs are gone: Ghostty ships both families itself (Catppuccin Latte, Frappe, Macchiato, Mocha; Rose Pine, Moon, Dawn). Themes already installed from them stay where they are.
+- 0xhckr/ghostty-shaders is now hackrdotsh/ghostty-shaders; it still states no licence, as the panel says.
+- Shaders and themes are fetched from each repository's default branch, whatever it is called.
+
 ## [2.1.0] - 2026-11-06
 
 ### Added
