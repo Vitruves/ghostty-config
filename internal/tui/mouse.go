@@ -24,6 +24,7 @@ const (
 	hitButton
 	hitRail
 	hitValue // a value of a setting's control: name is the value, or "slider"
+	hitTab   // a tab of a list shown a page at a time: index is the tab
 )
 
 type region struct {
@@ -174,6 +175,8 @@ func (m *Model) atelierMouse(msg mouseEv) (tea.Model, tea.Cmd) {
 		return m.pressButton(r.name)
 	case hitValue:
 		return m.clickValue(r, msg.X)
+	case hitTab:
+		return m, m.turnTab(r.index)
 	}
 	return m, nil
 }

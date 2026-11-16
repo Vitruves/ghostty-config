@@ -62,10 +62,29 @@ func TestEveryProgramPicksItsBuildFromItsRealRelease(t *testing.T) {
 		"zmx darwin/amd64":       "zmx-1.0.1-macos-x86_64.tar.gz",
 		"lig linux/amd64":        "lig-1.2.2-x86_64-unknown-linux-musl.tar.gz",
 		"carapace linux/arm64":   "carapace-bin_1.8.2_linux_arm64.tar.gz",
+		"zellij darwin/arm64":    "zellij-aarch64-apple-darwin.tar.gz",
+		"zellij linux/amd64":     "zellij-x86_64-unknown-linux-musl.tar.gz",
+		"glow linux/arm64":       "glow_3.0.0_Linux_arm64.tar.gz",
+		"lazygit darwin/amd64":   "lazygit_0.66.3_darwin_x86_64.tar.gz",
+		"viu darwin/arm64":       "viu-aarch64-apple-darwin",
+		"btop linux/amd64":       "btop-x86_64-unknown-linux-musl.tar.gz",
+		"bat linux/arm64":        "bat-v0.26.1-aarch64-unknown-linux-musl.tar.gz",
+		"delta linux/amd64":      "delta-0.20.1-x86_64-unknown-linux-musl.tar.gz",
+		"fd darwin/amd64":        "fd-v10.5.2-x86_64-apple-darwin.tar.gz",
+		"micro linux/amd64":      "micro-2.0.15-linux64-static.tar.gz",
+		"micro darwin/arm64":     "micro-2.0.15-macos-arm64.tar.gz",
+		"procs darwin/amd64":     "procs-v0.14.12-x86_64-mac.zip",
+		"jq darwin/arm64":        "jq-macos-arm64",
+		"fx linux/arm64":         "fx_linux_arm64",
+		"tealdeer darwin/amd64":  "tealdeer-macos-x86_64",
+		"bottom linux/amd64":     "bottom_x86_64-unknown-linux-musl.tar.gz",
+		"duf linux/amd64":        "duf_0.9.1_linux_x86_64.tar.gz",
+		"television linux/arm64": "tv-0.15.9-aarch64-unknown-linux-gnu.tar.gz",
+		"navi linux/amd64":       "navi-v2.24.0-x86_64-unknown-linux-musl.tar.gz",
 	}
 	for _, p := range Programs {
 		assets := all[strings.ToLower(p.Repo)]
-		if assets == nil {
+		if assets == nil && (p.Builds == nil || len(p.Builds) > 0) {
 			t.Fatalf("no release recorded for %s", p.Repo)
 		}
 		for _, sys := range []string{"darwin/arm64", "darwin/amd64", "linux/arm64", "linux/amd64"} {
@@ -207,9 +226,23 @@ func TestThePlanPrefersHomebrew(t *testing.T) {
 	if r := starship.Plan(); r.Brew != "" || !r.Release {
 		t.Fatalf("without Homebrew starship comes from its release: %+v", r)
 	}
-	eza, _ := FindProgram("eza")
-	if releaseBuilt(eza, "darwin", "arm64") || !releaseBuilt(eza, "linux", "arm64") {
-		t.Fatal("eza builds only for Linux")
+	for _, c := range []struct {
+		name, sys string
+		built     bool
+	}{
+		{"eza", "darwin/arm64", false}, {"eza", "linux/arm64", true},
+		{"btop", "darwin/amd64", false}, {"delta", "darwin/amd64", false}, {"delta", "darwin/arm64", true},
+		{"chafa", "linux/amd64", false}, {"tdf", "darwin/arm64", false}, {"zellij", "darwin/amd64", true},
+	} {
+		p, _ := FindProgram(c.name)
+		goos, goarch, _ := strings.Cut(c.sys, "/")
+		if releaseBuilt(p, goos, goarch) != c.built {
+			t.Errorf("%s on %s: built should be %v", c.name, c.sys, c.built)
+		}
+	}
+	chafa, _ := FindProgram("chafa")
+	if r := chafa.Plan(); r.Why == "" {
+		t.Fatalf("without Homebrew chafa cannot be installed: %+v", r)
 	}
 }
 
@@ -251,6 +284,9 @@ func TestTheBlockGoesAboveLigsLastLine(t *testing.T) {
 	if !strings.HasSuffix(got, blockEnd+"\n\n# lig\neval \"$(lig init zsh post)\"\n") {
 		t.Fatalf("the block should sit above lig's last lines:\n%s", got)
 	}
+	if back := WithBlock(got, "zsh", nil, false); back != rc {
+		t.Fatalf("emptying it should give the file back:\n%q", back)
+	}
 	fish := "eval ('/home/u/.local/bin/lig' init fish post | string collect)\n"
 	if got := WithBlock(fish, "fish", []string{"starship"}, false); !strings.HasPrefix(got, blockStart) {
 		t.Fatalf("lig's quoted path is found too:\n%s", got)
@@ -258,5 +294,66 @@ func TestTheBlockGoesAboveLigsLastLine(t *testing.T) {
 	lig, _ := FindProgram("lig")
 	if !OwnLine("eval ('/home/u/.local/bin/lig' init fish pre | string collect)\n", lig) {
 		t.Fatal("lig set up by its own install, under a quoted path, is on")
+	}
+}
+
+// Only what this tool's routes put in place is removed: files in
+// ~/.local/bin, or a formula beside brew. Anything else is left alone.
+func TestUninstallRemovesOnlyWhatItsRoutesInstalled(t *testing.T) {
+	home := t.TempDir()
+	oldBrew, oldRun := Brew, brewRun
+	t.Cleanup(func() { Brew, brewRun = oldBrew, oldRun })
+	brewDir := filepath.Join(home, "brew", "bin")
+	os.MkdirAll(brewDir, 0o755)
+	Brew = func() string { return filepath.Join(brewDir, "brew") }
+	var ran []string
+	brewRun = func(_ context.Context, _, verb, formula string) error {
+		ran = append(ran, verb+" "+formula)
+		return nil
+	}
+
+	yazi, _ := FindProgram("yazi")
+	local := LocalBin(home)
+	os.MkdirAll(local, 0o755)
+	for _, b := range []string{"yazi", "ya", "unrelated"} {
+		os.WriteFile(filepath.Join(local, b), []byte("x"), 0o755)
+	}
+	if r := yazi.Removal(home, filepath.Join(local, "yazi")); len(r.Files) != 2 || r.Brew != "" {
+		t.Fatalf("yazi in ~/.local/bin is its two files: %+v", r)
+	}
+	t.Setenv("PATH", t.TempDir())
+	if err := Uninstall(context.Background(), yazi, home); err != nil {
+		t.Fatal(err)
+	}
+	entries, _ := os.ReadDir(local)
+	if len(entries) != 1 || entries[0].Name() != "unrelated" {
+		t.Fatalf("only yazi's files should go: %v", entries)
+	}
+
+	starship, _ := FindProgram("starship")
+	os.WriteFile(filepath.Join(brewDir, "starship"), []byte("x"), 0o755)
+	if err := Uninstall(context.Background(), starship, home); err != nil || strings.Join(ran, ",") != "uninstall starship" {
+		t.Fatalf("starship beside brew goes with brew uninstall: %v %v", ran, err)
+	}
+	if r := starship.Removal(home, "/usr/bin/starship"); r.Why == "" {
+		t.Fatal("a program from elsewhere is not removed")
+	}
+}
+
+// GitHub's limit on questions without an account is said in words, with
+// the time it lifts.
+func TestTheRateLimitIsSaidPlainly(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-RateLimit-Remaining", "0")
+		w.Header().Set("X-RateLimit-Reset", "1794483780")
+		w.WriteHeader(http.StatusForbidden)
+	}))
+	t.Cleanup(srv.Close)
+	old := apiURL
+	apiURL = srv.URL
+	t.Cleanup(func() { apiURL = old })
+	_, err := fetch(context.Background(), apiURL+"/repos/a/b/releases/latest", 1<<20)
+	if err == nil || !strings.Contains(err.Error(), "limit") || !strings.Contains(err.Error(), "try again after") {
+		t.Fatalf("the limit should be named: %v", err)
 	}
 }

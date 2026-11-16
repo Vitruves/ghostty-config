@@ -301,6 +301,9 @@ func (m *Model) viewList(ui chrome, l layout) []string {
 	m.sel.clamp(len(m.results), l.listH)
 	return m.sel.window(len(m.results), l.listH, func(i int, selected bool) string {
 		o := m.results[i]
+		if len(o.tabs) > 0 {
+			return m.cellTabs(ui, o, l.mainX, l.bodyY+(i-m.sel.offset), l.mainW)
+		}
 		if o.header {
 			return ui.mutedS().Render(truncate(strings.TrimSpace(o.label+"  "+o.detail), l.mainW))
 		}
@@ -632,6 +635,12 @@ func (m *Model) keyPairs() []string {
 			} else {
 				pairs = append(pairs, "Enter", "apply")
 			}
+		}
+		if m.tabRow() != nil && strings.TrimSpace(m.arg) == "" {
+			pairs = append(pairs, "←→", "group")
+		}
+		if o := m.selected(); o != nil && m.cmd.installed != nil && m.cmd.installed(m, o) {
+			pairs = append(pairs, "^X", "uninstall")
 		}
 		pairs = append(pairs, "Esc", "back", "Tab", "complete", "F2", "peek", "F1", "help")
 	}

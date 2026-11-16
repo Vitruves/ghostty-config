@@ -156,8 +156,14 @@ func renderBlock(shell string, names []string, local bool) string {
 func WithBlock(text, shell string, names []string, local bool) string {
 	block := renderBlock(shell, names, local)
 	if before, _, after, found := splitBlock(text); found {
-		if block == "" && strings.HasSuffix(before, "\n\n") {
-			before = before[:len(before)-1] // the blank line set above it
+		if block == "" {
+			// The blank lines set around it when it was added go with it.
+			if strings.HasSuffix(before, "\n\n") {
+				before = before[:len(before)-1]
+			}
+			if strings.HasPrefix(after, "\n") && before != "" {
+				after = after[1:]
+			}
 		}
 		return before + block + after
 	}

@@ -767,6 +767,10 @@ func (p *palette) press(m *Model, msg tea.KeyPressMsg) tea.Cmd {
 		if r != nil && r.kind == palShortcut {
 			return m.unbindKeys(r.opt.key)
 		}
+		if r != nil && r.kind == palValue && p.scope != nil && p.scope.uninstall != nil {
+			o := r.opt
+			return p.scope.uninstall(m, &o)
+		}
 	case "ctrl+g":
 		if r != nil && r.kind == palShortcut && globalAction(r.opt.key.action) {
 			return m.toggleGlobal(r.opt.key)
@@ -880,6 +884,9 @@ func (p *palette) enterRow(m *Model) tea.Cmd {
 
 // openScope lists a command's values in place of the results.
 func (p *palette) openScope(m *Model, c *command) tea.Cmd {
+	if c.name == "program" {
+		forgetPrograms() // read the disk again, as the prompt's list does
+	}
 	p.scope, p.wasQuery, p.query = c, p.query, ""
 	p.want = ""
 	if c.onMove != nil && c.group == "Tool" && uiPrefNamed(c.name) == nil {

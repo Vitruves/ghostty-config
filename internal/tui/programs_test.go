@@ -45,14 +45,43 @@ func TestAProgramIsInstalledAndStartedWithTheShell(t *testing.T) {
 	h := newHarness(t, "theme = Dracula\n")
 	rc := filepath.Join(home, ".zshrc")
 
+	// One group at a time, under a row of tabs the arrows and a click turn.
 	h.typeText("program ")
 	v := h.view()
-	for _, want := range []string{"Shell", "Images in the terminal", "Clickable links", "starship", "yazi", "download"} {
+	for _, want := range []string{"Shell", "Images", "Links", "starship", "lig", "download", "←→ group"} {
 		if !strings.Contains(v, want) {
-			t.Fatalf("the list of programs lacks %q:\n%s", want, v)
+			t.Fatalf("the first group lacks %q:\n%s", want, v)
 		}
 	}
-	h.typeText("starsh")
+	if strings.Contains(v, "yazi") {
+		t.Fatalf("other groups wait behind their tab:\n%s", v)
+	}
+	h.key("right")
+	if o := h.m.selected(); o == nil || o.value != "yazi" || !strings.Contains(h.view(), "kitten") {
+		t.Fatalf("→ should open Images on its first program: %+v", o)
+	}
+	h.key("left", "left")
+	if o := h.m.tabRow(); o == nil || o.tabs[o.tab] != "Sessions" {
+		t.Fatalf("← from the first group wraps to the last: %+v", o)
+	}
+	if v := h.view(); !strings.Contains(v, "‹") || strings.Contains(v, "Shell   Images") {
+		t.Fatalf("the row keeps the open tab in view and says tabs are left out:\n%s", v)
+	}
+	r, ok := h.find(hitTab, -1, "Editors")
+	if !ok {
+		t.Fatal("the tabs should be places to click")
+	}
+	h.click(r.x, r.y-h.m.top)
+	if o := h.m.selected(); o == nil || o.value != "neovim" {
+		t.Fatalf("a click on Editors opens it: %+v", o)
+	}
+	// Typing searches every group.
+	h.typeText("yaz")
+	if o := h.m.selected(); o == nil || o.value != "yazi" || h.m.tabRow() != nil {
+		t.Fatalf("a search lists every group, without tabs: %+v", o)
+	}
+	h.m.setPromptText("")
+	h.typeText("program starsh")
 	if v := h.view(); !strings.Contains(v, "starship/starship") || !strings.Contains(v, "ISC") || !strings.Contains(v, `eval "$(starship init zsh)"`) {
 		t.Fatalf("the panel should say where it comes from and what it adds:\n%s", v)
 	}
@@ -122,5 +151,68 @@ func TestAUsersOwnLineIsLeftAlone(t *testing.T) {
 	h.key("enter")
 	if !strings.Contains(h.m.status, "run yazi") {
 		t.Fatalf("Enter on yazi says how to run it: %q", h.m.status)
+	}
+}
+
+// Ctrl+X uninstalls a program after a yes: its line leaves the block and
+// its files leave ~/.local/bin. lig's own uninstall runs first, while lig is
+// still there to run it.
+func TestCtrlXUninstallsAProgram(t *testing.T) {
+	const zshrc = "eval \"$(lig init zsh pre)\"\nalias g=git\neval \"$(lig init zsh post)\"\n"
+	home, _ := programHome(t, zshrc)
+	h := newHarness(t, "theme = Dracula\n")
+	rc := filepath.Join(home, ".zshrc")
+	var setups []string
+	oldSetup := extensions.SelfSetup
+	extensions.SelfSetup = func(_ context.Context, path, verb, shell string) error {
+		if _, err := os.Stat(path); err != nil {
+			t.Errorf("%s %s ran after its file was deleted", path, verb)
+		}
+		setups = append(setups, filepath.Base(path)+" "+verb+" "+shell)
+		return nil
+	}
+	t.Cleanup(func() { extensions.SelfSetup = oldSetup })
+
+	h.typeText("program starsh")
+	h.key("enter", "y")
+	if data, _ := os.ReadFile(rc); !strings.Contains(string(data), "ghostty-config:starship") {
+		t.Fatalf("starship should be on:\n%s", data)
+	}
+	if v := h.view(); !strings.Contains(v, "^X") || !strings.Contains(v, "uninstall") {
+		t.Fatalf("the footer and panel should offer Ctrl+X once it is installed:\n%s", v)
+	}
+	h.key("ctrl+x")
+	if h.m.overlay != overlayConfirm || !strings.Contains(h.m.confirmText, "leaves ~/.zshrc") || !strings.Contains(h.m.confirmText, "starship is deleted from ~/.local/bin") {
+		t.Fatalf("Ctrl+X should ask and say what goes: %q", h.m.confirmText)
+	}
+	h.key("n")
+	if _, err := os.Stat(filepath.Join(extensions.LocalBin(home), "starship")); err != nil {
+		t.Fatal("no keeps it")
+	}
+	h.key("ctrl+x", "y")
+	if _, err := os.Stat(filepath.Join(extensions.LocalBin(home), "starship")); err == nil {
+		t.Fatal("yes deletes it")
+	}
+	if data, _ := os.ReadFile(rc); string(data) != zshrc {
+		t.Fatalf("its line should be gone and the rest kept:\n%q", data)
+	}
+	if o := h.m.selected(); o == nil || o.detail != "download" {
+		t.Fatalf("starship should be listed as not installed: %+v", o)
+	}
+
+	// lig set itself up: its own uninstall takes its lines out first.
+	os.WriteFile(filepath.Join(extensions.LocalBin(home), "lig"), []byte("#!/bin/sh\n"), 0o755)
+	h.key("esc")
+	h.typeText("program lig")
+	h.key("ctrl+x")
+	if !strings.Contains(h.m.confirmText, "lig uninstall zsh") {
+		t.Fatalf("the question should name lig's own uninstall: %q", h.m.confirmText)
+	}
+	h.key("y")
+	if strings.Join(setups, ",") != "lig uninstall zsh" {
+		t.Fatalf("lig uninstall should have run once: %v", setups)
+	}
+	if _, err := os.Stat(filepath.Join(extensions.LocalBin(home), "lig")); err == nil {
+		t.Fatal("lig should be deleted after its uninstall")
 	}
 }

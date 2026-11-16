@@ -187,9 +187,11 @@ type Model struct {
 	// shaderRevert puts the previous shader back while "keep this shader?"
 	// waits for an answer; nil otherwise.
 	shaderRevert func(*Model) tea.Cmd
-	busyText     string
-	messageText  string
-	spin         spinner.Model
+	// progTab is the group of programs shown, under their row of tabs.
+	progTab     int
+	busyText    string
+	messageText string
+	spin        spinner.Model
 
 	// Status line.
 	status     string
@@ -536,6 +538,8 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.finishProgram(msg)
 	case programSetupMsg:
 		return m, m.finishProgramSetup(msg)
+	case programRemovedMsg:
+		return m, m.finishUninstall(msg)
 	case updateMsg:
 		if msg.err != nil {
 			// Offline or rate limited: try again next start.

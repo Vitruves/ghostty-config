@@ -27,6 +27,9 @@ type option struct {
 	header  bool // a group title in the menu, not selectable
 	cmd     *command
 	key     *keyRow // an action of the shortcut editor
+	// tabs makes a header the row of a list's pages, tab the one shown.
+	tabs []string
+	tab  int
 }
 
 // command is one word the prompt understands. Typing it shows its options;
@@ -63,6 +66,13 @@ type command struct {
 	transient bool
 	// hidden keeps a command out of the menu while it cannot matter.
 	hidden func(m *Model) bool
+	// uninstall removes what the highlighted option installed, on Ctrl+X;
+	// installed says whether it has anything to remove.
+	uninstall func(m *Model, opt *option) tea.Cmd
+	installed func(m *Model, opt *option) bool
+	// tabTo shows page i of a list shown a page at a time, under a row of
+	// tabs its options begin with; ← → and a click on a tab turn them.
+	tabTo func(m *Model, i int)
 }
 
 // title is what the command is called on screen.

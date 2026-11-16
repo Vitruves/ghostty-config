@@ -17,6 +17,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -57,14 +58,39 @@ type Program struct {
 	SelfSetup bool
 	// Caveat is said before it is installed.
 	Caveat string
+	// Builds are the systems its release has a build for, as "darwin/arm64";
+	// none listed means all four, and an empty list none: Homebrew only.
+	Builds []string
 }
 
+var (
+	linuxOnly    = []string{"linux/arm64", "linux/amd64"}
+	homebrewOnly = []string{}
+)
+
+// The groups are short words: the list shows one at a time, under a row of
+// their names.
 const (
 	groupShell    = "Shell"
-	groupImages   = "Images in the terminal"
-	groupLinks    = "Clickable links"
+	groupImages   = "Images"
+	groupLinks    = "Links"
+	groupEveryday = "Tools"
+	groupSystem   = "System"
+	groupSearch   = "Search"
+	groupEditors  = "Editors"
 	groupSessions = "Sessions"
 )
+
+// Groups lists the groups in the order of the list.
+func Groups() []string {
+	var out []string
+	for _, p := range Programs {
+		if len(out) == 0 || out[len(out)-1] != p.Group {
+			out = append(out, p.Group)
+		}
+	}
+	return out
+}
 
 // Programs is the list on offer, short on purpose: tools that are maintained,
 // built for macOS and Linux on ARM and Intel, and that either use something
@@ -109,18 +135,84 @@ var Programs = []Program{
 		Uses: "Kitty graphics; reads Ghostty's own config for the font", Repo: "fastfetch-cli/fastfetch", Licence: "MIT", Brew: "fastfetch", Bins: []string{"fastfetch"}, Skip: []string{"polyfilled"}},
 	{Name: "kitten", Group: groupImages, Note: "kitten icat photo.jpg shows an image in the terminal: the reference viewer of the protocol Ghostty draws images with",
 		Uses: "Kitty graphics", Repo: "kovidgoyal/kitty", Licence: "GPL-3.0", Bins: []string{"kitten"}},
+	{Name: "chafa", Group: groupImages, Note: "chafa photo.jpg shows an image, a GIF or a video frame; where images cannot be drawn it falls back to coloured characters",
+		Uses: "Kitty graphics, Ghostty listed in its terminal database", Repo: "hpjansson/chafa", Licence: "LGPL-3.0", Brew: "chafa", Bins: []string{"chafa"}, Builds: homebrewOnly,
+		Caveat: "Homebrew installs about ten image libraries with it."},
+	{Name: "viu", Group: groupImages, Note: "viu photo.jpg shows an image in the terminal; a single small program",
+		Uses: "Kitty graphics, asked of the terminal rather than guessed", Repo: "atanunq/viu", Licence: "MIT", Brew: "viu", Bins: []string{"viu"}},
+	{Name: "tdf", Group: groupImages, Note: "Reads PDFs in the terminal, each page drawn as an image, with search",
+		Uses: "Kitty graphics; copes with Ghostty's limit on image memory by name", Repo: "itsjunetime/tdf", Licence: "AGPL-3.0", Brew: "tdf", Bins: []string{"tdf"}, Builds: homebrewOnly},
 
 	{Name: "ripgrep", Group: groupLinks, Note: "Searches files fast; with the alias below, a click on a file name opens it",
 		Uses: "OSC 8 hyperlinks", Repo: "BurntSushi/ripgrep", Licence: "MIT or Unlicense", Brew: "ripgrep", Bins: []string{"rg"},
 		Init: map[string]string{"zsh": "alias rg='rg --hyperlink-format=default'", "bash": "alias rg='rg --hyperlink-format=default'", "fish": "alias rg 'rg --hyperlink-format=default'"},
 		Mark: []string{"alias rg"}},
 	{Name: "eza", Group: groupLinks, Note: "ls with colours, icons and git status; ll lists the folder with clickable names",
-		Uses: "OSC 8 hyperlinks and Nerd Font icons", Repo: "eza-community/eza", Licence: "EUPL-1.2", Brew: "eza", Bins: []string{"eza"}, Skip: []string{"no_libgit"},
+		Uses: "OSC 8 hyperlinks and Nerd Font icons", Repo: "eza-community/eza", Licence: "EUPL-1.2", Brew: "eza", Bins: []string{"eza"}, Skip: []string{"no_libgit"}, Builds: linuxOnly,
 		Init: map[string]string{"zsh": "alias ll='eza -l --hyperlink --icons=auto'", "bash": "alias ll='eza -l --hyperlink --icons=auto'", "fish": "alias ll 'eza -l --hyperlink --icons=auto'"},
 		Mark: []string{"alias ll"}},
+	{Name: "fd", Group: groupLinks, Note: "Finds files by name, fast and simply; with the alias below, a click on a result opens it",
+		Uses: "OSC 8 hyperlinks", Repo: "sharkdp/fd", Licence: "MIT or Apache-2.0", Brew: "fd", Bins: []string{"fd"},
+		Init: map[string]string{"zsh": "alias fd='fd --hyperlink=auto'", "bash": "alias fd='fd --hyperlink=auto'", "fish": "alias fd 'fd --hyperlink=auto'"},
+		Mark: []string{"alias fd"}},
+	{Name: "delta", Group: groupLinks, Note: "git diff, log and show in colour, with syntax highlighting, line numbers and clickable file names",
+		Uses: "OSC 8 hyperlinks and true colour", Repo: "dandavison/delta", Licence: "MIT", Brew: "git-delta", Bins: []string{"delta"},
+		Builds: []string{"darwin/arm64", "linux/arm64", "linux/amd64"},
+		Init:   map[string]string{"zsh": "export GIT_PAGER='delta --hyperlinks'", "bash": "export GIT_PAGER='delta --hyperlinks'", "fish": "set -gx GIT_PAGER 'delta --hyperlinks'"},
+		Mark:   []string{"GIT_PAGER"},
+		Caveat: "Its line makes git page through delta; a core.pager set in your git config is passed over while it is on."},
+
+	{Name: "bat", Group: groupEveryday, Note: "cat with syntax highlighting, line numbers and the lines git sees as changed",
+		Uses: "true colour", Repo: "sharkdp/bat", Licence: "MIT or Apache-2.0", Brew: "bat", Bins: []string{"bat"}},
+	{Name: "glow", Group: groupEveryday, Note: "Reads Markdown in the terminal, styled: glow README.md, or glow alone to browse the folder",
+		Uses: "true colour", Repo: "charmbracelet/glow", Licence: "MIT", Brew: "glow", Bins: []string{"glow"}},
+	{Name: "lazygit", Group: groupEveryday, Note: "git in one screen: stage single lines, commit, branch, rebase and resolve conflicts with a few keys",
+		Uses: "true colour and the mouse", Repo: "jesseduffield/lazygit", Licence: "MIT", Brew: "lazygit", Bins: []string{"lazygit"}},
+
+	{Name: "btop", Group: groupSystem, Note: "Processes, processors, memory, disks and network, with live graphs; kill a process from the list",
+		Uses: "true colour, braille graphs and the mouse", Repo: "aristocratos/btop", Licence: "Apache-2.0", Brew: "btop", Bins: []string{"btop"}, Builds: linuxOnly},
+	{Name: "bottom", Group: groupSystem, Note: "Processes, processors, memory, network, disks and temperatures in panels you can zoom; started with btm",
+		Uses: "true colour, braille graphs and the mouse", Repo: "ClementTsang/bottom", Licence: "MIT", Brew: "bottom", Bins: []string{"btm"}},
+	{Name: "dust", Group: groupSystem, Note: "Which folders take the space: a tree of sizes with bars, largest first",
+		Uses: "true colour", Repo: "bootandy/dust", Licence: "Apache-2.0", Brew: "dust", Bins: []string{"dust"}},
+	{Name: "duf", Group: groupSystem, Note: "Disks and their free space in a table that fits the window",
+		Uses: "true colour", Repo: "muesli/duf", Licence: "MIT", Brew: "duf", Bins: []string{"duf"}},
+	{Name: "procs", Group: groupSystem, Note: "ps made readable: colours, search, a tree, and the ports each process listens on",
+		Uses: "true colour", Repo: "dalance/procs", Licence: "MIT", Brew: "procs", Bins: []string{"procs"}},
+	{Name: "hyperfine", Group: groupSystem, Note: "Times commands over many runs, with statistics and a comparison of several",
+		Uses: "nothing special: a progress bar while it runs", Repo: "sharkdp/hyperfine", Licence: "MIT or Apache-2.0", Brew: "hyperfine", Bins: []string{"hyperfine"}},
+
+	{Name: "television", Group: groupSearch, Note: "Fuzzy search across channels: files, text, git, environment, your own; started with tv",
+		Uses: "true colour", Repo: "alexpasmantier/television", Licence: "MIT", Brew: "television", Bins: []string{"tv"}},
+	{Name: "jq", Group: groupSearch, Note: "Slices and reshapes JSON: jq '.items[].name' data.json",
+		Uses: "colour", Repo: "jqlang/jq", Licence: "MIT", Brew: "jq", Bins: []string{"jq"},
+		Skip: []string{"osx", "linux64"}}, // older names of the same builds
+	{Name: "fx", Group: groupSearch, Note: "Browses JSON: fold, search, and copy the path to a value",
+		Uses: "true colour and the mouse", Repo: "antonmedv/fx", Licence: "MIT", Brew: "fx", Bins: []string{"fx"}},
+	{Name: "tealdeer", Group: groupSearch, Note: "Short, practical examples for a command: tldr tar",
+		Uses: "colour", Repo: "tealdeer-rs/tealdeer", Licence: "MIT or Apache-2.0", Brew: "tealdeer", Bins: []string{"tldr"}},
+	{Name: "navi", Group: groupSearch, Note: "Cheatsheets you can run: Ctrl+G in the shell picks a command and fills in its arguments",
+		Uses: "true colour", Repo: "denisidoro/navi", Licence: "Apache-2.0", Brew: "navi", Bins: []string{"navi"}, Builds: linuxOnly,
+		Init:   map[string]string{"zsh": `eval "$(navi widget zsh)"`, "bash": `eval "$(navi widget bash)"`, "fish": "navi widget fish | source"},
+		Mark:   []string{"navi widget"},
+		Caveat: "It shows its lists with fzf, also in this list."},
+
+	// The editors' releases hold a folder of runtime files beside the
+	// program, which this tool does not lay out: they come from Homebrew,
+	// except micro, a single file.
+	{Name: "neovim", Group: groupEditors, Note: "Vim rebuilt: Lua plugins, a built-in language client and tree-sitter; started with nvim",
+		Uses: "Kitty keyboard protocol, OSC 52 clipboard, OSC 8 links, and Ghostty's progress bar (OSC 9;4) since 0.12", Repo: "neovim/neovim", Licence: "Apache-2.0", Brew: "neovim", Bins: []string{"nvim"}, Builds: homebrewOnly},
+	{Name: "helix", Group: groupEditors, Note: "A modal editor with language servers, tree-sitter and multiple selections built in; started with hx",
+		Uses: "Kitty keyboard protocol and true colour", Repo: "helix-editor/helix", Licence: "MPL-2.0", Brew: "helix", Bins: []string{"hx"}, Builds: homebrewOnly},
+	{Name: "micro", Group: groupEditors, Note: "An editor that works like a desktop one: Ctrl+S saves, Ctrl+Q quits, the mouse selects",
+		Uses: "the mouse, true colour and OSC 52 clipboard", Repo: "micro-editor/micro", Licence: "MIT", Brew: "micro", Bins: []string{"micro"},
+		Builds: []string{"darwin/arm64", "linux/arm64", "linux/amd64"}},
 
 	{Name: "zmx", Group: groupSessions, Note: "Keeps a shell running when its window closes: zmx attach name brings it back, scrollback included",
 		Uses: "built on libghostty-vt, Ghostty's own terminal engine", Repo: "neurosnap/zmx", Licence: "MIT", Bins: []string{"zmx"}},
+	{Name: "zellij", Group: groupSessions, Note: "Tabs, panes and sessions inside one window, its keys always shown at the bottom; a session survives the window",
+		Uses: "reads Ghostty's prompt marks (OSC 133) since 0.45", Repo: "zellij-org/zellij", Licence: "MIT", Brew: "zellij", Bins: []string{"zellij"}, Skip: []string{"no-web"},
+		Caveat: "Inside zellij, Ghostty's own splits, jump to prompt and new tab in the same folder act on zellij, not on the shells in its panes."},
 }
 
 // ligMarks find lig's lines, which name it bare or by a quoted path:
@@ -198,7 +290,10 @@ func (p Program) Plan() Route {
 	if releaseBuilt(p, runtime.GOOS, runtime.GOARCH) {
 		return Route{Release: true}
 	}
-	return Route{Why: fmt.Sprintf("%s publishes no build for %s/%s; install Homebrew, then try again", p.Name, runtime.GOOS, runtime.GOARCH)}
+	if p.Brew != "" {
+		return Route{Why: fmt.Sprintf("%s publishes no build for %s/%s, so here it comes from Homebrew: install Homebrew (brew.sh), then try again", p.Name, runtime.GOOS, runtime.GOARCH)}
+	}
+	return Route{Why: fmt.Sprintf("%s publishes no build for %s/%s", p.Name, runtime.GOOS, runtime.GOARCH)}
 }
 
 // releaseBuilt knows which programs ship no build for a system, so the
@@ -209,8 +304,15 @@ func releaseBuilt(p Program, goos, goarch string) bool {
 	default:
 		return false
 	}
-	// eza builds only for Linux; on macOS it comes from Homebrew.
-	return !(p.Name == "eza" && goos == "darwin")
+	if p.Builds == nil {
+		return true
+	}
+	for _, b := range p.Builds {
+		if b == goos+"/"+goarch {
+			return true
+		}
+	}
+	return false
 }
 
 // InstallTimeout bounds an install: brew can take a while.
@@ -224,7 +326,7 @@ func Install(ctx context.Context, p Program, home string) (string, error) {
 	route := p.Plan()
 	switch {
 	case route.Brew != "":
-		if err := brewInstall(ctx, route.Brew, p.Brew); err != nil {
+		if err := brewRun(ctx, route.Brew, "install", p.Brew); err != nil {
 			return "", err
 		}
 	case route.Release:
@@ -240,14 +342,15 @@ func Install(ctx context.Context, p Program, home string) (string, error) {
 	return "", fmt.Errorf("%s was installed but %s cannot be found", p.Name, p.Bin())
 }
 
-// brewInstall runs brew install, without the update of every formula brew
-// would do first, and returns brew's last words when it fails.
-var brewInstall = func(ctx context.Context, brew, formula string) error {
-	cmd := exec.CommandContext(ctx, brew, "install", formula)
+// brewRun runs brew install or uninstall, without the update of every
+// formula brew would do first, and returns brew's last words when it fails.
+// It is a variable so tests run no brew.
+var brewRun = func(ctx context.Context, brew, verb, formula string) error {
+	cmd := exec.CommandContext(ctx, brew, verb, formula)
 	cmd.Env = append(os.Environ(), "HOMEBREW_NO_AUTO_UPDATE=1", "HOMEBREW_NO_ENV_HINTS=1", "HOMEBREW_NO_INSTALL_CLEANUP=1")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("brew install %s failed: %s", formula, lastLine(out, err))
+		return fmt.Errorf("brew %s %s failed: %s", verb, formula, lastLine(out, err))
 	}
 	return nil
 }
@@ -331,6 +434,9 @@ func fetch(ctx context.Context, url string, limit int64) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
+		if err := rateLimited(resp); err != nil {
+			return nil, err
+		}
 		return nil, fmt.Errorf("%s answered %s", url, resp.Status)
 	}
 	data, err := io.ReadAll(io.LimitReader(resp.Body, limit+1))
@@ -343,14 +449,30 @@ func fetch(ctx context.Context, url string, limit int64) ([]byte, error) {
 	return data, nil
 }
 
+// rateLimited says when GitHub's API may be asked again, when the refusal
+// is its limit on questions without an account, 60 an hour per address.
+func rateLimited(resp *http.Response) error {
+	if resp.StatusCode != http.StatusForbidden && resp.StatusCode != http.StatusTooManyRequests {
+		return nil
+	}
+	if resp.Header.Get("X-RateLimit-Remaining") != "0" {
+		return nil
+	}
+	reset, err := strconv.ParseInt(resp.Header.Get("X-RateLimit-Reset"), 10, 64)
+	if err != nil {
+		return errors.New("GitHub's limit of questions an hour without an account is reached; try again later, or install Homebrew")
+	}
+	return fmt.Errorf("GitHub's limit of questions an hour without an account is reached; try again after %s, or install Homebrew", time.Unix(reset, 0).Format("15:04"))
+}
+
 // PickAsset chooses, among a release's files, the program built for a
 // system. Projects name their files each their own way: aarch64-apple-darwin,
 // darwin_arm64, macos-aarch64, macos-universal, linux-amd64. On Linux a
 // static musl build is preferred, since it runs on any distribution, and a
 // tar.gz over a zip of the same build.
 func PickAsset(assets []Asset, goos, goarch string, skip []string) (Asset, error) {
-	osWords := map[string][]string{"darwin": {"darwin", "macos", "apple"}, "linux": {"linux"}}[goos]
-	archWords := map[string][]string{"arm64": {"aarch64", "arm64"}, "amd64": {"x86_64", "amd64", "x86-64"}}[goarch]
+	osWords := map[string][]string{"darwin": {"darwin", "macos", "apple", "mac", "osx"}, "linux": {"linux"}}[goos]
+	archWords := map[string][]string{"arm64": {"aarch64", "arm64"}, "amd64": {"x86_64", "amd64", "x86-64", "linux64"}}[goarch]
 	if osWords == nil || archWords == nil {
 		return Asset{}, fmt.Errorf("no build for %s/%s", goos, goarch)
 	}
@@ -358,13 +480,13 @@ func PickAsset(assets []Asset, goos, goarch string, skip []string) (Asset, error
 	for _, a := range assets {
 		name := strings.ToLower(a.Name)
 		score, ok := assetScore(name)
-		if !ok || !containsAny(name, osWords) || containsAny(name, skip) {
+		if !ok || !containsAny(name, osWords) || containsAny(name, skip) || strings.Contains(name, "android") {
 			continue
 		}
 		if !containsAny(name, archWords) && !(goos == "darwin" && strings.Contains(name, "universal")) {
 			continue
 		}
-		if strings.Contains(name, "musl") {
+		if strings.Contains(name, "musl") || strings.Contains(name, "static") {
 			score += 2
 		}
 		switch {
@@ -492,6 +614,58 @@ func writeExecutable(target string, data []byte) error {
 		return err
 	}
 	return os.Rename(tmp.Name(), target)
+}
+
+// Removal is how an installed program would be taken off the system.
+type Removal struct {
+	Brew  string   // the brew executable, when Homebrew installed it
+	Files []string // else the executables to delete from ~/.local/bin
+	// Why says why this tool leaves it alone: something else installed it.
+	Why string
+}
+
+// Removal says how the program found at path would be uninstalled. Only
+// what this tool's two routes put in place is removed: a program in
+// ~/.local/bin, or one beside brew that Homebrew knows by its formula.
+// Anything else came from apt, cargo, an installer of its own, and is
+// removed there.
+func (p Program) Removal(home, path string) Removal {
+	dir := filepath.Dir(path)
+	switch {
+	case path == "":
+		return Removal{Why: p.Name + " is not installed"}
+	case dir == LocalBin(home):
+		var files []string
+		for _, b := range p.Bins {
+			if _, err := os.Lstat(filepath.Join(dir, b)); err == nil {
+				files = append(files, filepath.Join(dir, b))
+			}
+		}
+		return Removal{Files: files}
+	}
+	if b := Brew(); b != "" && p.Brew != "" && dir == filepath.Dir(b) {
+		return Removal{Brew: b}
+	}
+	return Removal{Why: fmt.Sprintf("%s is at %s, put there by something other than Homebrew or this tool: remove it the way it was installed", p.Name, path)}
+}
+
+// Uninstall takes the program off the system along the route Removal gives.
+func Uninstall(ctx context.Context, p Program, home string) error {
+	ctx, cancel := context.WithTimeout(ctx, InstallTimeout)
+	defer cancel()
+	r := p.Removal(home, p.Where(home))
+	switch {
+	case r.Brew != "":
+		return brewRun(ctx, r.Brew, "uninstall", p.Brew)
+	case r.Why != "":
+		return errors.New(r.Why)
+	}
+	for _, f := range r.Files {
+		if err := os.Remove(f); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+	}
+	return nil
 }
 
 // SelfSetup runs the program's own "install" or "uninstall" for a shell,

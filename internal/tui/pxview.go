@@ -1133,6 +1133,10 @@ func (m *Model) pxOptions(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo) {
 			if sy < top-0.5 || sy+spots[i].h > g.viewEnd+0.5 {
 				continue
 			}
+			if len(o.tabs) > 0 {
+				m.pxTabs(c, p, f, o, g.bodyX+14, sy, listW-28)
+				continue
+			}
 			if o.header {
 				w := c.Text(f.h2, g.bodyX+14, mid(sy, headH, 15), o.label, p.fg)
 				c.Text(f.small, g.bodyX+14+w+10, mid(sy, headH, 12.5), c.Fit(f.small, o.detail, listW-w-40), p.muted)

@@ -32,6 +32,11 @@ type programSetupMsg struct {
 	err        error
 }
 
+type programRemovedMsg struct {
+	name string
+	err  error
+}
+
 // programsView is what the list shows about every program, read from the
 // disk: where each is installed and what the shell's start file holds.
 type programsView struct {
@@ -118,7 +123,7 @@ func (v *programsView) installedCount() int {
 // programCommand is the command of the Programs part.
 func (m *Model) programCommand() *command {
 	return &command{name: "program", group: "Extensions", syntax: "program <name>",
-		desc:    "Install a command-line tool that puts Ghostty to use, and start it with your shell: a prompt, completions, images in the terminal, clickable links",
+		desc:    "Install a command-line tool that puts Ghostty to use, and start it with your shell: a prompt, completions, images in the terminal, clickable links. Ctrl+X uninstalls one",
 		filters: true,
 		options: func(m *Model, arg string) []option { return m.programOptions(arg) },
 		run: func(m *Model, arg string, opt *option) tea.Cmd {
@@ -129,14 +134,38 @@ func (m *Model) programCommand() *command {
 			return m.useProgram(opt.value)
 		},
 		preview: previewProgramPanel,
+		uninstall: func(m *Model, opt *option) tea.Cmd {
+			return m.askUninstall(opt.value)
+		},
+		installed: func(m *Model, opt *option) bool {
+			return m.programs().where[opt.value] != ""
+		},
+		tabTo: func(m *Model, i int) { m.progTab = i },
 	}
 }
 
-// programOptions lists the programs by kind, each with what Enter would do.
+// programOptions lists one group of programs under the row of groups. A
+// search lists them all, for the prompt to filter, and so does Palette,
+// which searches what it lists and has no row of tabs.
 func (m *Model) programOptions(arg string) []option {
 	v := m.programs()
-	titled := strings.TrimSpace(arg) == ""
+	groups := extensions.Groups()
+	row := func(p extensions.Program) option {
+		on, _ := v.starts(p)
+		return option{label: p.Name, detail: programState(v, p), value: p.Name, current: on}
+	}
 	var out []option
+	if strings.TrimSpace(arg) == "" && m.state.ActiveProfile() != ghostty.ProfilePalette {
+		tab := (m.progTab%len(groups) + len(groups)) % len(groups)
+		out = append(out, option{header: true, tabs: groups, tab: tab})
+		for _, p := range extensions.Programs {
+			if p.Group == groups[tab] {
+				out = append(out, row(p))
+			}
+		}
+		return out
+	}
+	titled := strings.TrimSpace(arg) == ""
 	group := ""
 	for _, p := range extensions.Programs {
 		if titled && p.Group != group {
@@ -146,8 +175,7 @@ func (m *Model) programOptions(arg string) []option {
 			group = p.Group
 			out = append(out, option{label: group, header: true})
 		}
-		on, _ := v.starts(p)
-		out = append(out, option{label: p.Name, detail: programState(v, p), value: p.Name, current: on})
+		out = append(out, row(p))
 	}
 	return out
 }
@@ -161,6 +189,8 @@ func programState(v *programsView, p extensions.Program) string {
 			return "brew"
 		case route.Release:
 			return "download"
+		case p.Brew != "":
+			return "needs Homebrew"
 		}
 		return "not for this system"
 	}
@@ -181,6 +211,7 @@ func (m *Model) useProgram(name string) tea.Cmd {
 		m.warn("No program is called %q", name)
 		return nil
 	}
+	m.openGroupOf(p)
 	v := m.programs()
 	path := v.where[p.Name]
 	if path == "" {
@@ -221,6 +252,17 @@ func (m *Model) useProgram(name string) tea.Cmd {
 		return m.runSelfSetup(p, path, "install", v.shell)
 	}
 	return m.setProgramLine(p, true)
+}
+
+// openGroupOf turns the tabs to the program's group: after Enter the
+// prompt goes back to the command word, and the list must still hold the
+// program the user acted on, highlighted, found by a search or not.
+func (m *Model) openGroupOf(p extensions.Program) {
+	for i, g := range extensions.Groups() {
+		if g == p.Group {
+			m.progTab = i
+		}
+	}
 }
 
 // installQuestion says exactly what installing will do.
@@ -298,8 +340,25 @@ func (m *Model) finishProgram(msg programDoneMsg) tea.Cmd {
 	return nil
 }
 
-// setProgramLine adds the program's line to the block, or takes it out.
+// setProgramLine adds the program's line to the block, or takes it out,
+// and says so.
 func (m *Model) setProgramLine(p extensions.Program, on bool) tea.Cmd {
+	v := m.programs()
+	err := m.writeProgramLine(p, on)
+	m.recompute()
+	switch {
+	case err != nil:
+		m.fail("Could not write %s: %v", shortenPath(v.rc), err)
+	case on:
+		m.info("%s starts with %s now (%s); open a new tab to see it", p.Name, v.shell, shortenPath(v.rc))
+	default:
+		m.info("%s no longer starts with %s; it is still installed", p.Name, v.shell)
+	}
+	return nil
+}
+
+// writeProgramLine rewrites the block with the program's line in or out.
+func (m *Model) writeProgramLine(p extensions.Program, on bool) error {
 	v := m.programs()
 	names := []string{}
 	for n := range v.on {
@@ -321,14 +380,101 @@ func (m *Model) setProgramLine(p extensions.Program, on bool) tea.Cmd {
 	text := extensions.WithBlock(v.text, v.shell, names, local)
 	err := ghostty.WriteOther(m.paths, v.rc, []byte(text))
 	forgetPrograms()
-	m.recompute()
+	return err
+}
+
+// askUninstall is Ctrl+X on a program: it says exactly what goes, and asks.
+func (m *Model) askUninstall(name string) tea.Cmd {
+	p, ok := extensions.FindProgram(name)
+	if !ok {
+		return nil
+	}
+	m.openGroupOf(p)
+	v := m.programs()
+	path := v.where[p.Name]
+	if path == "" {
+		m.info("%s is not installed", p.Name)
+		return nil
+	}
+	r := p.Removal(v.home, path)
+	if r.Why != "" {
+		m.warn("%s", r.Why)
+		return nil
+	}
+	steps := []string{}
+	on, own := v.starts(p)
+	if on && p.SelfSetup {
+		steps = append(steps, fmt.Sprintf("%s uninstall %s takes its lines out of your shell's file", p.Name, v.shell))
+	} else if on && !own {
+		steps = append(steps, fmt.Sprintf("its line leaves %s", shortenPath(v.rc)))
+	}
+	if r.Brew != "" {
+		steps = append(steps, "brew uninstall "+p.Brew+" removes it")
+	} else {
+		names := make([]string, len(r.Files))
+		for i, f := range r.Files {
+			names[i] = filepath.Base(f)
+		}
+		verb := " is deleted from "
+		if len(names) > 1 {
+			verb = " are deleted from "
+		}
+		steps = append(steps, strings.Join(names, " and ")+verb+shortenPath(extensions.LocalBin(v.home)))
+	}
+	// Each step may begin with a command, which keeps its lower case.
+	text := fmt.Sprintf("Uninstall %s? %s.", p.Name, steps[0])
+	if len(steps) == 2 {
+		text = fmt.Sprintf("Uninstall %s? First %s, then %s.", p.Name, steps[0], steps[1])
+	}
+	if on && own && !p.SelfSetup {
+		text += fmt.Sprintf(" A line of your own in %s still starts it: take it out, or your shell will say the command is missing.", shortenPath(extensions.UserRcFile(v.shell, v.home)))
+	}
+	m.openConfirm(text, func(m *Model) tea.Cmd { return m.uninstallProgram(p) })
+	return nil
+}
+
+// uninstallProgram runs behind the spinner: the program's own uninstall
+// first, while it is still there to run, then brew or the deletion. The
+// block's line is taken out when it comes back, on the UI's side.
+func (m *Model) uninstallProgram(p extensions.Program) tea.Cmd {
+	v := m.programs()
+	m.busyText = "Uninstalling " + p.Name + "…"
+	m.overlay = overlayBusy
+	path, shell, home := v.where[p.Name], v.shell, v.home
+	on, _ := v.starts(p)
+	selfSetup := p.SelfSetup && on
+	return func() tea.Msg {
+		if selfSetup {
+			if err := extensions.SelfSetup(context.Background(), path, "uninstall", shell); err != nil {
+				return programRemovedMsg{name: p.Name, err: err}
+			}
+		}
+		return programRemovedMsg{name: p.Name, err: uninstallProgramFn(context.Background(), p, home)}
+	}
+}
+
+// uninstallProgramFn is extensions.Uninstall, a variable so tests run no brew.
+var uninstallProgramFn = extensions.Uninstall
+
+func (m *Model) finishUninstall(msg programRemovedMsg) tea.Cmd {
+	m.overlay = overlayNone
+	forgetPrograms()
+	defer m.recompute()
+	p, _ := extensions.FindProgram(msg.name)
+	v := m.programs()
+	// The line goes even when the program could not: a line that starts a
+	// program half removed is worse than none, and Enter puts it back.
+	lineErr := error(nil)
+	if v.on[p.Name] {
+		lineErr = m.writeProgramLine(p, false)
+	}
 	switch {
-	case err != nil:
-		m.fail("Could not write %s: %v", shortenPath(v.rc), err)
-	case on:
-		m.info("%s starts with %s now (%s); open a new tab to see it", p.Name, v.shell, shortenPath(v.rc))
+	case msg.err != nil:
+		m.fail("Could not uninstall %s: %v", p.Name, msg.err)
+	case lineErr != nil:
+		m.warn("Uninstalled %s, but its line could not leave %s: %v", p.Name, shortenPath(v.rc), lineErr)
 	default:
-		m.info("%s no longer starts with %s; it is still installed", p.Name, v.shell)
+		m.info("Uninstalled %s", p.Name)
 	}
 	return nil
 }
@@ -393,6 +539,8 @@ func previewProgramPanel(m *Model, opt *option, width int) []string {
 		case route.Release:
 			lines = append(lines, field("installs", c.base().Render(shortenPath(filepath.Join(extensions.LocalBin(v.home), strings.Join(p.Bins, ", "))))))
 			lines = append(lines, field("", c.mutedS().Render("from the latest release, SHA-256 checked")))
+		case p.Brew != "":
+			lines = append(lines, field("installs", c.text(c.warn).Render("with Homebrew, which is not here")))
 		default:
 			lines = append(lines, field("installs", c.text(c.warn).Render("no build for this system")))
 		}
@@ -435,17 +583,28 @@ func previewProgramPanel(m *Model, opt *option, width int) []string {
 		enter = "says how to run it."
 	}
 	lines = append(lines, m.entry("Enter", enter, 9, width, c.bold(c.accent))...)
-	how := ""
-	switch dir := filepath.Dir(path); {
-	case path == "":
-	case dir == extensions.LocalBin(v.home):
-		how = "delete " + strings.Join(p.Bins, ", ") + " from " + shortenPath(dir)
-	case p.Brew != "" && extensions.Brew() != "" && dir == filepath.Dir(extensions.Brew()):
-		how = "brew uninstall " + p.Brew
-	}
-	if how != "" {
+	if path != "" {
+		r := p.Removal(v.home, path)
+		note := ""
+		switch {
+		case r.Brew != "":
+			note = "uninstalls it with brew uninstall " + p.Brew
+		case r.Why != "":
+			note = "does nothing here: something other than Homebrew or this tool installed it."
+		default:
+			note = "uninstalls it: deleted from " + shortenPath(extensions.LocalBin(v.home))
+		}
+		if r.Why == "" {
+			switch on, own := v.starts(p); {
+			case on && p.SelfSetup:
+				note += fmt.Sprintf(", after %s uninstall %s takes its lines out", p.Name, v.shell)
+			case on && !own:
+				note += ", and its line leaves your shell's file"
+			}
+			note += "."
+		}
 		lines = append(lines, "")
-		lines = append(lines, para(c.mutedS(), "To remove the program itself: "+how+".", width)...)
+		lines = append(lines, m.entry("Ctrl+X", note, 9, width, c.bold(c.accent))...)
 	}
 	return lines
 }

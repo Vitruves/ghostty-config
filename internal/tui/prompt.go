@@ -53,7 +53,13 @@ func (m *Model) resolve(text string) (*command, string) {
 func (m *Model) recompute() {
 	text := m.prompt.Value()
 	keep := m.selectedValue()
+	prev := m.cmd
 	m.cmd, m.arg = m.resolve(text)
+	if m.cmd != nil && m.cmd.name == "program" && (prev == nil || prev.name != "program") {
+		// Programs come and go from other terminals: the disk is read again
+		// each time their list opens.
+		forgetPrograms()
+	}
 	if m.previewing != "" && (m.cmd == nil || m.cmd.name != m.previewing) {
 		// The list of a look was left without Enter: what it showed goes.
 		m.endPrefPreview()
@@ -422,6 +428,12 @@ func (m *Model) updatePrompt(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "pgdown":
 		return m, m.move(m.resultsHeight())
 	case "left", "right":
+		// In a list shown a page at a time, with nothing typed after the
+		// command, the arrows turn its pages.
+		if o := m.tabRow(); o != nil && strings.TrimSpace(m.arg) == "" {
+			dir := map[string]int{"left": -1, "right": 1}[msg.String()]
+			return m, m.turnTab((o.tab + dir + len(o.tabs)) % len(o.tabs))
+		}
 		// On an empty prompt there is no text to move through. On a setting
 		// the arrows step it through its values; on any other line they walk
 		// the sections.
@@ -462,6 +474,10 @@ func (m *Model) updatePrompt(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if o := m.selected(); m.cmd != nil && o != nil && o.theme != nil {
 			m.deleteThemes([]*ghostty.Theme{o.theme})
 			return m, nil
+		}
+		// Uninstall what the highlighted option installed.
+		if o := m.selected(); m.cmd != nil && m.cmd.uninstall != nil && o != nil && !o.header {
+			return m, m.cmd.uninstall(m, o)
 		}
 	case "ctrl+u":
 		m.setPromptText("")

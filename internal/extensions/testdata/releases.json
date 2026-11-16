@@ -23,6 +23,76 @@
     ]
   },
   {
+    "repo": "alexpasmantier/television",
+    "tag": "",
+    "assets": [
+      "tv-0.15.9-aarch64-apple-darwin.sha256",
+      "tv-0.15.9-aarch64-apple-darwin.tar.gz",
+      "tv-0.15.9-aarch64-unknown-linux-gnu.deb",
+      "tv-0.15.9-aarch64-unknown-linux-gnu.deb.sha256",
+      "tv-0.15.9-aarch64-unknown-linux-gnu.sha256",
+      "tv-0.15.9-aarch64-unknown-linux-gnu.tar.gz",
+      "tv-0.15.9-i686-unknown-linux-gnu.sha256",
+      "tv-0.15.9-i686-unknown-linux-gnu.tar.gz",
+      "tv-0.15.9-x86_64-apple-darwin.sha256",
+      "tv-0.15.9-x86_64-apple-darwin.tar.gz",
+      "tv-0.15.9-x86_64-pc-windows-msvc.sha256",
+      "tv-0.15.9-x86_64-pc-windows-msvc.tar.gz",
+      "tv-0.15.9-x86_64-pc-windows-msvc.zip",
+      "tv-0.15.9-x86_64-pc-windows-msvc.zip.sha256",
+      "tv-0.15.9-x86_64-unknown-linux-gnu.deb",
+      "tv-0.15.9-x86_64-unknown-linux-gnu.deb.sha256",
+      "tv-0.15.9-x86_64-unknown-linux-gnu.sha256",
+      "tv-0.15.9-x86_64-unknown-linux-gnu.tar.gz",
+      "tv-0.15.9-x86_64-unknown-linux-musl.deb",
+      "tv-0.15.9-x86_64-unknown-linux-musl.deb.sha256",
+      "tv-0.15.9-x86_64-unknown-linux-musl.sha256",
+      "tv-0.15.9-x86_64-unknown-linux-musl.tar.gz"
+    ]
+  },
+  {
+    "repo": "antonmedv/fx",
+    "tag": "",
+    "assets": [
+      "fx_darwin_amd64",
+      "fx_darwin_arm64",
+      "fx_linux_amd64",
+      "fx_linux_arm64",
+      "fx_windows_amd64.exe",
+      "fx_windows_arm64.exe"
+    ]
+  },
+  {
+    "repo": "aristocratos/btop",
+    "tag": "v1.4.8",
+    "assets": [
+      "btop-aarch64-unknown-linux-musl.tar.gz",
+      "btop-arm-unknown-linux-musleabi.tar.gz",
+      "btop-armv7-unknown-linux-musleabi.tar.gz",
+      "btop-i586-unknown-linux-musl.tar.gz",
+      "btop-i686-unknown-linux-musl.tar.gz",
+      "btop-m68k-unknown-linux-musl.tar.gz",
+      "btop-mips64-unknown-linux-musl.tar.gz",
+      "btop-powerpc64-unknown-linux-musl.tar.gz",
+      "btop-riscv64-unknown-linux-musl.tar.gz",
+      "btop-s390x-ibm-linux-musl.tar.gz",
+      "btop-x86_64-unknown-linux-musl.tar.gz"
+    ]
+  },
+  {
+    "repo": "atanunq/viu",
+    "tag": "v1.6.1",
+    "assets": [
+      "viu-aarch64-apple-darwin",
+      "viu-aarch64-unknown-linux-musl",
+      "viu-arm-unknown-linux-musleabihf",
+      "viu-armv7-unknown-linux-musleabihf",
+      "viu-x86_64-apple-darwin",
+      "viu-x86_64-pc-windows-msvc.exe",
+      "viu-x86_64-unknown-linux-musl"
+    ]
+  },
+  {
     "repo": "atuinsh/atuin",
     "tag": "v18.24.6",
     "assets": [
@@ -64,6 +134,30 @@
       "sha256.sum",
       "source.tar.gz",
       "source.tar.gz.sha256"
+    ]
+  },
+  {
+    "repo": "bootandy/dust",
+    "tag": "",
+    "assets": [
+      "du-dust_1.2.7-1_amd64.deb",
+      "du-dust_1.2.7-1_i386.deb",
+      "dust-v1.2.7-aarch64-apple-darwin.tar.gz",
+      "dust-v1.2.7-aarch64-pc-windows-gnullvm.zip",
+      "dust-v1.2.7-aarch64-pc-windows-msvc.zip",
+      "dust-v1.2.7-aarch64-unknown-linux-gnu.tar.gz",
+      "dust-v1.2.7-aarch64-unknown-linux-musl.tar.gz",
+      "dust-v1.2.7-arm-unknown-linux-gnueabihf.tar.gz",
+      "dust-v1.2.7-arm-unknown-linux-musleabi.tar.gz",
+      "dust-v1.2.7-i686-pc-windows-msvc.zip",
+      "dust-v1.2.7-i686-unknown-linux-gnu.tar.gz",
+      "dust-v1.2.7-i686-unknown-linux-musl.tar.gz",
+      "dust-v1.2.7-riscv64gc-unknown-linux-gnu.tar.gz",
+      "dust-v1.2.7-x86_64-apple-darwin.tar.gz",
+      "dust-v1.2.7-x86_64-pc-windows-gnu.zip",
+      "dust-v1.2.7-x86_64-pc-windows-msvc.zip",
+      "dust-v1.2.7-x86_64-unknown-linux-gnu.tar.gz",
+      "dust-v1.2.7-x86_64-unknown-linux-musl.tar.gz"
     ]
   },
   {
@@ -133,6 +227,123 @@
     ]
   },
   {
+    "repo": "charmbracelet/glow",
+    "tag": "v3.0.0",
+    "assets": [
+      "checksums.txt",
+      "checksums.txt.sigstore.json",
+      "glow-3.0.0-1.aarch64.rpm",
+      "glow-3.0.0-1.armv7hl.rpm",
+      "glow-3.0.0-1.i386.rpm",
+      "glow-3.0.0-1.x86_64.rpm",
+      "glow-3.0.0.tar.gz",
+      "glow-3.0.0.tar.gz.sbom.json",
+      "glow_3.0.0_aarch64.apk",
+      "glow_3.0.0_amd64.deb",
+      "glow_3.0.0_arm64.deb",
+      "glow_3.0.0_armhf.deb",
+      "glow_3.0.0_armv7.apk",
+      "glow_3.0.0_Darwin_arm64.tar.gz",
+      "glow_3.0.0_Darwin_arm64.tar.gz.sbom.json",
+      "glow_3.0.0_Darwin_x86_64.tar.gz",
+      "glow_3.0.0_Darwin_x86_64.tar.gz.sbom.json",
+      "glow_3.0.0_Freebsd_arm.tar.gz",
+      "glow_3.0.0_Freebsd_arm.tar.gz.sbom.json",
+      "glow_3.0.0_Freebsd_arm64.tar.gz",
+      "glow_3.0.0_Freebsd_arm64.tar.gz.sbom.json",
+      "glow_3.0.0_Freebsd_i386.tar.gz",
+      "glow_3.0.0_Freebsd_i386.tar.gz.sbom.json",
+      "glow_3.0.0_Freebsd_x86_64.tar.gz",
+      "glow_3.0.0_Freebsd_x86_64.tar.gz.sbom.json",
+      "glow_3.0.0_i386.deb",
+      "glow_3.0.0_Linux_arm.tar.gz",
+      "glow_3.0.0_Linux_arm.tar.gz.sbom.json",
+      "glow_3.0.0_Linux_arm64.tar.gz",
+      "glow_3.0.0_Linux_arm64.tar.gz.sbom.json",
+      "glow_3.0.0_Linux_i386.tar.gz",
+      "glow_3.0.0_Linux_i386.tar.gz.sbom.json",
+      "glow_3.0.0_Linux_x86_64.tar.gz",
+      "glow_3.0.0_Linux_x86_64.tar.gz.sbom.json",
+      "glow_3.0.0_Netbsd_arm.tar.gz",
+      "glow_3.0.0_Netbsd_arm.tar.gz.sbom.json",
+      "glow_3.0.0_Netbsd_arm64.tar.gz",
+      "glow_3.0.0_Netbsd_arm64.tar.gz.sbom.json",
+      "glow_3.0.0_Netbsd_i386.tar.gz",
+      "glow_3.0.0_Netbsd_i386.tar.gz.sbom.json",
+      "glow_3.0.0_Netbsd_x86_64.tar.gz",
+      "glow_3.0.0_Netbsd_x86_64.tar.gz.sbom.json",
+      "glow_3.0.0_Openbsd_arm.tar.gz",
+      "glow_3.0.0_Openbsd_arm.tar.gz.sbom.json",
+      "glow_3.0.0_Openbsd_arm64.tar.gz",
+      "glow_3.0.0_Openbsd_arm64.tar.gz.sbom.json",
+      "glow_3.0.0_Openbsd_i386.tar.gz",
+      "glow_3.0.0_Openbsd_i386.tar.gz.sbom.json",
+      "glow_3.0.0_Openbsd_x86_64.tar.gz",
+      "glow_3.0.0_Openbsd_x86_64.tar.gz.sbom.json",
+      "glow_3.0.0_Windows_i386.zip",
+      "glow_3.0.0_Windows_i386.zip.sbom.json",
+      "glow_3.0.0_Windows_x86_64.zip",
+      "glow_3.0.0_Windows_x86_64.zip.sbom.json",
+      "glow_3.0.0_x86.apk",
+      "glow_3.0.0_x86_64.apk"
+    ]
+  },
+  {
+    "repo": "ClementTsang/bottom",
+    "tag": "",
+    "assets": [
+      "bottom-0.15.0-1.x86_64.rpm",
+      "bottom-musl-0.15.0-1.x86_64.rpm",
+      "bottom-musl_0.15.0-1_amd64.deb",
+      "bottom-musl_0.15.0-1_arm64.deb",
+      "bottom-musl_0.15.0-1_armhf.deb",
+      "bottom.desktop",
+      "bottom_0.15.0-1_amd64.deb",
+      "bottom_0.15.0-1_arm64.deb",
+      "bottom_0.15.0-1_armhf.deb",
+      "bottom_aarch64-apple-darwin.tar.gz",
+      "bottom_aarch64-linux-android.tar.gz",
+      "bottom_aarch64-pc-windows-gnullvm.zip",
+      "bottom_aarch64-pc-windows-msvc.zip",
+      "bottom_aarch64-unknown-linux-gnu.tar.gz",
+      "bottom_aarch64-unknown-linux-musl.tar.gz",
+      "bottom_aarch64_gnullvm_installer.msi",
+      "bottom_aarch64_installer.msi",
+      "bottom_armv7-unknown-linux-gnueabihf.tar.gz",
+      "bottom_armv7-unknown-linux-musleabihf.tar.gz",
+      "bottom_i686-pc-windows-msvc.zip",
+      "bottom_i686-unknown-linux-gnu.tar.gz",
+      "bottom_i686-unknown-linux-musl.tar.gz",
+      "bottom_loongarch64-unknown-linux-gnu.tar.gz",
+      "bottom_powerpc64le-unknown-linux-gnu.tar.gz",
+      "bottom_riscv64gc-unknown-linux-gnu.tar.gz",
+      "bottom_x86_64-apple-darwin.tar.gz",
+      "bottom_x86_64-pc-windows-gnu.zip",
+      "bottom_x86_64-pc-windows-msvc.zip",
+      "bottom_x86_64-unknown-freebsd.tar.gz",
+      "bottom_x86_64-unknown-linux-gnu-2-17.tar.gz",
+      "bottom_x86_64-unknown-linux-gnu.tar.gz",
+      "bottom_x86_64-unknown-linux-musl.tar.gz",
+      "bottom_x86_64-unknown-netbsd.tar.gz",
+      "bottom_x86_64_installer.msi",
+      "choco.zip",
+      "completion.tar.gz",
+      "manpage.tar.gz"
+    ]
+  },
+  {
+    "repo": "dalance/procs",
+    "tag": "",
+    "assets": [
+      "procs-0.14.12-1.x86_64.rpm",
+      "procs-v0.14.12-aarch64-linux.zip",
+      "procs-v0.14.12-aarch64-mac.zip",
+      "procs-v0.14.12-x86_64-linux.zip",
+      "procs-v0.14.12-x86_64-mac.zip",
+      "procs-v0.14.12-x86_64-windows.zip"
+    ]
+  },
+  {
     "repo": "dandavison/delta",
     "tag": "0.20.1",
     "assets": [
@@ -148,6 +359,18 @@
       "git-delta_0.20.1_arm64.deb",
       "git-delta_0.20.1_armhf.deb",
       "git-delta_0.20.1_i386.deb"
+    ]
+  },
+  {
+    "repo": "denisidoro/navi",
+    "tag": "",
+    "assets": [
+      "navi-v2.24.0-aarch64-linux-android.tar.gz",
+      "navi-v2.24.0-aarch64-unknown-linux-gnu.tar.gz",
+      "navi-v2.24.0-armv7-linux-androideabi.tar.gz",
+      "navi-v2.24.0-armv7-unknown-linux-musleabihf.tar.gz",
+      "navi-v2.24.0-x86_64-pc-windows-gnu.zip",
+      "navi-v2.24.0-x86_64-unknown-linux-musl.tar.gz"
     ]
   },
   {
@@ -245,6 +468,81 @@
       "fastfetch-windows-aarch64.zip",
       "fastfetch-windows-amd64.7z",
       "fastfetch-windows-amd64.zip"
+    ]
+  },
+  {
+    "repo": "helix-editor/helix",
+    "tag": "",
+    "assets": [
+      "helix-25.07.1-aarch64-linux.tar.xz",
+      "helix-25.07.1-aarch64-macos.tar.xz",
+      "helix-25.07.1-source.tar.xz",
+      "helix-25.07.1-x86_64-linux.tar.xz",
+      "helix-25.07.1-x86_64-macos.tar.xz",
+      "helix-25.07.1-x86_64-windows.zip",
+      "helix-25.07.1-x86_64.AppImage",
+      "helix-25.07.1-x86_64.AppImage.zsync",
+      "helix_25.7.1-1_amd64.deb"
+    ]
+  },
+  {
+    "repo": "itsjunetime/tdf",
+    "tag": "v0.5.0",
+    "assets": []
+  },
+  {
+    "repo": "jesseduffield/lazygit",
+    "tag": "v0.66.3",
+    "assets": [
+      "checksums.txt",
+      "lazygit_0.66.3_darwin_arm64.tar.gz",
+      "lazygit_0.66.3_darwin_x86_64.tar.gz",
+      "lazygit_0.66.3_freebsd_32-bit.tar.gz",
+      "lazygit_0.66.3_freebsd_arm64.tar.gz",
+      "lazygit_0.66.3_freebsd_armv6.tar.gz",
+      "lazygit_0.66.3_freebsd_x86_64.tar.gz",
+      "lazygit_0.66.3_linux_32-bit.tar.gz",
+      "lazygit_0.66.3_linux_arm64.tar.gz",
+      "lazygit_0.66.3_linux_armv6.tar.gz",
+      "lazygit_0.66.3_linux_x86_64.tar.gz",
+      "lazygit_0.66.3_windows_32-bit.zip",
+      "lazygit_0.66.3_windows_arm64.zip",
+      "lazygit_0.66.3_windows_x86_64.zip"
+    ]
+  },
+  {
+    "repo": "jqlang/jq",
+    "tag": "",
+    "assets": [
+      "jq-1.8.2.tar.gz",
+      "jq-1.8.2.zip",
+      "jq-attestation.json",
+      "jq-linux-amd64",
+      "jq-linux-arm64",
+      "jq-linux-armel",
+      "jq-linux-armhf",
+      "jq-linux-i386",
+      "jq-linux-mips",
+      "jq-linux-mips64",
+      "jq-linux-mips64el",
+      "jq-linux-mips64r6",
+      "jq-linux-mips64r6el",
+      "jq-linux-mipsel",
+      "jq-linux-mipsr6",
+      "jq-linux-mipsr6el",
+      "jq-linux-powerpc",
+      "jq-linux-ppc64el",
+      "jq-linux-riscv64",
+      "jq-linux-s390x",
+      "jq-linux64",
+      "jq-macos-amd64",
+      "jq-macos-arm64",
+      "jq-osx-amd64",
+      "jq-win64.exe",
+      "jq-windows-amd64.exe",
+      "jq-windows-arm64.exe",
+      "jq-windows-i386.exe",
+      "sha256sum.txt"
     ]
   },
   {
@@ -385,6 +683,113 @@
     ]
   },
   {
+    "repo": "micro-editor/micro",
+    "tag": "",
+    "assets": [
+      "micro-2.0.15-freebsd32.tar.gz",
+      "micro-2.0.15-freebsd32.tar.gz.sha",
+      "micro-2.0.15-freebsd64.tar.gz",
+      "micro-2.0.15-freebsd64.tar.gz.sha",
+      "micro-2.0.15-illumos64.tar.gz",
+      "micro-2.0.15-illumos64.tar.gz.sha",
+      "micro-2.0.15-linux-arm.tar.gz",
+      "micro-2.0.15-linux-arm.tar.gz.sha",
+      "micro-2.0.15-linux-arm64.tar.gz",
+      "micro-2.0.15-linux-arm64.tar.gz.sha",
+      "micro-2.0.15-linux32.tar.gz",
+      "micro-2.0.15-linux32.tar.gz.sha",
+      "micro-2.0.15-linux64-static.tar.gz",
+      "micro-2.0.15-linux64-static.tar.gz.sha",
+      "micro-2.0.15-linux64.tar.gz",
+      "micro-2.0.15-linux64.tar.gz.sha",
+      "micro-2.0.15-macos-arm64.tar.gz",
+      "micro-2.0.15-macos-arm64.tar.gz.sha",
+      "micro-2.0.15-netbsd32.tar.gz",
+      "micro-2.0.15-netbsd32.tar.gz.sha",
+      "micro-2.0.15-netbsd64.tar.gz",
+      "micro-2.0.15-netbsd64.tar.gz.sha",
+      "micro-2.0.15-openbsd32.tar.gz",
+      "micro-2.0.15-openbsd32.tar.gz.sha",
+      "micro-2.0.15-openbsd64.tar.gz",
+      "micro-2.0.15-openbsd64.tar.gz.sha",
+      "micro-2.0.15-osx.tar.gz",
+      "micro-2.0.15-osx.tar.gz.sha",
+      "micro-2.0.15-solaris64.tar.gz",
+      "micro-2.0.15-solaris64.tar.gz.sha",
+      "micro-2.0.15-win-arm64.zip",
+      "micro-2.0.15-win-arm64.zip.sha",
+      "micro-2.0.15-win32.zip",
+      "micro-2.0.15-win32.zip.sha",
+      "micro-2.0.15-win64.zip",
+      "micro-2.0.15-win64.zip.sha"
+    ]
+  },
+  {
+    "repo": "muesli/duf",
+    "tag": "",
+    "assets": [
+      "checksums.txt",
+      "checksums.txt.sig",
+      "duf_0.9.1_darwin_arm64.tar.gz",
+      "duf_0.9.1_darwin_x86_64.tar.gz",
+      "duf_0.9.1_freebsd_arm64.tar.gz",
+      "duf_0.9.1_freebsd_armv6.tar.gz",
+      "duf_0.9.1_freebsd_armv7.tar.gz",
+      "duf_0.9.1_freebsd_i386.tar.gz",
+      "duf_0.9.1_freebsd_x86_64.tar.gz",
+      "duf_0.9.1_linux_386.apk",
+      "duf_0.9.1_linux_386.deb",
+      "duf_0.9.1_linux_386.rpm",
+      "duf_0.9.1_linux_amd64.apk",
+      "duf_0.9.1_linux_amd64.deb",
+      "duf_0.9.1_linux_amd64.rpm",
+      "duf_0.9.1_linux_arm64.apk",
+      "duf_0.9.1_linux_arm64.deb",
+      "duf_0.9.1_linux_arm64.rpm",
+      "duf_0.9.1_linux_arm64.tar.gz",
+      "duf_0.9.1_linux_armv6.apk",
+      "duf_0.9.1_linux_armv6.deb",
+      "duf_0.9.1_linux_armv6.rpm",
+      "duf_0.9.1_linux_armv6.tar.gz",
+      "duf_0.9.1_linux_armv7.apk",
+      "duf_0.9.1_linux_armv7.deb",
+      "duf_0.9.1_linux_armv7.rpm",
+      "duf_0.9.1_linux_armv7.tar.gz",
+      "duf_0.9.1_linux_i386.tar.gz",
+      "duf_0.9.1_linux_ppc64le.apk",
+      "duf_0.9.1_linux_ppc64le.deb",
+      "duf_0.9.1_linux_ppc64le.rpm",
+      "duf_0.9.1_linux_ppc64le.tar.gz",
+      "duf_0.9.1_linux_x86_64.tar.gz",
+      "duf_0.9.1_openbsd_arm64.tar.gz",
+      "duf_0.9.1_openbsd_armv6.tar.gz",
+      "duf_0.9.1_openbsd_armv7.tar.gz",
+      "duf_0.9.1_openbsd_i386.tar.gz",
+      "duf_0.9.1_openbsd_x86_64.tar.gz",
+      "duf_0.9.1_windows_arm64.zip",
+      "duf_0.9.1_windows_i386.zip",
+      "duf_0.9.1_windows_x86_64.zip"
+    ]
+  },
+  {
+    "repo": "neovim/neovim",
+    "tag": "",
+    "assets": [
+      "nvim-linux-arm64.appimage",
+      "nvim-linux-arm64.appimage.zsync",
+      "nvim-linux-arm64.tar.gz",
+      "nvim-linux-x86_64.appimage",
+      "nvim-linux-x86_64.appimage.zsync",
+      "nvim-linux-x86_64.tar.gz",
+      "nvim-macos-arm64.tar.gz",
+      "nvim-macos-x86_64.tar.gz",
+      "nvim-win-arm64.msi",
+      "nvim-win-arm64.zip",
+      "nvim-win64.msi",
+      "nvim-win64.zip"
+    ]
+  },
+  {
     "repo": "neurosnap/zmx",
     "tag": "v1.0.1",
     "assets": [
@@ -396,6 +801,33 @@
       "zmx-1.0.1-macos-aarch64.tar.gz.sha256",
       "zmx-1.0.1-macos-x86_64.tar.gz",
       "zmx-1.0.1-macos-x86_64.tar.gz.sha256"
+    ]
+  },
+  {
+    "repo": "sharkdp/bat",
+    "tag": "v0.26.1",
+    "assets": [
+      "bat-musl_0.26.1_arm64.deb",
+      "bat-musl_0.26.1_musl-linux-amd64.deb",
+      "bat-musl_0.26.1_musl-linux-i686.deb",
+      "bat-v0.26.1-aarch64-apple-darwin.tar.gz",
+      "bat-v0.26.1-aarch64-pc-windows-msvc.zip",
+      "bat-v0.26.1-aarch64-unknown-linux-gnu.tar.gz",
+      "bat-v0.26.1-aarch64-unknown-linux-musl.tar.gz",
+      "bat-v0.26.1-arm-unknown-linux-gnueabihf.tar.gz",
+      "bat-v0.26.1-arm-unknown-linux-musleabihf.tar.gz",
+      "bat-v0.26.1-i686-pc-windows-msvc.zip",
+      "bat-v0.26.1-i686-unknown-linux-gnu.tar.gz",
+      "bat-v0.26.1-i686-unknown-linux-musl.tar.gz",
+      "bat-v0.26.1-x86_64-apple-darwin.tar.gz",
+      "bat-v0.26.1-x86_64-pc-windows-msvc.zip",
+      "bat-v0.26.1-x86_64-unknown-linux-gnu.tar.gz",
+      "bat-v0.26.1-x86_64-unknown-linux-musl.tar.gz",
+      "bat_0.26.1_amd64.deb",
+      "bat_0.26.1_arm64.deb",
+      "bat_0.26.1_armhf.deb",
+      "bat_0.26.1_i686.deb",
+      "bat_0.26.1_musl-linux-armhf.deb"
     ]
   },
   {
@@ -425,6 +857,33 @@
       "fd_10.5.2_arm64.deb",
       "fd_10.5.2_armhf.deb",
       "fd_10.5.2_i686.deb"
+    ]
+  },
+  {
+    "repo": "sharkdp/hyperfine",
+    "tag": "",
+    "assets": [
+      "hyperfine-musl_2.0.0_amd64.deb",
+      "hyperfine-musl_2.0.0_arm64.deb",
+      "hyperfine-musl_2.0.0_armhf.deb",
+      "hyperfine-musl_2.0.0_i686.deb",
+      "hyperfine-v2.0.0-aarch64-apple-darwin.tar.gz",
+      "hyperfine-v2.0.0-aarch64-pc-windows-msvc.zip",
+      "hyperfine-v2.0.0-aarch64-unknown-linux-gnu.tar.gz",
+      "hyperfine-v2.0.0-aarch64-unknown-linux-musl.tar.gz",
+      "hyperfine-v2.0.0-arm-unknown-linux-gnueabihf.tar.gz",
+      "hyperfine-v2.0.0-arm-unknown-linux-musleabihf.tar.gz",
+      "hyperfine-v2.0.0-i686-pc-windows-msvc.zip",
+      "hyperfine-v2.0.0-i686-unknown-linux-gnu.tar.gz",
+      "hyperfine-v2.0.0-i686-unknown-linux-musl.tar.gz",
+      "hyperfine-v2.0.0-x86_64-apple-darwin.tar.gz",
+      "hyperfine-v2.0.0-x86_64-pc-windows-msvc.zip",
+      "hyperfine-v2.0.0-x86_64-unknown-linux-gnu.tar.gz",
+      "hyperfine-v2.0.0-x86_64-unknown-linux-musl.tar.gz",
+      "hyperfine_2.0.0_amd64.deb",
+      "hyperfine_2.0.0_arm64.deb",
+      "hyperfine_2.0.0_armhf.deb",
+      "hyperfine_2.0.0_i686.deb"
     ]
   },
   {
@@ -487,6 +946,37 @@
     ]
   },
   {
+    "repo": "tealdeer-rs/tealdeer",
+    "tag": "",
+    "assets": [
+      "LICENSE-APACHE.txt",
+      "LICENSE-MIT.txt",
+      "completions_bash",
+      "completions_fish",
+      "completions_zsh",
+      "tealdeer-linux-aarch64-musl",
+      "tealdeer-linux-aarch64-musl.sha256",
+      "tealdeer-linux-arm-musleabi",
+      "tealdeer-linux-arm-musleabi.sha256",
+      "tealdeer-linux-arm-musleabihf",
+      "tealdeer-linux-arm-musleabihf.sha256",
+      "tealdeer-linux-armv7-musleabihf",
+      "tealdeer-linux-armv7-musleabihf.sha256",
+      "tealdeer-linux-i686-musl",
+      "tealdeer-linux-i686-musl.sha256",
+      "tealdeer-linux-x86_64-musl",
+      "tealdeer-linux-x86_64-musl.sha256",
+      "tealdeer-macos-aarch64",
+      "tealdeer-macos-aarch64.sha256",
+      "tealdeer-macos-x86_64",
+      "tealdeer-macos-x86_64.sha256",
+      "tealdeer-windows-aarch64-msvc.exe",
+      "tealdeer-windows-aarch64-msvc.exe.sha256",
+      "tealdeer-windows-x86_64-msvc.exe",
+      "tealdeer-windows-x86_64-msvc.exe.sha256"
+    ]
+  },
+  {
     "repo": "yorukot/superfile",
     "tag": "v1.6.0",
     "assets": [
@@ -497,6 +987,42 @@
       "superfile-v1.6.0-checksums.txt",
       "superfile-windows-v1.6.0-amd64.zip",
       "superfile-windows-v1.6.0-arm64.zip"
+    ]
+  },
+  {
+    "repo": "zellij-org/zellij",
+    "tag": "v0.46.0",
+    "assets": [
+      "zellij-aarch64-apple-darwin.sha256sum",
+      "zellij-aarch64-apple-darwin.tar.gz",
+      "zellij-aarch64-unknown-linux-gnu.sha256sum",
+      "zellij-aarch64-unknown-linux-gnu.tar.gz",
+      "zellij-aarch64-unknown-linux-musl.sha256sum",
+      "zellij-aarch64-unknown-linux-musl.tar.gz",
+      "zellij-desktop-files.sha256sum",
+      "zellij-desktop-files.tar.gz",
+      "zellij-no-web-aarch64-apple-darwin.sha256sum",
+      "zellij-no-web-aarch64-apple-darwin.tar.gz",
+      "zellij-no-web-aarch64-unknown-linux-musl.sha256sum",
+      "zellij-no-web-aarch64-unknown-linux-musl.tar.gz",
+      "zellij-no-web-x86_64-apple-darwin.sha256sum",
+      "zellij-no-web-x86_64-apple-darwin.tar.gz",
+      "zellij-no-web-x86_64-pc-windows-msvc-installer.msi",
+      "zellij-no-web-x86_64-pc-windows-msvc-installer.sha256sum",
+      "zellij-no-web-x86_64-pc-windows-msvc.sha256sum",
+      "zellij-no-web-x86_64-pc-windows-msvc.zip",
+      "zellij-no-web-x86_64-unknown-linux-musl.sha256sum",
+      "zellij-no-web-x86_64-unknown-linux-musl.tar.gz",
+      "zellij-x86_64-apple-darwin.sha256sum",
+      "zellij-x86_64-apple-darwin.tar.gz",
+      "zellij-x86_64-pc-windows-msvc-installer.msi",
+      "zellij-x86_64-pc-windows-msvc-installer.sha256sum",
+      "zellij-x86_64-pc-windows-msvc.sha256sum",
+      "zellij-x86_64-pc-windows-msvc.zip",
+      "zellij-x86_64-unknown-linux-gnu.sha256sum",
+      "zellij-x86_64-unknown-linux-gnu.tar.gz",
+      "zellij-x86_64-unknown-linux-musl.sha256sum",
+      "zellij-x86_64-unknown-linux-musl.tar.gz"
     ]
   }
 ]
