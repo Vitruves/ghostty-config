@@ -12,8 +12,12 @@ import (
 type WindowSpec struct {
 	BG, FG string
 	Cursor string
-	Pal    [16]string
-	Screen string // the colour of the screen the picture sits on
+	// CursorStyle is block, bar, underline or block_hollow, block when
+	// empty; CursorOpacity is 1 when zero.
+	CursorStyle   string
+	CursorOpacity float64
+	Pal           [16]string
+	Screen        string // the colour of the screen the picture sits on
 	// Behind are the two colours of what lies behind the window, which a
 	// translucent background lets through.
 	Behind [2]string
@@ -40,6 +44,14 @@ type Backdrop struct {
 	Repeat   bool
 }
 
+// behindKey is what the discs behind a translucent window are drawn from.
+type behindKey struct {
+	size    image.Point
+	scale   float64
+	colours [2]string
+	blur    bool
+}
+
 // Window draws a Ghostty window as its settings would have it: the title bar
 // in one of its styles, the padding round the text, the shadow, and, when the
 // background is translucent, what lies behind showing through.
@@ -57,14 +69,20 @@ func Window(cols, rows int, cw, ch float64, s WindowSpec) *Canvas {
 	// What lies behind: two soft discs. They only matter through a
 	// translucent window, where blur decides how sharp they stay.
 	if s.Opacity < 1 {
-		behind := NewCanvas(int(float64(cols)*cw+0.5), int(float64(rows)*ch+0.5), scale)
-		behind.Circle(wx+ww*0.26, wy+wh*0.52, wh*0.34, RGBA(s.Behind[0], 1))
-		behind.Circle(wx+ww*0.74, wy+wh*0.60, wh*0.40, RGBA(s.Behind[1], 1))
-		if s.Blur {
-			behind.Blur(13)
-		} else {
-			behind.Blur(2)
-		}
+		// The same discs behind every picture of this size, whatever the
+		// window in front of them is set to.
+		size := c.Img.Bounds().Size()
+		behind := kept(behindKey{size, scale, s.Behind, s.Blur}, func() *Canvas {
+			behind := NewCanvas(size.X, size.Y, scale)
+			behind.Circle(wx+ww*0.26, wy+wh*0.52, wh*0.34, RGBA(s.Behind[0], 1))
+			behind.Circle(wx+ww*0.74, wy+wh*0.60, wh*0.40, RGBA(s.Behind[1], 1))
+			if s.Blur {
+				behind.Blur(13)
+			} else {
+				behind.Blur(2)
+			}
+			return behind
+		})
 		c.Draw(behind, 0, 0)
 	}
 
@@ -145,7 +163,24 @@ func Window(cols, rows int, cw, ch float64, s WindowSpec) *Canvas {
 		for _, p := range prompt {
 			px += c.Text(mono, px, y, p[1], RGBA(p[0], 1))
 		}
-		c.Fill(px+1, y-10, 7, 13, 1.5, RGBA(s.Cursor, 1))
+		op := s.CursorOpacity
+		if op <= 0 {
+			op = 1
+		}
+		col := RGBA(s.Cursor, op)
+		switch s.CursorStyle {
+		case "bar":
+			c.Fill(px+1, y-10, 2, 13, 1, col)
+		case "underline":
+			c.Fill(px+1, y+1, 7, 2, 1, col)
+		case "block_hollow":
+			c.Fill(px+1, y-10, 7, 1.2, 0, col)
+			c.Fill(px+1, y+1.8, 7, 1.2, 0, col)
+			c.Fill(px+1, y-10, 1.2, 13, 0, col)
+			c.Fill(px+6.8, y-10, 1.2, 13, 0, col)
+		default:
+			c.Fill(px+1, y-10, 7, 13, 1.5, col)
+		}
 	}
 	return c
 }

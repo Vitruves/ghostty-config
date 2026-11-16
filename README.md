@@ -68,7 +68,7 @@ The keys of Atelier; Palette and Guided show theirs in the footer.
 
 </div>
 
-Everything can be clicked too: sections, pills, switches, sliders, and a double click on a theme card applies it.
+Everything can be clicked too: sections, pills, switches, the arrows beside a long value, and a double click on a theme card applies it. Sliders are pulled: the preview follows the pointer and the value is written when you let go. What the pointer is over lights up, and the mark of a changed setting turns into an arrow that puts Ghostty's default back.
 
 <p align="center">
   <img src="img/window.png" alt="Window settings in a light terminal" width="820">
@@ -78,9 +78,9 @@ Everything can be clicked too: sections, pills, switches, sliders, and a double 
 
 - **Themes:** 1071 themes, the 252 of the curated collection in 27 families and the 819 Ghostty 1.4 ships, plus your own, each shown as a card and checked for contrast. Create, edit and save your own.
 - **Fonts:** family, style and size with a specimen set in the font itself, spacing, ligatures, the OpenType features and variable axes the font really has, Nerd Font icons. 70 monospace families can be downloaded in one Enter, and if your font is missing or proportional the tool offers one.
-- **Window:** title bar, opacity, blur, padding, background image, size and position at launch, with a preview.
-- **Input:** cursor, clipboard, mouse, and every keyboard shortcut: press the new one, conflicts are shown.
-- **Session:** scrollback, window restore, quick terminal, bell, notifications, shell integration.
+- **Window:** opacity, blur, title bar and title, padding, size and position at launch, full screen, tabs, splits, search and palette colours, background image, with a preview that follows every value.
+- **Input:** cursor, mouse (right click, scroll speed), selection, clipboard, links, and every keyboard shortcut: press the new one, conflicts are shown.
+- **Session:** window restore, startup command and directory, scrollback, notifications, bell, quick terminal, shell integration, updates, the macOS or Linux specifics, and an Advanced part. 212 Ghostty options in all on macOS with Ghostty 1.4; the few that are lists of lines (`env`, `key-remap`…) stay in the file.
 - **Extensions:** shaders (cursor trails, screen effects) and theme packs, with their source and licence shown before install. **Programs** that put Ghostty to use, installed in one Enter and started with your shell: a prompt and completions (starship, zoxide, fzf, atuin, carapace, lig), images in the terminal through the Kitty graphics protocol (yazi, superfile, presenterm, fastfetch, kitten icat, chafa, viu, tdf for PDFs), clickable file names (ripgrep, eza, fd, delta for git), everyday tools in true colour (bat, glow, lazygit), system and disk (btop, bottom, dust, duf, procs, hyperfine), search and data (television, jq, fx, tealdeer, navi), editors (neovim, helix, micro), sessions that outlive their window (zmx, zellij). The list shows one group at a time under a row of tabs: `←` `→` or a click turns them, typing searches them all. A program comes from Homebrew when you have it, else from its GitHub release into `~/.local/bin`, checked against the SHA-256 GitHub gives for the file; nothing runs as root. The line that starts it goes in one marked block of `~/.zshrc` or `~/.bashrc` (`~/.bash_profile` on macOS), backed up before its first change, or in `conf.d/ghostty-config.fish` for fish; switching a program off takes its line out, and a line of your own is left alone. `Ctrl+X` uninstalls a program after a yes: its line goes, then `brew uninstall`, or its files leave `~/.local/bin` (lig runs its own `lig uninstall` first); a program installed some other way (apt, cargo…) is left to its installer.
 - **Tool:** reload Ghostty, check the config, see the session's changes, restore a backup, the interface's own layout and look: its scheme, accent colour and contrast, and when drawn as images its size and the width of theme cards.
 

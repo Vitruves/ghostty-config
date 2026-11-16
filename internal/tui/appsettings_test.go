@@ -302,3 +302,92 @@ func TestF4FitsIn80x24(t *testing.T) {
 		t.Fatalf("the picture dialog should fit 80×24: last row %+v, card %+v", last, card)
 	}
 }
+
+// In the picture interface every row of F4 shows its control: a click on a
+// pill, a dot or a switch keeps that value at once, a row a flag set has
+// nothing to click, and the keys still only show a value until Enter.
+func TestF4ControlsAnswerClicks(t *testing.T) {
+	h := newPixHarnessWith(t, "midnight", pixConfig)
+	h.m.opts.Locked = map[string]Lock{"drawing": {Flag: "-cells", Value: "cells"}}
+	h.send(f4())
+	row := func(p *uiPref) int { h.toRow(p); return h.m.ps.at }
+	contrast, accent, glyphs, drawing, layout := row(prefContrast), row(prefAccent), row(prefGlyphs), row(prefDrawing), row(prefLayout)
+
+	r, ok := h.find(hitButton, contrast, "ps-set:high")
+	if !ok {
+		t.Fatal("the contrast should show a pill for high")
+	}
+	h.click(r.x+r.w/2, r.y)
+	if h.m.ps.at != contrast || !strings.Contains(h.saved(), `"contrast": "high"`) {
+		t.Fatalf("a click on a pill should highlight its row and keep its value: row %d\n%s", h.m.ps.at, h.saved())
+	}
+	r, ok = h.find(hitButton, accent, "ps-set:amber")
+	if !ok {
+		t.Fatal("the accent should show a dot for each colour")
+	}
+	h.click(r.x, r.y)
+	if !strings.Contains(h.saved(), `"accent": "amber"`) {
+		t.Fatalf("a click on a dot should keep its accent:\n%s", h.saved())
+	}
+	r, ok = h.find(hitButton, glyphs, "ps-set:on")
+	if !ok {
+		t.Fatal("simple glyphs should be a switch")
+	}
+	h.click(r.x+r.w/2, r.y)
+	if !h.m.state.Plain || h.m.caps.roundCaps {
+		t.Fatal("a click on the switch should turn simple glyphs on at once")
+	}
+	if _, ok := h.find(hitButton, drawing, "ps-set:text"); ok {
+		t.Error("a row a flag set should have nothing to click")
+	}
+	// No control reaches into the row above or below its own.
+	for _, g := range h.m.regions {
+		if !strings.HasPrefix(g.name, "ps-set:") {
+			continue
+		}
+		if own, _ := h.find(hitButton, g.index, "ps-row"); g.y != own.y || g.h != own.h {
+			t.Fatalf("the control of row %d should sit on its row: %+v on %+v", g.index, g, own)
+		}
+	}
+
+	// The arrows show, Enter keeps; a click on the value shown keeps it too.
+	h.toRow(prefCards)
+	h.key("right")
+	if strings.Contains(h.saved(), `"cards"`) {
+		t.Fatalf("→ alone should keep nothing:\n%s", h.saved())
+	}
+	r, _ = h.find(hitButton, h.m.ps.at, "ps-set:large")
+	h.click(r.x+r.w/2, r.y)
+	if !strings.Contains(h.saved(), `"cards": "large"`) {
+		t.Fatalf("a click on the value the arrows came to should keep it:\n%s", h.saved())
+	}
+	h.shot("f4-controls")
+
+	// A layout is switched to by the click, the dialog staying open over it.
+	r, ok = h.find(hitButton, layout, "ps-set:"+ghostty.ProfilePalette)
+	if !ok {
+		t.Fatal("the layout should show a pill for Palette")
+	}
+	h.click(r.x+r.w/2, r.y)
+	if h.m.state.ActiveProfile() != ghostty.ProfilePalette || h.m.overlay != overlaySettings {
+		t.Fatalf("a click on a layout should switch to it under the dialog: %q, overlay %d", h.m.state.ActiveProfile(), h.m.overlay)
+	}
+	h.key("esc")
+	if h.m.state.Contrast != "high" || h.m.state.Accent != "amber" || h.m.state.Cards != "large" {
+		t.Fatalf("Esc should put back nothing a click kept: %+v", h.m.state)
+	}
+
+	// At 80×24 the rows are too short for controls: each names its value,
+	// and a click on it steps or lists it as before.
+	small := newPixHarness(t, "midnight")
+	small.send(tea.WindowSizeMsg{Width: 80, Height: 24})
+	small.send(f4())
+	if _, ok := small.find(hitButton, -1, "ps-value"); !ok {
+		t.Fatal("80×24 should keep the rows that name their value")
+	}
+	for _, g := range small.m.regions {
+		if strings.HasPrefix(g.name, "ps-set:") {
+			t.Fatalf("80×24 has no room for controls: %+v", g)
+		}
+	}
+}

@@ -592,7 +592,7 @@ func (m *Model) keyPairs() []string {
 		pairs = []string{"↑↓", "choose"}
 		if o := m.selected(); o != nil && o.cmd != nil && o.cmd.adjust {
 			pairs = append(pairs, "←→", "change")
-			if o.cmd.set != nil {
+			if o.cmd.set != nil && o.cmd.set.pref == nil {
 				pairs = append(pairs, "Delete", "default")
 			}
 		}

@@ -6,6 +6,13 @@ All notable changes to ghostty-config are documented here. Versions follow [Sema
 
 ### Added
 
+- **About a hundred more Ghostty options**, 212 in all on macOS with Ghostty 1.4 (116 before), each with the control its shape calls for and hidden where the platform or the Ghostty version does not have it:
+  - Fonts: bold and italic families and styles, synthetic styles, bold colour, a Metrics part (baseline, underline, strikethrough, overline, box drawing), icon height.
+  - Window: title and its font, window buttons, full screen, maximise, new-tab position, split fill, divider colour, search colours, generated palette, shader animation; the GTK title bar, toolbar and tab settings on Linux.
+  - Input: right click, scroll speed for wheel and trackpad, click interval, mouse reporting, Shift capture, cursor thickness and height, a Selection part (word characters, clear on copy), link previews, bracketed-paste safety.
+  - Session: a Startup part (command, first command, working directory, first window, wait after command), what new tabs and splits inherit, undo timeout, resize overlay position and time, scroll to bottom, notification delay and actions, progress style, image memory; Updates and a macOS part (icon, Dock drop, secure input, shortcuts, AppleScript); a Linux part (single instance, class, cgroups); an Advanced part (TERM, ENQ answer, colour report format, checksum reports, grapheme width, alpha blending, vsync, FreeType hinting).
+  - Text and colour options take what you type, checked before it is written (a colour must be hex, a directory must exist), under suggestions: the theme's colours, your shells, installed families.
+  - Left for the file itself: `env`, `input`, `key-remap`, `command-palette-entry`, `clipboard-codepoint-map`, `gtk-custom-css` (lists of lines), and `font-variation-bold`/`-italic`/`-bold-italic`.
 - **Extensions → Programs:** command-line tools that put Ghostty to use, installed in one Enter after a yes, and started with your shell.
   - Shell: starship, zoxide, fzf, atuin, carapace, and lig (IDE-style completion; it sets itself up with `lig install`, and keeps Ghostty's shell integration since 1.2.2).
   - Images in the terminal, through the Kitty graphics protocol: yazi, superfile, presenterm, fastfetch, kitten (`kitten icat`), chafa, viu, tdf (PDFs).
@@ -26,6 +33,16 @@ All notable changes to ghostty-config are documented here. Versions follow [Sema
 
 ### Changed
 
+- **Settings, reordered.** The parts of each section come in the order people reach for them, and the settings of a part in a fixed order of their own: Window opens on Appearance (opacity, blur) before the title bar and padding; Input has Cursor (style, blink, opacity) after Keyboard, and "Click to move the cursor" sits with the mouse; Session goes Windows, Scrollback, Notifications, Bell, Quick terminal, Shell integration, Programs. An open setting lists its neighbours by name, in the same order and groups, instead of by command word.
+- **Settings answer the pointer** in the picture interface. What the pointer is over lights up (lines, pills, switches, sections, the column on the left). Sliders are pulled: the value and the window preview follow the pointer, and the config is written once, when the button is let go. The arrows beside a value too long for pills are clickable. The mark of a changed setting becomes an arrow that puts Ghostty's default back. "Changed" in the left column walks the changed settings, and a dot marks the sections that hold some.
+- An open number has the whole scale to pull above its steps.
+- The window preview shows the cursor in its style and opacity, and comes with the cursor settings too.
+- **Tool tab and F4 settings:** ghostty-config's own settings show real controls (pills, switches, colour dots for the accent), set with a click or `←` `→`, with values in display case and a panel that says what each value does.
+- **Actions say what they do.** A line of the menu that opens something (Undo, Changes, Check, Restore, Preset, Keys, Shader…) carries a short description under its name; opened, its full description sits under the title on two lines instead of being cut, and the title, the description and the lines share one left edge.
+- **Faster window preview.** The picture of the window beside a Window setting is redrawn in about 2 ms instead of about 85 ms when a value changes (blurred layers are kept, fills and blurs run across cores), so stepping opacity or padding, or pulling a slider, no longer stutters.
+- **Help (F1)** lists each section with its parts by name, in place of two hundred command words that no longer fitted.
+- The tab settings on Linux sit together under Window → Tabs.
+- Long whole numbers read in groups of three (50 000 000). The config path beside a setting is cut at its start, not its end. Changed settings read a tone brighter than the ones left to Ghostty.
 - The catppuccin and rose-pine theme packs are gone: Ghostty ships both families itself (Catppuccin Latte, Frappe, Macchiato, Mocha; Rose Pine, Moon, Dawn). Themes already installed from them stay where they are.
 - 0xhckr/ghostty-shaders is now hackrdotsh/ghostty-shaders; it still states no licence, as the panel says.
 - Shaders and themes are fetched from each repository's default branch, whatever it is called.

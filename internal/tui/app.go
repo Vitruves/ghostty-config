@@ -175,6 +175,10 @@ type Model struct {
 	// Mouse: what is clickable on the current frame, and the last click.
 	regions   []region
 	lastClick clickMemory
+	// hoverX and hoverY are the cell under the pointer, -1 when it is not
+	// over the picture interface; drag is the slider being pulled.
+	hoverX, hoverY int
+	drag           *sliderDrag
 
 	// Dialogs.
 	confirmText string
@@ -251,6 +255,8 @@ func New(paths ghostty.Paths, tree *ghostty.Tree, lib *ghostty.Library, state *g
 		fonts: ghostty.NewFontCatalog(paths.Binary),
 		c:     defaultChrome(),
 		caps:  detectTerminal(opts.Plain),
+
+		hoverX: -1, hoverY: -1,
 	}
 	if opts.Images {
 		out := opts.ImgOut
@@ -582,6 +588,8 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Every key the user presses begins a step of the session's history,
 		// so that whatever it writes is undone in one go.
 		m.tree.Checkpoint(m.stepKeyFor(msg.String()))
+		// The keys take over from the pointer: one highlight at a time.
+		m.hoverX, m.hoverY = -1, -1
 		if m.overlay == overlayCapture && !m.peek && msg.String() != "ctrl+c" {
 			// Asking for a shortcut, every key is a candidate, ctrl+d too.
 			return m.updateCapture(msg)
@@ -644,6 +652,10 @@ func (m *Model) View() tea.View {
 	v := tea.NewView(content)
 	v.AltScreen = !m.peek
 	v.MouseMode = tea.MouseModeCellMotion
+	if m.px != nil {
+		// The picture interface answers the pointer as it passes.
+		v.MouseMode = tea.MouseModeAllMotion
+	}
 	v.WindowTitle = "ghostty-config"
 	return v
 }

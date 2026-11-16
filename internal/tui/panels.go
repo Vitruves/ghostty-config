@@ -130,7 +130,7 @@ func (m *Model) detailEditing(width int) []string {
 // currentValueOf reports what a command's setting is now, when it has one.
 func (m *Model) currentValueOf(cmd *command) string {
 	if p := uiPrefNamed(cmd.name); p != nil {
-		return p.value(m)
+		return title(p.title(p.value(m)))
 	}
 	switch cmd.name {
 	case "theme":

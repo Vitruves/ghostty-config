@@ -163,7 +163,7 @@ func palWhere(c *command) string {
 
 // palChanged is whether a setting is set otherwise than its default.
 func (m *Model) palChanged(c *command) bool {
-	if c.set != nil {
+	if c.set != nil && c.set.pref == nil {
 		return m.changed(c.set)
 	}
 	if p := uiPrefNamed(c.name); p != nil {
@@ -1234,7 +1234,7 @@ func (m *Model) palExplain(c *command, value string) (lead, text string) {
 // note when it puts none.
 func (m *Model) palWrites(c *command, value string) (key string, lines []string, note string) {
 	s := c.set
-	if s == nil {
+	if s == nil || s.pref != nil {
 		if c.name == "size" {
 			return "font-size", []string{"font-size = " + value}, ""
 		}

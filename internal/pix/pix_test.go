@@ -72,3 +72,28 @@ func BenchmarkPictureOpaque(b *testing.B) {
 		c.Picture(img, 100, 50)
 	}
 }
+
+// A row composited by overRow is the row draw.Draw composites, whatever the
+// bytes: noise is no premultiplied picture, and still comes out the same.
+func TestOverRowIsDrawOver(t *testing.T) {
+	rng := rand.New(rand.NewSource(9))
+	src, dst, want := image.NewRGBA(image.Rect(0, 0, 4096, 1)), image.NewRGBA(image.Rect(0, 0, 4096, 1)), image.NewRGBA(image.Rect(0, 0, 4096, 1))
+	rng.Read(src.Pix)
+	rng.Read(dst.Pix)
+	for i := 0; i < len(src.Pix); i += 4 {
+		switch (i / 4) % 4 {
+		case 1:
+			src.Pix[i+3] = 0xff
+		case 2:
+			src.Pix[i+3] = 0
+		case 3:
+			copy(src.Pix[i:i+4], []uint8{0, 0, 0, 0})
+		}
+	}
+	copy(want.Pix, dst.Pix)
+	draw.Draw(want, want.Rect, src, image.Point{}, draw.Over)
+	overRow(dst.Pix, src.Pix)
+	if !bytes.Equal(dst.Pix, want.Pix) {
+		t.Fatal("overRow differs from draw.Draw")
+	}
+}

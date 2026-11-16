@@ -196,3 +196,92 @@ func TestCellLookFrames(t *testing.T) {
 		}
 	}
 }
+
+// commandRow is the line of the menu a command sits on.
+func (h *harness) commandRow(name string) int {
+	h.t.Helper()
+	for i, o := range h.m.results {
+		if o.cmd != nil && o.cmd.name == name {
+			return i
+		}
+	}
+	h.t.Fatalf("no line for %s in the menu", name)
+	return -1
+}
+
+// In Tool, a preference of the editor's own has the control a setting of
+// Ghostty's has: a click on a pill, a dot or the switch keeps the value at
+// once, and so do the arrows. None of it reaches Ghostty's config.
+func TestToolPrefsHaveControls(t *testing.T) {
+	h := newPixHarness(t, "midnight")
+	h.m.jumpToGroup("Tool")
+	config := h.config()
+
+	pill, ok := h.find(hitValue, h.commandRow("uicontrast"), "high")
+	if !ok {
+		t.Fatal("the contrast should show a pill for high")
+	}
+	h.click(pill.x+pill.w/2, pill.y)
+	if h.m.state.Contrast != "high" || !strings.Contains(h.saved(), `"contrast": "high"`) {
+		t.Fatalf("a click on the pill should keep high: %q\n%s", h.m.state.Contrast, h.saved())
+	}
+
+	dot, ok := h.find(hitValue, h.commandRow("accent"), "teal")
+	if !ok {
+		t.Fatal("the accent should show a dot for each colour")
+	}
+	h.click(dot.x, dot.y)
+	if !strings.Contains(h.saved(), `"accent": "teal"`) {
+		t.Fatalf("a click on a dot should keep its accent:\n%s", h.saved())
+	}
+
+	sw, ok := h.find(hitValue, h.commandRow("autoreload"), "off")
+	if !ok {
+		t.Fatal("reloading after each change should be a switch")
+	}
+	h.click(sw.x+sw.w/2, sw.y)
+	if h.m.state.AutoReloadEnabled() || !strings.Contains(h.saved(), `"auto_reload": false`) {
+		t.Fatalf("a click on the switch should turn reloading off:\n%s", h.saved())
+	}
+
+	// The arrows step the highlighted row, a scheme of six included.
+	h.m.sel.cursor = h.commandRow("interface")
+	h.key("right")
+	if h.m.state.Interface != "graphite" || !strings.Contains(h.saved(), `"interface": "graphite"`) {
+		t.Fatalf("→ on the scheme should keep the next one: %q", h.m.state.Interface)
+	}
+	h.m.sel.cursor = h.commandRow("uisize")
+	h.key("left")
+	if h.m.state.UISize != "small" {
+		t.Fatalf("← on the size should keep small: %q", h.m.state.UISize)
+	}
+	if len(h.m.prefWas) != 0 {
+		t.Fatalf("nothing chosen on a row is left to put back: %v", h.m.prefWas)
+	}
+
+	// They are not Ghostty's: no line written, nothing counted as changed,
+	// no default of Ghostty's to go back to.
+	if h.config() != config {
+		t.Fatalf("a preference of the editor's reached Ghostty's config:\n%s", h.config())
+	}
+	for _, name := range []string{"accent", "uicontrast", "autoreload"} {
+		c := h.command(name)
+		if c.set == nil || c.set.pref == nil {
+			t.Fatalf("%s should be a preference with a face", name)
+		}
+		if h.m.changed(c.set) {
+			t.Errorf("%s should not count as a changed setting of Ghostty's", name)
+		}
+		if key, lines, _ := h.m.palWrites(c, "high"); key != "" || len(lines) != 0 {
+			t.Errorf("%s should write nothing to the config: %q %v", name, key, lines)
+		}
+	}
+	h.m.sel.cursor = h.commandRow("accent")
+	if pairs := strings.Join(h.m.keyPairs(), " "); strings.Contains(pairs, "Delete") || !strings.Contains(pairs, "←→") {
+		t.Errorf("a preference's row steps with the arrows and has no default of Ghostty's: %s", pairs)
+	}
+	if !h.m.palChanged(h.command("accent")) {
+		t.Error("Palette should still list a preference off its default among what changed")
+	}
+	h.shot("tool-prefs-chosen")
+}

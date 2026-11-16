@@ -451,7 +451,7 @@ func (m *Model) buildCommands() []*command {
 		preview: previewOverview,
 	})
 	add(&command{name: "autoreload", group: "Tool", syntax: "autoreload on|off", desc: "Whether every change asks the running Ghostty to reload",
-		adjust: true,
+		adjust: true, set: reloadFace(),
 		options: func(m *Model, arg string) []option {
 			return onOff(m.state.AutoReloadEnabled())
 		},
@@ -774,6 +774,10 @@ type setting struct {
 	// flag marks one switch of a flag list, which the help leaves to the
 	// section: a dozen of them would crowd every other command out.
 	flag bool
+	// pref is the preference of the editor's own the setting stands for,
+	// nil for a key of Ghostty's: such a setting is kept in the state file
+	// and has no line in the config.
+	pref *uiPref
 }
 
 // shown is a value as the menu writes it.
@@ -997,7 +1001,13 @@ func (m *Model) buildSettings() []setting {
 	s = append(s, numberSetting("paddingy", "window-padding-y", "Padding, top and bottom", "With a transparent title bar, extra top padding keeps the first line clear of the buttons", 2, 0, 60, 2, plain))
 	s = append(s, paddingBalance(v14))
 	s = append(s, keySetting("paddingcolor", "window-padding-color", "Padding colour", "extend continues the nearest cell's background into the padding", []string{"background", "extend", "extend-always"}, "background"))
-	s = append(s, keySetting("windowtheme", "window-theme", "Window chrome theme", "auto follows the terminal background · system follows the desktop", []string{"auto", "system", "light", "dark"}, "auto"))
+	chrome := []string{"auto", "system", "light", "dark"}
+	if !mac {
+		// Only GTK takes the terminal's own colours, which the title bar
+		// colours further down then replace.
+		chrome = append(chrome, "ghostty")
+	}
+	s = append(s, keySetting("windowtheme", "window-theme", "Window chrome theme", "auto follows the terminal background · system follows the desktop", chrome, "auto"))
 	if mac {
 		s = append(s, keySetting("colorspace", "window-colorspace", "Colour space", "display-p3 renders theme colours in the wider gamut", []string{"srgb", "display-p3"}, "srgb"))
 	}
@@ -1080,10 +1090,10 @@ func (m *Model) buildSettings() []setting {
 		session(ss)
 		session(boolSetting("stepresize", "window-step-resize", "Resize in whole cells", "Window edges snap to the cell grid instead of pixels", false))
 	} else {
-		session(keySetting("tabbar", "window-show-tab-bar", "Tab bar", "auto shows it from two tabs up (GTK)", []string{"auto", "always", "never"}, "auto"))
+		s = append(s, keySetting("tabbar", "window-show-tab-bar", "Tab bar", "auto shows it from two tabs up (GTK)", []string{"auto", "always", "never"}, "auto"))
 		if v14 {
-			session(boolSetting("tabsinverted", "gtk-tabs-inverted", "Close button first", "Each tab's close button at its start and its icon at its end, in the tab bar and the overview", false))
-			session(boolSetting("tabswipe", "gtk-horizontal-tab-scroll", "Swipe between tabs", "Two-finger horizontal scrolling on a touchpad switches tabs: left to the next, right to the previous", true))
+			s = append(s, boolSetting("tabsinverted", "gtk-tabs-inverted", "Close button first", "Each tab's close button at its start and its icon at its end, in the tab bar and the overview", false))
+			s = append(s, boolSetting("tabswipe", "gtk-horizontal-tab-scroll", "Swipe between tabs", "Two-finger horizontal scrolling on a touchpad switches tabs: left to the next, right to the previous", true))
 		}
 	}
 	if v14 {
@@ -1104,5 +1114,6 @@ func (m *Model) buildSettings() []setting {
 	s = append(s, m.windowExtraSettings(mac)...)
 	s = append(s, m.sessionExtraSettings(mac)...)
 	s = append(s, m.fontExtraSettings()...)
+	s = append(s, m.moreSettings(mac, v14)...)
 	return s
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/vitruves/ghostty-config/internal/color"
 	"github.com/vitruves/ghostty-config/internal/ghostty"
+	"github.com/vitruves/ghostty-config/internal/pix"
 )
 
 // The editor's own look: its colours and, in the picture interface, its
@@ -350,6 +351,42 @@ func (m *Model) accentSample(name string) string {
 	return c.accent
 }
 
+// face is the preference as a setting of the menu, so that its row draws the
+// control a Ghostty setting would have and answers the arrows and a click
+// the same way. It has no key and no default of Ghostty's: nothing of it is
+// ever written to the config or counted as changed there.
+func (p *uiPref) face() *setting {
+	s := &setting{cmd: p.name, group: "Tool", label: p.label, detail: p.desc, options: p.values, explain: p.notes, pref: p}
+	if len(p.values) == 2 && indexOf(p.values, "on")+indexOf(p.values, "off") == 1 {
+		// On before off, whatever the order the arrows step them in: that is
+		// how a control knows a switch.
+		s.options = []string{"on", "off"}
+	}
+	s.get = func(m *Model) string { return p.value(m) }
+	s.set = func(m *Model, v string) tea.Cmd { return p.choose(m, v) }
+	return s
+}
+
+// choose is a value chosen in the menu: kept at once, a layout switched to.
+func (p *uiPref) choose(m *Model, v string) tea.Cmd {
+	if indexOf(p.values, v) == 0 && p.values[0] != v {
+		return nil
+	}
+	if m.previewing == p.name {
+		m.previewing = ""
+	}
+	return m.keepSetting(p, v)
+}
+
+// word is a value as a control writes it: a word of the config shortened,
+// one of the editor's own by its title.
+func (s *setting) word(v string) string {
+	if s.pref != nil {
+		return title(s.pref.title(v))
+	}
+	return displayValue(v)
+}
+
 // uiPrefCommands are the commands of Tool → Interface.
 func uiPrefCommands() []*command {
 	var out []*command
@@ -357,18 +394,15 @@ func uiPrefCommands() []*command {
 		p := p
 		c := &command{
 			name: p.name, group: "Tool", label: p.label, syntax: p.name + " " + strings.Join(p.values, "|"), desc: p.desc,
-			// A short scale steps from the menu with the arrows.
-			adjust: len(p.values) <= 3,
+			// Its row holds its control, which the arrows step.
+			adjust: true, set: p.face(),
 			options: func(m *Model, arg string) []option {
 				var out []option
 				for _, v := range p.values {
 					if arg != "" && !fuzzyMatch(v, strings.TrimSpace(arg)) {
 						continue
 					}
-					o := option{label: v, detail: p.notes[v], value: v, current: v == p.value(m)}
-					if t, ok := p.titles[v]; ok {
-						o.label = t
-					}
+					o := option{label: title(p.title(v)), detail: p.notes[v], value: v, current: v == p.value(m)}
 					if p == prefAccent {
 						o.swatch = m.accentSample(v)
 					}
@@ -389,17 +423,7 @@ func uiPrefCommands() []*command {
 				if opt == nil {
 					return nil
 				}
-				if p.apply != nil {
-					cmd := p.apply(m, opt.value)
-					m.info("%s: %s", p.label, opt.label)
-					return cmd
-				}
-				if m.previewing == p.name {
-					m.previewing = ""
-				}
-				p.keep(m, opt.value)
-				m.info("%s: %s", p.label, opt.value)
-				return nil
+				return p.choose(m, opt.value)
 			},
 			preview: previewOverview,
 		}
@@ -409,6 +433,89 @@ func uiPrefCommands() []*command {
 		out = append(out, c)
 	}
 	return out
+}
+
+// pxAccentDots is the accent's control: a dot of each colour, the one in
+// effect ringed and named. It reports false when the row has no room for it.
+func (m *Model) pxAccentDots(c *pix.Canvas, p pxPal, f pxFonts, s *setting, v string, idx int, right, y, minLeft float32) (float32, bool) {
+	const step = 22
+	name := s.word(v)
+	left := right - float32(len(s.options))*step - 12 - c.Width(f.small, name)
+	if left < minLeft {
+		return 0, false
+	}
+	cy := y + rowH/2
+	c.Text(f.small, left, mid(y, rowH, 12.5), name, p.fg)
+	x := right - float32(len(s.options))*step
+	for _, o := range s.options {
+		cx := x + step/2
+		if o == v {
+			c.Ring(cx-9, cy-9, 18, 18, 9, 1.4, p.fg)
+		}
+		c.Circle(cx, cy, 5.5, pix.Hex(m.accentSample(o), 1))
+		m.pxRegion(c, x, y, step, rowH, hitValue, idx, o)
+		x += step
+	}
+	return left, true
+}
+
+// pxPrefSide is the panel beside a preference of the editor's own: what it
+// is, and what each of its values does, the one shown standing out.
+func (m *Model) pxPrefSide(c *pix.Canvas, p pxPal, f pxFonts, pref *uiPref, opt *option, x, y, w, h float32) {
+	value := pref.value(m)
+	if opt != nil && opt.value != "" {
+		value = opt.value
+	}
+	c.Text(f.h3, x, y+20, pref.label, p.fg)
+	yy := y + 34
+	for _, line := range c.Wrap(f.body, sentence(pref.desc), w-12) {
+		c.Text(f.body, x, yy+14, line, p.text2)
+		yy += 21
+	}
+	yy += 14
+	nameW := float32(0)
+	for _, v := range pref.values {
+		nameW = maxF(nameW, c.Width(f.rowB, title(pref.title(v))))
+	}
+	nx := x
+	if pref == prefAccent {
+		nx += 20
+	}
+	tx := nx + nameW + 18
+	for _, v := range pref.values {
+		face, col, noteCol := f.row, p.muted, p.muted
+		if v == value {
+			face, col, noteCol = f.rowB, p.fg, p.text2
+		}
+		note := c.Wrap(f.small, sentence(pref.notes[v]), maxF(x+w-12-tx, 80))
+		if yy+float32(maxInt(len(note), 1))*19+8 > y+h {
+			break
+		}
+		if pref == prefAccent {
+			c.Circle(x+6, yy+9.5, 5.5, pix.Hex(m.accentSample(v), 1))
+		}
+		c.Text(face, nx, yy+14, title(pref.title(v)), col)
+		for i, line := range note {
+			c.Text(f.small, tx, yy+14+float32(i)*19, line, noteCol)
+		}
+		yy += float32(maxInt(len(note), 1))*19 + 8
+	}
+	yy += 14
+	kept := "Kept by ghostty-config itself, not in Ghostty's config."
+	switch {
+	case pref.later:
+		kept = "Applies at the next launch. " + kept
+	case pref.apply != nil:
+		kept = "Enter or a click switches at once. " + kept
+	}
+	for _, line := range c.Wrap(f.small, kept, w-12) {
+		if yy+19 > y+h {
+			break
+		}
+		c.Text(f.small, x, yy+13, line, p.muted)
+		yy += 19
+	}
+	m.pxRegion(c, x, y, w, h, hitPreview, 0, "")
 }
 
 // endPrefPreview puts back the value of every preference that was in effect
@@ -421,4 +528,12 @@ func (m *Model) endPrefPreview() {
 		}
 	}
 	m.prefWas, m.previewing = nil, ""
+}
+
+// reloadFace is the face of Tool → Ghostty's switch, named shortly: it sits
+// under the command that reloads, and in the column beside an open command.
+func reloadFace() *setting {
+	s := prefAutoReload.face()
+	s.label = "Auto-reload"
+	return s
 }

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"image"
 	stdcolor "image/color"
+	"math"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -29,6 +31,8 @@ type pxPal struct {
 	ui                                              chrome
 	bg, fg, text2, muted, accent, onAccent          stdcolor.NRGBA
 	field, rowSel, railSel, keycap, track, hairline stdcolor.NRGBA
+	// hover is the ground under the pointer, quieter than the highlight's.
+	hover stdcolor.NRGBA
 }
 
 func newPxPal(ui chrome) pxPal {
@@ -50,6 +54,7 @@ func newPxPal(ui chrome) pxPal {
 		accent: h(ui.accent), onAccent: h(on),
 		field:    tone(0.94),
 		rowSel:   tone(0.93),
+		hover:    tone(0.965),
 		railSel:  tone(0.90),
 		keycap:   tone(0.88),
 		track:    tone(0.83),
@@ -148,7 +153,7 @@ func pxKeyLabel(c *pix.Canvas, f font.Face, x, base float32, key string, col std
 		rest = strings.TrimPrefix(strings.TrimPrefix(strings.TrimPrefix(rest, "^"), "Ctrl+"), "ctrl+")
 		rest = strings.ToUpper(rest)
 	}
-	rest = strings.NewReplacer("⇧", "Shift ", "⌫", "Bksp", "Enter", "Enter").Replace(rest)
+	rest = keyWords.Replace(rest)
 	if draw {
 		w += c.Text(f, x+w, base, rest, col)
 	} else {
@@ -183,11 +188,29 @@ func pxSwatch(c *pix.Canvas, t *ghostty.Theme, x, y, size float32) {
 // pxDot is the accent mark of a changed or current value.
 func pxDot(c *pix.Canvas, cx, cy float32, col stdcolor.Color) { c.Circle(cx, cy, 3, col) }
 
-// displayValue shortens a config word for a control.
+// displayValue shortens a config word for a control, and sets a long whole
+// number in groups of three so its size reads at a glance.
 func displayValue(v string) string {
+	if len(v) > 4 && strings.Trim(v, "0123456789") == "" {
+		var b strings.Builder
+		for i, r := range v {
+			if i > 0 && (len(v)-i)%3 == 0 {
+				b.WriteByte(' ')
+			}
+			b.WriteRune(r)
+		}
+		return b.String()
+	}
 	v = strings.TrimPrefix(v, "macos-")
-	return strings.NewReplacer("-", " ", "_", " ").Replace(v)
+	return valueWords.Replace(v)
 }
+
+// The replacers of pxKeyLabel and displayValue, built once: a frame asks
+// for dozens of labels and values, and building one costs more than using it.
+var (
+	keyWords   = strings.NewReplacer("⇧", "Shift ", "⌫", "Bksp", "Enter", "Enter")
+	valueWords = strings.NewReplacer("-", " ", "_", " ")
+)
 
 // changed is whether a setting differs from Ghostty's default.
 func (m *Model) changed(s *setting) bool {
@@ -214,6 +237,12 @@ func (m *Model) pxHeader(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo) {
 		navX = g.M + 170
 	}
 	searching := m.cmd == nil && strings.TrimSpace(m.prompt.Value()) != ""
+	changedIn := map[string]bool{}
+	for _, cmd := range m.commands() {
+		if !changedIn[cmd.group] && cmd.set != nil && m.listed(cmd) && m.changed(cmd.set) {
+			changedIn[cmd.group] = true
+		}
+	}
 	x := navX
 	for i, name := range groups {
 		w := c.Width(f.nav, name)
@@ -224,7 +253,15 @@ func (m *Model) pxHeader(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo) {
 			c.Text(f.navB, x, base, name, p.fg)
 			c.Rect(x, g.T+33, c.Width(f.navB, name), 2, 1, p.accent)
 		} else {
-			c.Text(f.nav, x, base, name, p.muted)
+			col := p.muted
+			if m.hovering(c, x-6, g.T, w+12, 36) {
+				col = p.fg
+			}
+			c.Text(f.nav, x, base, name, col)
+		}
+		if changedIn[name] {
+			// Something in this section differs from Ghostty's default.
+			pxDot(c, x+w+6, base-12, p.accent)
 		}
 		m.pxRegion(c, x-6, g.T, w+12, 36, hitGroup, i, name)
 		x += w + 24
@@ -351,6 +388,8 @@ func (m *Model) pxRail(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo, title string,
 		}
 		if it.active {
 			c.Rect(g.railX, y, g.railW, 28, 7, p.railSel)
+		} else if it.kind != hitNone && m.hovering(c, g.railX, y, g.railW, 28) {
+			c.Rect(g.railX, y, g.railW, 28, 7, p.hover)
 		}
 		lx := g.railX + 10
 		if it.dot {
@@ -644,8 +683,12 @@ func (m *Model) pxMenuLayout() ([]menuSpot, float32) {
 			y += headH
 			last = sub
 		}
-		spots[i].y, spots[i].h = y, rowH
-		y += rowH
+		h := float32(rowH)
+		if !searching && briefOf(o.cmd) != "" {
+			h = actionH
+		}
+		spots[i].y, spots[i].h = y, h
+		y += h
 	}
 	return spots, y
 }
@@ -676,7 +719,7 @@ func (m *Model) pxMenu(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo) {
 		items[cur].active = true
 	}
 	if changed > 0 {
-		items = append(items, railItem{label: "Changed", count: itoa(changed), dot: true, gapBefore: true})
+		items = append(items, railItem{label: "Changed", count: itoa(changed), dot: true, gapBefore: true, kind: hitButton, name: "next-changed"})
 	}
 	title := groups[m.group]
 	if strings.TrimSpace(m.prompt.Value()) != "" {
@@ -703,7 +746,7 @@ func (m *Model) pxMenu(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo) {
 		s := spots[i]
 		if s.head != "" {
 			hy := g.bodyY + s.headY - e.listTop
-			if hy >= g.bodyY-0.5 && hy+headH+rowH <= g.viewEnd+0.5 {
+			if hy >= g.bodyY-0.5 && hy+headH+s.h <= g.viewEnd+0.5 {
 				c.Text(f.h2, g.bodyX+14, mid(hy, headH, 15), s.head, p.fg)
 			}
 		}
@@ -711,18 +754,23 @@ func (m *Model) pxMenu(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo) {
 			continue
 		}
 		y := g.bodyY + s.y - e.listTop
-		if y < g.bodyY-0.5 || y+rowH > g.viewEnd+0.5 {
+		if y < g.bodyY-0.5 || y+s.h > g.viewEnd+0.5 {
 			continue
 		}
 		// The row first, so the control's own regions lie on top of it.
-		m.pxRegion(c, g.bodyX, y, listW, rowH, hitResult, i, "")
-		m.pxMenuRow(c, p, f, o, i, i == m.sel.cursor, g.bodyX, y, listW)
+		m.pxRegion(c, g.bodyX, y, listW, s.h, hitResult, i, "")
+		m.pxMenuRow(c, p, f, o, i, i == m.sel.cursor, g.bodyX, y, listW, s.h)
 	}
 	c.Unclip()
 
 	if sideW > 0 {
 		if o := m.selected(); o != nil && o.cmd != nil {
-			m.pxCommandSide(c, p, f, o.cmd, nil, sideX, g.bodyY, sideW, g.viewEnd-g.bodyY)
+			var held *option
+			if d := m.drag; d != nil && d.set == o.cmd.set {
+				// A slider being pulled: the panel shows where it is.
+				held = &option{value: d.value}
+			}
+			m.pxCommandSide(c, p, f, o.cmd, held, sideX, g.bodyY, sideW, g.viewEnd-g.bodyY)
 		}
 	}
 }
@@ -780,20 +828,24 @@ func (m *Model) pxScrollList(spots []menuSpot, total float32, g pxGeo) {
 
 // pxMenuRow is a line of the menu: a mark when the setting is changed, its
 // name, and on the right the control that shows its value.
-func (m *Model) pxMenuRow(c *pix.Canvas, p pxPal, f pxFonts, o option, idx int, sel bool, x, y, w float32) {
+func (m *Model) pxMenuRow(c *pix.Canvas, p pxPal, f pxFonts, o option, idx int, sel bool, x, y, w, h float32) {
+	over := m.hovering(c, x, y, w, h)
 	if sel {
-		c.Rect(x, y, w, rowH, 8, p.rowSel)
+		c.Rect(x, y, w, h, 8, p.rowSel)
+	} else if over {
+		c.Rect(x, y, w, h, 8, p.hover)
 	}
 	var s *setting
 	if o.cmd != nil {
 		s = o.cmd.set
 	}
-	if m.changed(s) {
-		pxDot(c, x+6, y+rowH/2, p.accent)
-	}
+	changed := m.changed(s)
 	face, col := f.row, p.text2
 	if sel {
 		face, col = f.rowB, p.fg
+	} else if changed {
+		// What the user set reads a tone above what Ghostty decided.
+		col = p.fg
 	}
 	label := o.label
 	if s != nil {
@@ -808,14 +860,16 @@ func (m *Model) pxMenuRow(c *pix.Canvas, p pxPal, f pxFonts, o option, idx int, 
 	labelW := c.Width(face, label)
 
 	if s == nil {
-		// A command: its value, quiet, and a chevron that says Enter opens it.
+		// A command: its value, quiet, and a chevron that says Enter opens
+		// it; under its name, when the line is tall enough, what it does.
+		cy := y + h/2
 		right -= 10
-		c.Line(right+3, y+rowH/2-4, right+7, y+rowH/2, 1.4, p.muted)
-		c.Line(right+7, y+rowH/2, right+3, y+rowH/2+4, 1.4, p.muted)
+		c.Line(right+3, cy-4, right+7, cy, 1.4, p.muted)
+		c.Line(right+7, cy, right+3, cy+4, 1.4, p.muted)
 		v := o.detail
 		vx := right - 8
 		if o.theme != nil {
-			pxSwatch(c, o.theme, vx-22, y+8, 22)
+			pxSwatch(c, o.theme, vx-22, cy-11, 22)
 			vx -= 30
 		}
 		room := vx - (x + 14 + labelW + 20)
@@ -824,14 +878,52 @@ func (m *Model) pxMenuRow(c *pix.Canvas, p pxPal, f pxFonts, o option, idx int, 
 		if !quietValue(v) {
 			vc = p.text2
 		}
-		c.Text(f.small, vx-c.Width(f.small, v), mid(y, rowH, 12.5), v, vc)
+		vw := c.Width(f.small, v)
+		c.Text(f.small, vx-vw, mid(y, h, 12.5), v, vc)
+		if h > rowH {
+			c.Text(face, x+14, y+22, label, col)
+			c.Text(f.small, x+14, y+41, c.Fit(f.small, briefOf(o.cmd), vx-vw-16-(x+14)), p.muted)
+			return
+		}
 		c.Text(face, x+14, base, label, col)
 		return
 	}
 
 	v := s.get(m)
+	if d := m.drag; d != nil && d.set == s {
+		v = d.value
+	}
 	ctrlLeft := m.pxControl(c, p, f, s, v, idx, right, y, x+14+labelW+24)
 	c.Text(face, x+14, base, c.Fit(face, label, ctrlLeft-(x+14)-16), col)
+	if changed {
+		// The mark of a changed setting; under the pointer, or on the
+		// highlighted line, it is the arrow that puts the default back.
+		if over || sel {
+			pxUndoArrow(c, x+6, y+rowH/2, p.accent)
+			m.pxRegion(c, x-4, y, 18, rowH, hitValue, idx, resetValue)
+		} else {
+			pxDot(c, x+6, y+rowH/2, p.accent)
+		}
+	}
+}
+
+// pxUndoArrow is a small arrow turning back on itself: back to the default.
+func pxUndoArrow(c *pix.Canvas, cx, cy float32, col stdcolor.Color) {
+	const r = 4.2
+	// Three quarters of a circle, open at the top left, where the head is.
+	const steps = 18
+	px, py := float32(0), float32(0)
+	for i := 0; i <= steps; i++ {
+		a := -math.Pi*0.75 + float64(i)/steps*math.Pi*1.5
+		x, y := cx+r*float32(math.Cos(a)), cy+r*float32(math.Sin(a))
+		if i > 0 {
+			c.Line(px, py, x, y, 1.4, col)
+		}
+		px, py = x, y
+	}
+	hx, hy := cx+r*float32(math.Cos(-math.Pi*0.75)), cy+r*float32(math.Sin(-math.Pi*0.75))
+	c.Line(hx, hy, hx-0.4, hy-3.6, 1.4, col)
+	c.Line(hx, hy, hx+3.6, hy-0.4, 1.4, col)
 }
 
 // pxControl draws the control of a setting with its right edge at right and
@@ -874,6 +966,13 @@ func (m *Model) pxControl(c *pix.Canvas, p pxPal, f pxFonts, s *setting, v strin
 		c.Rect(tx, cy-2, tw, 4, 2, p.track)
 		c.Rect(tx, cy-2, tw*frac, 4, 2, p.accent)
 		kx := tx + (tw-14)*frac
+		held := m.drag != nil && m.drag.set == s
+		if held || m.hovering(c, tx, y, tw, rowH) {
+			// Within reach: the knob says it can be pulled.
+			halo := p.accent
+			halo.A = 56
+			c.Circle(kx+7, cy, 12, halo)
+		}
 		c.Circle(kx+7, cy+0.5, 8, stdcolor.NRGBA{0, 0, 0, 64})
 		c.Circle(kx+7, cy, 7, pix.Hex("#f6f7f9", 1))
 		m.pxRegion(c, tx, y, tw, rowH, hitValue, idx, "slider")
@@ -888,6 +987,11 @@ func (m *Model) pxControl(c *pix.Canvas, p pxPal, f pxFonts, s *setting, v strin
 			bg = p.accent
 			kx = tx + 16
 		}
+		if m.hovering(c, tx-4, y, 42, rowH) {
+			halo := p.accent
+			halo.A = 56
+			c.Rect(tx-3, cy-13, 40, 26, 13, halo)
+		}
 		c.Rect(tx, cy-10, 34, 20, 10, bg)
 		c.Circle(kx+8, cy+0.4, 8.4, stdcolor.NRGBA{0, 0, 0, 40})
 		c.Circle(kx+8, cy, 8, pix.Hex("#f6f7f9", 1))
@@ -899,22 +1003,33 @@ func (m *Model) pxControl(c *pix.Canvas, p pxPal, f pxFonts, s *setting, v strin
 		return tx
 	}
 
+	if s.pref == prefAccent {
+		if left, ok := m.pxAccentDots(c, p, f, s, v, idx, right, y, minLeft); ok {
+			return left
+		}
+	}
+
 	// Pills, when they fit.
 	widths := make([]float32, len(s.options))
 	total := float32(0)
 	for i, o := range s.options {
-		widths[i] = c.Width(f.smallB, displayValue(o)) + 20
+		widths[i] = c.Width(f.smallB, s.word(o)) + 20
 		total += widths[i] + 2
 	}
 	if right-total >= minLeft && len(s.options) <= 6 {
 		x := right - total + 2
 		for i, o := range s.options {
-			label := displayValue(o)
+			label := s.word(o)
 			if strings.EqualFold(o, v) {
 				c.Rect(x, cy-12, widths[i], 24, 6, p.accent)
 				c.Text(f.smallB, x+(widths[i]-c.Width(f.smallB, label))/2, mid(cy-12, 24, 12.5), label, p.onAccent)
 			} else {
-				c.Text(f.small, x+(widths[i]-c.Width(f.small, label))/2, mid(cy-12, 24, 12.5), label, p.muted)
+				col := p.muted
+				if m.hovering(c, x, y, widths[i], rowH) {
+					c.Rect(x, cy-12, widths[i], 24, 6, p.track)
+					col = p.fg
+				}
+				c.Text(f.small, x+(widths[i]-c.Width(f.small, label))/2, mid(cy-12, 24, 12.5), label, col)
 			}
 			m.pxRegion(c, x, y, widths[i], rowH, hitValue, idx, o)
 			x += widths[i] + 2
@@ -923,17 +1038,25 @@ func (m *Model) pxControl(c *pix.Canvas, p pxPal, f pxFonts, s *setting, v strin
 	}
 
 	// Too many words: the value between the arrows that step it.
-	label := displayValue(v)
+	label := s.word(v)
 	lw := c.Width(f.small, label)
 	x := right - 10
-	c.Line(x+2, cy-4, x+6, cy, 1.4, p.muted)
-	c.Line(x+6, cy, x+2, cy+4, 1.4, p.muted)
-	x -= 10 + lw
+	arrow := func(ax float32, dir float32, name string) {
+		col := p.muted
+		if m.hovering(c, ax-8, y, 24, rowH) {
+			c.Rect(ax-7, cy-11, 22, 22, 6, p.track)
+			col = p.fg
+		}
+		c.Line(ax+4-2*dir, cy-4, ax+4+2*dir, cy, 1.4, col)
+		c.Line(ax+4+2*dir, cy, ax+4-2*dir, cy+4, 1.4, col)
+		m.pxRegion(c, ax-8, y, 24, rowH, hitValue, idx, name)
+	}
+	arrow(x, 1, nextValue)
+	x -= 14 + lw
 	c.Text(f.small, x, mid(y, rowH, 12.5), label, p.fg)
-	x -= 16
-	c.Line(x+6, cy-4, x+2, cy, 1.4, p.muted)
-	c.Line(x+2, cy, x+6, cy+4, 1.4, p.muted)
-	return x
+	x -= 22
+	arrow(x, -1, prevValue)
+	return x - 8
 }
 
 // pxCommandSide is the panel beside a list: for a setting, the window as it
@@ -943,10 +1066,17 @@ func (m *Model) pxCommandSide(c *pix.Canvas, p pxPal, f pxFonts, cmd *command, o
 	c.Clip(x, y, w, h)
 	defer c.Unclip()
 	s := cmd.set
+	if s != nil && s.pref != nil {
+		m.pxPrefSide(c, p, f, s.pref, opt, x, y, w, h)
+		return
+	}
 	if s == nil {
 		c.Text(f.h3, x, y+20, cmd.title(), p.fg)
-		c.Text(f.mono, x, y+46, c.Fit(f.mono, cmd.syntax, w), p.muted)
-		yy := y + 78
+		yy := y + 52
+		if cmd.syntax != cmd.name {
+			c.Text(f.mono, x, y+46, c.Fit(f.mono, cmd.syntax, w), p.muted)
+			yy = y + 78
+		}
 		for _, line := range c.Wrap(f.body, cmd.desc+".", w-12) {
 			c.Text(f.body, x, yy, line, p.text2)
 			yy += 21
@@ -963,7 +1093,7 @@ func (m *Model) pxCommandSide(c *pix.Canvas, p pxPal, f pxFonts, cmd *command, o
 		value = opt.value
 	}
 	yy := y
-	if s.group == "Window" && m.cur != nil {
+	if (s.group == "Window" || windowShows[s.cmd]) && m.cur != nil {
 		ph := minF(250, w*0.6)
 		m.pxWindowPicture(c, p, s.cmd, value, x, yy, w, ph)
 		yy += ph + 22
@@ -973,10 +1103,15 @@ func (m *Model) pxCommandSide(c *pix.Canvas, p pxPal, f pxFonts, cmd *command, o
 	kx := x + c.Text(f.mono, x, yy+14, s.key, p.muted)
 	if s.fallback != "" {
 		def := "· default " + displayValue(s.fallback)
-		if s.unset != "" && s.fallback == s.unset {
+		switch {
+		case s.unset != "" && s.fallback == s.unset:
 			def = "· not set by default"
+		case s.fallback == "default":
+			def = "· left to Ghostty by default"
 		}
-		c.Text(f.small, kx+10, yy+14, def, p.muted)
+		if kx+10+c.Width(f.small, def) <= x+w {
+			c.Text(f.small, kx+10, yy+14, def, p.muted)
+		}
 	}
 	yy += 34
 
@@ -991,6 +1126,8 @@ func (m *Model) pxCommandSide(c *pix.Canvas, p pxPal, f pxFonts, cmd *command, o
 		if len(text) > 0 {
 			text = strings.ToLower(text[:1]) + text[1:]
 		}
+		// A note that opens with the value's own word does not say it twice.
+		text = strings.TrimPrefix(text, strings.ToLower(lead)+" ")
 	}
 	first := true
 	for _, line := range c.Wrap(f.body, strings.TrimSpace(lead+" "+text), w-12) {
@@ -1048,8 +1185,25 @@ func (m *Model) pxCommandSide(c *pix.Canvas, p pxPal, f pxFonts, cmd *command, o
 		c.Text(f.mono, x+px, yy+14, c.Fit(f.mono, l, w-px), p.fg)
 		yy += 24
 	}
-	c.Text(f.small, x, yy+12, shortenPath(m.tree.Primary.Path), p.muted)
+	c.Text(f.small, x, yy+12, pxFitTail(c, f.small, shortenPath(m.tree.Primary.Path), w), p.muted)
 	m.pxRegion(c, x, y, w, h, hitPreview, 0, "")
+}
+
+// windowShows names the settings outside the Window section the picture of
+// the window shows all the same.
+var windowShows = map[string]bool{"cursor": true, "cursoropacity": true}
+
+// pxFitTail cuts a text that is too wide at its start: the end of a path
+// is the part that tells files apart.
+func pxFitTail(c *pix.Canvas, f font.Face, s string, w float32) string {
+	if c.Width(f, s) <= w {
+		return s
+	}
+	r := []rune(s)
+	for len(r) > 1 && c.Width(f, "…"+string(r)) > w {
+		r = r[1:]
+	}
+	return "…" + string(r)
 }
 
 // pxWindowPicture draws the window as its settings would have it, with the
@@ -1067,8 +1221,23 @@ func (m *Model) pxWindowPicture(c *pix.Canvas, p pxPal, cmd, value string, x, y,
 		rows := int(float64(hpx)/ch + 0.5)
 		return kimg.Window(cols, maxInt(rows, 4), cw, ch, spec).Img
 	})
-	c.Rect(x, y, w, h, 12, pix.Hex(spec.Screen, 1))
-	c.Picture(img, x, y)
+	// The picture is see-through round the window, and through it when it
+	// is translucent, so laying it on its ground works every pixel out:
+	// the two are kept as drawn, and copied back on the frames that show
+	// the same picture in the same place, which is most of them.
+	b := img.Bounds()
+	bw, bh := maxF(w, float32(b.Dx()+1)/c.S), maxF(h, float32(b.Dy()+1)/c.S)
+	m.px.cards.Draw(c, windowPart{key, x, y, w, h, c.S}, x, y, bw, bh, func() {
+		c.Rect(x, y, w, h, 12, pix.Hex(spec.Screen, 1))
+		c.Picture(img, x, y)
+	})
+}
+
+// windowPart is everything the picture of the window on its ground is
+// drawn from, but the pixels under it.
+type windowPart struct {
+	picture       string
+	x, y, w, h, s float32
 }
 
 // --- a command opened: its values --------------------------------------------------------
@@ -1076,15 +1245,30 @@ func (m *Model) pxWindowPicture(c *pix.Canvas, p pxPal, cmd, value string, x, y,
 func (m *Model) pxOptions(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo) {
 	// The left column: the other commands of the section, one click away.
 	var items []railItem
-	cur := 0
+	var cmds []*command
 	for _, cmd := range m.commands() {
-		if cmd.group != groups[m.group] || !m.listed(cmd) || cmd.transient {
-			continue
+		if cmd.group == groups[m.group] && m.listed(cmd) && !cmd.transient {
+			cmds = append(cmds, cmd)
 		}
+	}
+	sort.SliceStable(cmds, func(a, b int) bool { return placeOf(cmds[a]).slot < placeOf(cmds[b]).slot })
+	cur := 0
+	part := ""
+	for _, cmd := range cmds {
 		if cmd == m.cmd {
 			cur = len(items)
 		}
-		items = append(items, railItem{label: cmd.title(), count: m.currentValueOf(cmd), active: cmd == m.cmd, kind: hitCommand, index: len(items), name: cmd.name, dot: cmd.set != nil && m.changed(cmd.set)})
+		label := cmd.title()
+		at := placeOf(cmd).part
+		if cmd.set != nil {
+			label = cmd.set.label
+			if label == at {
+				label = "Style"
+			}
+		}
+		items = append(items, railItem{label: label, count: displayValue(m.currentValueOf(cmd)), active: cmd == m.cmd, kind: hitCommand, index: len(items), name: cmd.name,
+			dot: cmd.set != nil && m.changed(cmd.set), gapBefore: at != part})
+		part = at
 	}
 	m.pxRail(c, p, f, g, groups[m.group], items, cur, 0)
 
@@ -1092,16 +1276,39 @@ func (m *Model) pxOptions(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo) {
 	if m.cmd.set != nil {
 		label = m.cmd.set.label
 	}
-	hw := c.Text(f.h1, g.bodyX, g.bodyY+21, label, p.fg)
+	// The title, what it says and the lines under it share one left edge.
+	hw := c.Text(f.h1, g.bodyX+14, g.bodyY+21, label, p.fg)
 	listW := minF(488, g.bodyW*0.52)
 	sideX := g.bodyX + listW + 30
 	sideW := g.W - g.M - sideX
 	if sideW < 260 {
 		listW, sideW = g.bodyW, 0
 	}
-	c.Text(f.body, g.bodyX+hw+12, g.bodyY+21, c.Fit(f.body, m.cmd.desc, listW-hw-12), p.muted)
-
 	top := g.bodyY + 44
+	if m.cmd.set != nil || c.Width(f.body, m.cmd.desc) <= listW-hw-40 {
+		c.Text(f.body, g.bodyX+14+hw+12, g.bodyY+21, c.Fit(f.body, m.cmd.desc, listW-hw-40), p.muted)
+	} else {
+		// Too long for the title's line: under it, on two lines at most.
+		lines := c.Wrap(f.body, m.cmd.desc+".", listW-28)
+		if len(lines) > 2 {
+			lines = append(lines[:1], c.Fit(f.body, strings.Join(lines[1:], " "), listW-28))
+		}
+		for i, line := range lines {
+			c.Text(f.body, g.bodyX+14, top+12+float32(i)*20, line, p.muted)
+		}
+		top += float32(len(lines))*20 + 10
+	}
+	held := m.selected()
+	if s := m.cmd.set; s != nil && s.numeric && strings.TrimSpace(m.arg) == "" {
+		// A number: the whole scale to pull, over the steps to pick from.
+		v := s.get(m)
+		if d := m.drag; d != nil && d.set == s {
+			v = d.value
+			held = &option{value: v}
+		}
+		m.pxWideSlider(c, p, f, s, v, g.bodyX+14, top, listW-28)
+		top += 52
+	}
 	if len(m.results) == 0 {
 		msg := "Nothing matches — Esc clears"
 		if m.cmd.options == nil {
@@ -1151,12 +1358,41 @@ func (m *Model) pxOptions(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo) {
 	if sideW > 0 {
 		switch {
 		case m.cmd.set != nil:
-			m.pxCommandSide(c, p, f, m.cmd, m.selected(), sideX, g.bodyY, sideW, g.viewEnd-g.bodyY)
+			m.pxCommandSide(c, p, f, m.cmd, held, sideX, g.bodyY, sideW, g.viewEnd-g.bodyY)
 		case m.cmd.group == "Fonts" && m.pxFontSide(c, p, f, m.selected(), sideX, g.bodyY, sideW, g.viewEnd-g.bodyY):
 		default:
 			m.pxDetail(c, p, sideX, g.bodyY, sideW, g.viewEnd-g.bodyY)
 		}
 	}
+}
+
+// pxWideSlider is the slider of an open number, the width of its list: the
+// ends of the scale under the track, the value at its right.
+func (m *Model) pxWideSlider(c *pix.Canvas, p pxPal, f pxFonts, s *setting, v string, x, y, w float32) {
+	val, err := strconv.ParseFloat(strings.TrimSuffix(v, "%"), 64)
+	vc := p.fg
+	if err != nil || (s.unset != "" && strings.EqualFold(v, s.unset)) {
+		val, vc = s.unsetAt, p.muted
+	}
+	frac := clampF(float32((val-s.min)/(s.max-s.min)), 0, 1)
+	vw := maxF(64, c.Width(f.h3, v)+8)
+	tw := w - vw
+	cy := y + 14
+	c.Text(f.h3, x+w-c.Width(f.h3, v), cy+7, v, vc)
+	c.Rect(x, cy-3, tw, 6, 3, p.track)
+	c.Rect(x, cy-3, tw*frac, 6, 3, p.accent)
+	kx := x + (tw-18)*frac
+	if (m.drag != nil && m.drag.set == s) || m.hovering(c, x, y, tw, 30) {
+		halo := p.accent
+		halo.A = 56
+		c.Circle(kx+9, cy, 15, halo)
+	}
+	c.Circle(kx+9, cy+0.5, 10, stdcolor.NRGBA{0, 0, 0, 64})
+	c.Circle(kx+9, cy, 9, pix.Hex("#f6f7f9", 1))
+	lo, hi := s.format(s.min), s.format(s.max)
+	c.Text(f.small, x, y+42, lo, p.muted)
+	c.Text(f.small, x+tw-c.Width(f.small, hi), y+42, hi, p.muted)
+	m.pxRegion(c, x, y, tw, 30, hitValue, -1, "slider")
 }
 
 // pxOptionRow is one value of an open command.
@@ -1535,7 +1771,7 @@ func (m *Model) pxHelp(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo, card func(w, 
 	w := minF(980, g.W-32)
 	h := minF(g.H-32, 640)
 	x, y := card(w, h)
-	c.Text(f.h3, x+28, y+40, "Keys and commands", p.fg)
+	c.Text(f.h3, x+28, y+40, "Keys and sections", p.fg)
 	c.Text(f.small, x+w-28-c.Width(f.small, "Any key closes"), y+40, "Any key closes", p.muted)
 	c.Clip(x, y, w, h-12)
 	defer c.Unclip()
@@ -1552,7 +1788,7 @@ func (m *Model) pxHelp(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo, card func(w, 
 		// A group cut in half reads as the whole of it; one that does not
 		// fit is left to the footer of its own screen, which lists its keys.
 		if yy+24+float32(len(grp.pairs)/2)*23 > y+h-20 {
-			c.Text(f.small, x+28, yy, c.Fit(f.small, "The "+strings.ToLower(grp.title)+" lists its own keys at the foot of its screen", colW), p.muted)
+			c.Text(f.small, x+28, yy, c.Fit(f.small, "The "+strings.TrimPrefix(strings.ToLower(grp.title), "the ")+" lists its own keys at the foot of its screen", colW), p.muted)
 			break
 		}
 		c.Text(f.h2, x+28, yy, grp.title, p.accent)
@@ -1568,23 +1804,29 @@ func (m *Model) pxHelp(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo, card func(w, 
 	}
 	rx := x + 28 + colW + 32
 	yy = y + 76
-	c.Text(f.h2, rx, yy, "Commands", p.accent)
-	c.Text(f.small, rx+c.Width(f.h2, "Commands")+10, yy, "type one, then Enter; Tab completes", p.muted)
-	yy += 26
+	c.Text(f.h2, rx, yy, "Sections", p.accent)
+	c.Text(f.small, rx+c.Width(f.h2, "Sections")+10, yy, "type to search every setting; a click opens one", p.muted)
+	yy += 28
+	// What each section holds, by the names its screen uses: two hundred
+	// command words would say less and would not fit.
 	for _, grp := range groups {
-		c.Text(f.rowB, rx, yy, grp, p.fg)
-		yy += 20
-		var names []string
-		for _, cmd := range m.commands() {
-			if cmd.group == grp && m.inHelp(cmd) {
-				names = append(names, title(cmd.name))
+		var parts []string
+		seen := map[string]bool{}
+		for _, part := range subsections[grp] {
+			for _, cmd := range m.commands() {
+				if cmd.group == grp && !seen[part[0]] && m.listed(cmd) && !cmd.transient && placeOf(cmd).part == part[0] {
+					seen[part[0]] = true
+					parts = append(parts, part[0])
+				}
 			}
 		}
-		for _, l := range c.Wrap(f.mono, strings.Join(names, "  "), colW) {
-			c.Text(f.mono, rx, yy, l, p.text2)
+		c.Text(f.rowB, rx, yy, grp, p.fg)
+		yy += 21
+		for _, l := range c.Wrap(f.small, strings.Join(parts, "  ·  "), colW) {
+			c.Text(f.small, rx, yy, l, p.text2)
 			yy += 19
 		}
-		yy += 8
+		yy += 12
 	}
 }
 

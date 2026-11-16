@@ -207,14 +207,14 @@ func (m *Model) keepSetting(p *uiPref, v string) tea.Cmd {
 		m.ps.layout = ""
 		// Switching puts back the rest that was not kept, as leaving would.
 		cmd := p.apply(m, v)
-		m.info("%s: %s", p.label, p.title(v))
+		m.info("%s: %s", p.label, title(p.title(v)))
 		return cmd
 	}
 	p.keep(m, v)
 	if p.later {
-		m.info("%s: %s, from the next launch", p.label, p.title(p.value(m)))
+		m.info("%s: %s, from the next launch", p.label, title(p.title(p.value(m))))
 	} else {
-		m.info("%s: %s", p.label, p.title(p.value(m)))
+		m.info("%s: %s", p.label, title(p.title(p.value(m))))
 	}
 	return nil
 }
@@ -430,7 +430,8 @@ func fillOn(row string, width int, st lipgloss.Style) string {
 // --- the mouse ----------------------------------------------------------------------------
 
 // clickSettings answers a click: a row is highlighted, its value stepped or
-// listed, a value of a list kept; a click off the card closes it.
+// listed, a value of a list or of a row's control kept; a click off the card
+// closes it.
 func (m *Model) clickSettings(msg mouseEv) (tea.Model, tea.Cmd) {
 	r, ok := m.hit(msg.X, msg.Y)
 	if !ok {
@@ -438,6 +439,10 @@ func (m *Model) clickSettings(msg mouseEv) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 	rows, _ := m.settingsRows()
+	if v, ok := strings.CutPrefix(r.name, "ps-set:"); ok {
+		m.ps.at = clampInt(r.index, 0, len(rows)-1)
+		return m, m.clickSetting(m.settingsRow(), v)
+	}
 	switch r.name {
 	case "ps-pick":
 		p := m.settingsRow()
@@ -461,6 +466,47 @@ func (m *Model) clickSettings(msg mouseEv) (tea.Model, tea.Cmd) {
 		m.stepSetting(p, 1)
 	}
 	return m, nil
+}
+
+// clickSetting answers a click on a row's control. A click is a choice made:
+// the value under it is kept at once, as on a setting's row of the menu,
+// where the arrows of the keyboard only show a value until Enter. The arrows
+// drawn around a value too long for pills step it as the keys do.
+func (m *Model) clickSetting(p *uiPref, v string) tea.Cmd {
+	if l, ok := m.lockOf(p); ok {
+		m.info("%s is set by %s for this session", p.label, l.Flag)
+		return nil
+	}
+	switch v {
+	case prevValue:
+		m.stepSetting(p, -1)
+		return nil
+	case nextValue:
+		m.stepSetting(p, 1)
+		return nil
+	}
+	if indexOf(p.values, v) == 0 && p.values[0] != v {
+		return nil
+	}
+	if v == p.value(m) && !m.unkeptRow(p) {
+		return nil
+	}
+	return m.keepSetting(p, v)
+}
+
+// pxSettingControl draws a row's control, the one its row of the menu has,
+// centred on a row of the dialog, and returns where it starts. Its regions
+// become the dialog's own, no taller than the row: the control is drawn for
+// the taller rows of the menu.
+func (m *Model) pxSettingControl(c *pix.Canvas, p pxPal, f pxFonts, r *uiPref, i int, right, y, rh, minLeft float32) float32 {
+	row := m.regions[len(m.regions)-1] // the row's own region, just laid
+	n := len(m.regions)
+	left := m.pxControl(c, p, f, r.face(), m.shownValue(r), i, right, y+(rh-rowH)/2, minLeft)
+	for j := n; j < len(m.regions); j++ {
+		g := &m.regions[j]
+		g.kind, g.name, g.y, g.h = hitButton, "ps-set:"+g.name, row.y, row.h
+	}
+	return left
 }
 
 // --- in the picture interface ---------------------------------------------------------------
@@ -489,7 +535,10 @@ func (m *Model) pxSettings(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo, card func
 	} else {
 		fixed += 2*24 + 10
 	}
-	rh := clampF((g.H-32-fixed)/float32(n), 20, 30)
+	rh := clampF((g.H-32-fixed)/float32(n), 20, 34)
+	// A row's control needs a row tall enough to hold it apart from the next;
+	// a shorter one names its value, between arrows when it is highlighted.
+	controls := rh >= 28
 	h := fixed + float32(n)*rh
 	x, y := card(w, h)
 	m.pxRegion(c, x, y, w, h, hitButton, 0, "ps-card")
@@ -511,7 +560,7 @@ func (m *Model) pxSettings(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo, card func
 		yy += 8
 		valW := float32(0)
 		for _, v := range cur.values {
-			valW = maxF(valW, c.Width(f.rowB, cur.title(v)))
+			valW = maxF(valW, c.Width(f.rowB, title(cur.title(v))))
 		}
 		for i, v := range cur.values {
 			sel := i == m.ps.listAt
@@ -531,7 +580,7 @@ func (m *Model) pxSettings(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo, card func
 			if sel {
 				face, col = f.rowB, p.fg
 			}
-			c.Text(face, vx, base, cur.title(v), col)
+			c.Text(face, vx, base, title(cur.title(v)), col)
 			nx := vx + valW + 20
 			c.Text(f.small, nx, base, c.Fit(f.small, cur.notes[v], x+w-28-nx), p.muted)
 			m.pxRegion(c, x+16, yy, w-32, rh, hitButton, i, "ps-pick")
@@ -547,7 +596,7 @@ func (m *Model) pxSettings(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo, card func
 		valW := float32(0)
 		for _, r := range rows {
 			for _, v := range r.values {
-				valW = maxF(valW, c.Width(f.rowB, r.title(v)))
+				valW = maxF(valW, c.Width(f.rowB, title(r.title(v))))
 			}
 		}
 		for i, r := range rows {
@@ -570,6 +619,12 @@ func (m *Model) pxSettings(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo, card func
 			if sel {
 				labelCol = p.fg
 			}
+			if controls {
+				m.pxRegion(c, x+16, yy, w-32, rh, hitButton, i, "ps-row")
+				m.pxSettingRow(c, p, f, r, i, sel, x+28, x+w-28, yy, rh)
+				yy += rh
+				continue
+			}
 			c.Text(f.row, x+28, base, c.Fit(f.row, r.label, labelW-12), labelCol)
 			v := m.shownValue(r)
 			vx := x + 28 + labelW
@@ -587,7 +642,7 @@ func (m *Model) pxSettings(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo, card func
 			case sel:
 				face, col = f.rowB, p.fg
 			}
-			xx += c.Text(face, xx, base, r.title(v), col)
+			xx += c.Text(face, xx, base, title(r.title(v)), col)
 			if sel && !locked {
 				chevron(vx+4, base-4.5, -1, p.muted)
 				chevron(xx+10, base-4.5, 1, p.muted)
@@ -603,9 +658,54 @@ func (m *Model) pxSettings(c *pix.Canvas, p pxPal, f pxFonts, g pxGeo, card func
 			yy += rh
 		}
 	}
+	m.pxSettingsFoot(c, p, f, x, y, h, note)
+}
+
+// pxSettingRow is a row of the dialog where rows are tall enough: its name,
+// what there is to say of it, and on the right its control.
+func (m *Model) pxSettingRow(c *pix.Canvas, p pxPal, f pxFonts, r *uiPref, i int, sel bool, left, right, y, rh float32) {
+	base := mid(y, rh, 14)
+	face, col := f.row, p.text2
+	if sel {
+		face, col = f.rowB, p.fg
+	}
+	l, locked := m.lockOf(r)
+	// What follows the name: the flag that set it, that Enter has yet to
+	// keep it, or when it is honoured.
+	tag, tagCol := m.settingTag(r), p.muted
+	switch {
+	case locked:
+	case r == prefLayout && m.unkeptRow(r):
+		tag, tagCol = "Enter switches", p.accent
+	case m.unkeptRow(r):
+		tag, tagCol = "Enter keeps", p.accent
+	}
+	lw := c.Width(face, r.label)
+	end := left + lw
+	if tag != "" {
+		end += 12 + c.Width(f.small, tag)
+	}
+	var ctrl float32
+	if locked {
+		v := title(r.title(l.Value))
+		ctrl = right - c.Width(f.small, v)
+		c.Text(f.small, ctrl, mid(y, rh, 12.5), v, p.muted)
+	} else {
+		ctrl = m.pxSettingControl(c, p, f, r, i, right, y, rh, end+20)
+	}
+	label := c.Fit(face, r.label, ctrl-left-16)
+	lw = c.Text(face, left, base, label, col)
+	if tag != "" {
+		tx := left + lw + 12
+		c.Text(f.small, tx, mid(y, rh, 12.5), c.Fit(f.small, tag, ctrl-tx-12), tagCol)
+	}
+}
+
+// pxSettingsFoot is the foot of the dialog: the note and the keys.
+func (m *Model) pxSettingsFoot(c *pix.Canvas, p pxPal, f pxFonts, x, y, h float32, note []string) {
 	// The note, its last line a little above the keys.
 	ky := y + h - 24
-	yy = ky - 30 - float32(len(note)-1)*19
+	yy := ky - 30 - float32(len(note)-1)*19
 	for _, l := range note {
 		c.Text(f.small, x+28, yy, l, p.text2)
 		yy += 19

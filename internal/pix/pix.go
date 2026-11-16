@@ -418,11 +418,35 @@ func (c *Canvas) Picture(img image.Image, x, y float32) {
 				copy(c.Img.Pix[do:do+n], row)
 				continue
 			}
-			draw.Draw(c.Img, image.Rect(dr.Min.X, y, dr.Max.X, y+1), src, image.Pt(sp.X, sp.Y+y-dr.Min.Y), draw.Over)
+			do := c.Img.PixOffset(dr.Min.X, y)
+			overRow(c.Img.Pix[do:do+n:do+n], row)
 		}
 		return
 	}
 	draw.Draw(c.Img, dr, img, sp, draw.Over)
+}
+
+// overRow composites a row of premultiplied pixels over another, to the
+// bit as draw.Draw does, which works every pixel out: an opaque one is
+// copied and an empty one skipped, and the picture of a window is mostly
+// those, drawn on every frame that shows it.
+func overRow(dst, src []uint8) {
+	const m = 1<<16 - 1
+	for i := 0; i+4 <= len(src); i += 4 {
+		s, d := src[i:i+4:i+4], dst[i:i+4:i+4]
+		switch {
+		case s[3] == 0xff:
+			copy(d, s)
+			continue
+		case s[0]|s[1]|s[2]|s[3] == 0:
+			continue
+		}
+		a := (m - uint32(s[3])*0x101) * 0x101
+		d[0] = uint8((uint32(d[0])*a/m + uint32(s[0])*0x101) >> 8)
+		d[1] = uint8((uint32(d[1])*a/m + uint32(s[1])*0x101) >> 8)
+		d[2] = uint8((uint32(d[2])*a/m + uint32(s[2])*0x101) >> 8)
+		d[3] = uint8((uint32(d[3])*a/m + uint32(s[3])*0x101) >> 8)
+	}
 }
 
 // opaque is whether every pixel of an RGBA row has full alpha.

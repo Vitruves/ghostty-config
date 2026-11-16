@@ -106,6 +106,16 @@ func TestPixelScreens(t *testing.T) {
 	h.shot("06-extensions")
 	h.m.jumpToGroup("Tool")
 	h.shot("07-tool")
+	// A preference of the editor's own: its control on the row, its values
+	// explained beside it.
+	h.highlightCommand("accent")
+	h.shot("07b-tool-accent")
+	h.highlightCommand("layout")
+	h.shot("07c-tool-layout")
+	h.m.setPromptText("Accent ")
+	h.shot("07d-tool-accent-open")
+	h.m.setPromptText("")
+	h.m.jumpToGroup("Tool")
 
 	// The specimen is set in the family's own file; the embedded faces stand
 	// in for one on disk.
@@ -196,6 +206,9 @@ func TestPixelScreens(t *testing.T) {
 	h.send(f4())
 	light.send(f4())
 	light.shot("15c-settings-light")
+	light.toRow(prefCards)
+	light.key("right")
+	light.shot("15h-settings-unkept-light")
 	light.send(f4())
 	small := newPixHarness(t, "midnight")
 	small.send(tea.WindowSizeMsg{Width: 80, Height: 24})
@@ -378,11 +391,15 @@ func TestSettingControlsAreClickable(t *testing.T) {
 
 	for _, r := range h.m.regions {
 		if r.kind == hitValue && r.name == "slider" && h.m.results[r.index].cmd.name == "paddingx" {
+			// A click is a press and a release: the value is written as the
+			// button is let go.
 			h.click(r.x, r.y)
+			h.send(tea.MouseReleaseMsg{X: r.x, Y: r.y + h.m.top, Button: tea.MouseLeft})
 			if !strings.Contains(h.config(), "window-padding-x = 0") {
 				t.Fatalf("clicking the start of the slider did not set 0:\n%s", h.config())
 			}
 			h.click(r.x+r.w-1, r.y)
+			h.send(tea.MouseReleaseMsg{X: r.x + r.w - 1, Y: r.y + h.m.top, Button: tea.MouseLeft})
 			if !strings.Contains(h.config(), "window-padding-x = 60") {
 				t.Fatalf("clicking the end of the slider did not set 60:\n%s", h.config())
 			}
