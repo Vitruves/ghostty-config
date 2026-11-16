@@ -4,6 +4,8 @@ All notable changes to ghostty-config are documented here. Versions follow [Sema
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-11-16
+
 ### Added
 
 - **About a hundred more Ghostty options**, 212 in all on macOS with Ghostty 1.4 (116 before), each with the control its shape calls for and hidden where the platform or the Ghostty version does not have it:
