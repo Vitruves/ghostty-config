@@ -87,8 +87,8 @@ func TestPointerDragsSlider(t *testing.T) {
 	}
 }
 
-// The mark of a changed setting puts the default back, the arrows beside a
-// long value step it, and Changed walks the changed settings.
+// The mark of a changed setting puts the default back, the button of a
+// setting with many values opens them, and Changed walks the changed settings.
 func TestPointerResetsAndSteps(t *testing.T) {
 	h := newPixHarness(t, "midnight")
 	h.m.jumpToGroup("Window")
@@ -107,23 +107,24 @@ func TestPointerResetsAndSteps(t *testing.T) {
 		t.Fatal("a setting at its default still offers to be put back")
 	}
 
+	// More than four values: a button with the value, that opens their
+	// list as Enter does.
 	at = h.indexOfCommand("blur")
 	h.m.sel.cursor = at
 	was := h.m.results[at].cmd.set.get(h.m)
-	r, ok = h.find(hitValue, at, nextValue)
+	r, ok = h.find(hitValue, at, openValue)
 	if !ok {
-		t.Fatal("a value shown between arrows has no arrow to click")
+		t.Fatal("a setting with many values has no button to open them")
 	}
 	h.click(r.x+r.w/2, r.y)
-	next := h.m.results[h.indexOfCommand("blur")].cmd.set.get(h.m)
-	if next == was {
-		t.Fatalf("the arrow did not step the blur from %s", was)
+	if h.m.screen() != screenOptions || h.m.cmd == nil || h.m.cmd.set == nil || h.m.cmd.set.cmd != "blur" {
+		t.Fatal("the button did not open the list of the blur's values")
 	}
-	r, _ = h.find(hitValue, h.indexOfCommand("blur"), prevValue)
-	h.click(r.x+r.w/2, r.y)
-	if got := h.m.results[h.indexOfCommand("blur")].cmd.set.get(h.m); got != was {
-		t.Fatalf("the other arrow went to %s, not back to %s", got, was)
+	if got := h.m.cmd.set.get(h.m); got != was {
+		t.Fatalf("opening the list changed the blur from %s to %s", was, got)
 	}
+	h.m.setPromptText("")
+	h.m.jumpToGroup("Window")
 
 	r, ok = h.find(hitButton, -1, "next-changed")
 	if !ok {

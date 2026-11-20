@@ -95,6 +95,7 @@ const (
 	resetValue = "\x00reset"
 	prevValue  = "\x00prev"
 	nextValue  = "\x00next"
+	openValue  = "\x00open"
 )
 
 // hovering is whether the pointer is over a rectangle of the canvas.
@@ -277,6 +278,9 @@ func (m *Model) clickValue(r region, x int) (tea.Model, tea.Cmd) {
 	case prevValue, nextValue:
 		cmd, _ := m.adjustSelected(map[string]int{prevValue: -1, nextValue: 1}[v])
 		return m, tea.Batch(move, cmd)
+	case openValue:
+		// The button of a setting with many values: its list, as Enter.
+		return m, tea.Batch(move, m.run())
 	}
 	if strings.EqualFold(v, s.get(m)) {
 		return m, move

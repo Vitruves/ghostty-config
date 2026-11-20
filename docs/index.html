@@ -17,6 +17,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@400..700&family=Google+Sans+Code:wght@400..600&display=swap" rel="stylesheet">
+<script>
+try {
+  const s = localStorage.getItem('scheme');
+  if (s === 'light' || (!s && matchMedia('(prefers-color-scheme: light)').matches)) document.documentElement.dataset.theme = 'light';
+} catch {}
+</script>
 <style>
 :root {
   --bg: #0b0b10;
@@ -36,12 +42,31 @@
   --sans: "Google Sans Flex", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "Google Sans Code", ui-monospace, "SF Mono", Menlo, monospace;
   --stripe: linear-gradient(90deg, #e2675a, #f0a04b, #e8d36a, #8fd694, #5fc9c0, #6f9cf0, #b18cf0, #e27ab8);
+  --nav-bg: rgba(11, 11, 16, .72);
   color-scheme: dark;
+}
+/* The light scheme: the switch sets it, or the system when nothing was chosen. */
+:root[data-theme="light"] {
+  --bg: #f7f6f2;
+  --bg-2: #f1efe9;
+  --surface: #ffffff;
+  --surface-2: #f2f0ea;
+  --line: rgba(20, 20, 30, .09);
+  --line-2: rgba(20, 20, 30, .17);
+  --text: #17171d;
+  --muted: #55555f;
+  --faint: #85858f;
+  --accent: #2f5bd3;
+  --accent-2: #2448b0;
+  --accent-ink: #ffffff;
+  --green: #2e8b45;
+  --nav-bg: rgba(247, 246, 242, .78);
+  color-scheme: light;
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 body {
-  margin: 0; background: var(--bg); color: var(--text);
+  margin: 0; background: var(--bg); color: var(--text); transition: background-color .3s, color .3s;
   font: 17px/1.6 var(--sans); -webkit-font-smoothing: antialiased; overflow-x: hidden;
 }
 img { max-width: 100%; height: auto; display: block; }
@@ -54,7 +79,7 @@ code, kbd, pre { font-family: var(--mono); }
 .nav {
   position: sticky; top: 0; z-index: 50;
   backdrop-filter: saturate(160%) blur(16px); -webkit-backdrop-filter: saturate(160%) blur(16px);
-  background: rgba(11, 11, 16, .72); border-bottom: 1px solid transparent; transition: border-color .2s;
+  background: var(--nav-bg); border-bottom: 1px solid transparent; transition: border-color .2s;
 }
 .nav.scrolled { border-bottom-color: var(--line); }
 .nav .wrap { display: flex; align-items: center; gap: 28px; height: 64px; }
@@ -66,7 +91,7 @@ code, kbd, pre { font-family: var(--mono); }
   display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px;
   border: 1px solid var(--line-2); font-size: 14px; font-weight: 550; transition: background .2s, border-color .2s;
 }
-.gh:hover { background: var(--surface-2); border-color: rgba(255, 255, 255, .24); }
+.gh:hover { background: var(--surface-2); border-color: var(--line-2); }
 .gh svg { width: 17px; height: 17px; }
 
 /* Hero */
@@ -138,6 +163,7 @@ img[data-light].fading { opacity: .25; }
 .stat + .stat { border-left: 1px solid var(--line); }
 .stat b { display: block; font-size: clamp(28px, 4vw, 40px); letter-spacing: -.03em; font-weight: 650; line-height: 1.1; }
 .stat span { color: var(--muted); font-size: 14.5px; }
+.stats + .bento { margin-top: 36px; }
 
 /* Sections */
 section { padding: 110px 0 0; }
@@ -296,10 +322,11 @@ dialog.lb p { margin: 8px 0 0; text-align: center; color: var(--muted); font-siz
     <nav class="nav-links" aria-label="Sections">
       <a href="#layouts">Layouts</a>
       <a href="#features">Features</a>
+      <a href="#downloads">Downloads</a>
       <a href="#keys">Keys</a>
       <a href="#install">Install</a>
     </nav>
-    <div class="switch" role="group" aria-label="Screenshots scheme">
+    <div class="switch" role="group" aria-label="Colour scheme">
       <button aria-pressed="true" data-scheme="dark">Dark</button>
       <button aria-pressed="false" data-scheme="light">Light</button>
     </div>
@@ -313,9 +340,9 @@ dialog.lb p { margin: 8px 0 0; text-align: center; color: var(--muted); font-siz
 <main id="top">
   <div class="hero">
     <div class="wrap">
-      <a class="eyebrow" href="https://github.com/vitruves/ghostty-config/blob/main/CHANGELOG.md"><b id="ver">v2.4.0</b>Three layouts: Atelier, Palette, Guided →</a>
+      <a class="eyebrow" href="https://github.com/vitruves/ghostty-config/blob/main/CHANGELOG.md"><b id="ver">v2.5.0</b>Settings redrawn, 37 programs to install →</a>
       <h1>Configure <span class="grad">Ghostty</span> without leaving it.</h1>
-      <p class="lede">Themes, fonts, shortcuts and every everyday setting of Ghostty, in a full-screen interface inside the terminal. A single binary, installed with one command.</p>
+      <p class="lede">Themes, fonts, programs and every setting of Ghostty, in a full-screen interface inside the terminal. A single binary, installed with one command.</p>
 
       <div class="install">
         <code><span class="p">$</span>curl -fsSL https://ghostty-config.vitruves.workers.dev/install.sh | sh</code>
@@ -331,7 +358,7 @@ dialog.lb p { margin: 8px 0 0; text-align: center; color: var(--muted); font-siz
       </div>
 
       <div class="stage">
-        <div class="switch" role="group" aria-label="Screenshots scheme">
+        <div class="switch" role="group" aria-label="Colour scheme">
           <button aria-pressed="true" data-scheme="dark">Dark</button>
           <button aria-pressed="false" data-scheme="light">Light</button>
         </div>
@@ -460,6 +487,42 @@ dialog.lb p { margin: 8px 0 0; text-align: center; color: var(--muted); font-siz
             <p><kbd class="k">F1</kbd> lists them all; <kbd class="k">F3</kbd> opens Ghostty's own documentation for the highlighted line.</p>
           </div>
           <div class="pic"><img src="img/help.webp" data-light="img/help-light.webp" width="1600" height="1084" alt="The help overlay listing keys and commands" loading="lazy" data-full></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="downloads">
+    <div class="wrap">
+      <div class="head center reveal">
+        <div class="kicker">Downloads</div>
+        <h2>Fonts, programs, shaders. One Enter each.</h2>
+        <p class="sub">What makes a terminal worth living in, fetched from inside: checked against the checksum GitHub gives, installed without admin rights, and started with your shell.</p>
+      </div>
+
+      <div class="stats reveal">
+        <div class="stat"><b>37</b><span>programs, in 8 groups</span></div>
+        <div class="stat"><b>16</b><span>shaders: cursor trails, screen effects</span></div>
+        <div class="stat"><b>5</b><span>theme packs beyond Ghostty's own</span></div>
+        <div class="stat"><b>0</b><span>admin rights needed</span></div>
+      </div>
+
+      <div class="bento">
+        <article class="card span-3 reveal">
+          <div class="txt">
+            <span class="chip">Programs</span>
+            <h3>Tools that put Ghostty to use</h3>
+            <p>zellij, yazi, starship, zoxide, fzf, atuin, lazygit, btop, neovim, helix and more: images in the terminal, clickable links, a better prompt. From Homebrew or the project's release; switched off or uninstalled just as easily.</p>
+          </div>
+          <div class="pic"><img src="img/programs.webp" data-light="img/programs-light.webp" width="1600" height="1084" alt="Extensions, Programs: the Images group with yazi, superfile, presenterm, fastfetch, kitten, chafa, viu and tdf, and what installing yazi does" loading="lazy" data-full></div>
+        </article>
+        <article class="card span-3 reveal">
+          <div class="txt">
+            <span class="chip">Fonts</span>
+            <h3>The whole Nerd Fonts release, and more</h3>
+            <p>Every family of Nerd Fonts, Google Sans Code, Maple Mono and JuliaMono, icons included, put in your fonts folder and ready in the list.</p>
+          </div>
+          <div class="pic"><img src="img/font-download.webp" data-light="img/font-download-light.webp" width="1600" height="1084" alt="The font list: families to download, Maple Mono highlighted with its source and where it goes" loading="lazy" data-full></div>
         </article>
       </div>
     </div>
@@ -617,10 +680,12 @@ document.querySelectorAll('.copy-mini').forEach(b => b.addEventListener('click',
   try { await navigator.clipboard.writeText(b.dataset.copy); b.classList.add('done'); setTimeout(() => b.classList.remove('done'), 1600); } catch {}
 }));
 
-// Dark / light: every screenshot follows the switch, and the choice is kept.
+// Dark / light: the page and every screenshot follow the switch, and the
+// choice is kept. With none kept, the system's scheme was taken in <head>.
 const shots = [...document.querySelectorAll('img[data-light]')];
 shots.forEach(i => i.dataset.dark = i.getAttribute('src'));
-function scheme(name) {
+function scheme(name, keep = true) {
+  document.documentElement.dataset.theme = name;
   document.querySelectorAll('.switch button').forEach(x => x.setAttribute('aria-pressed', x.dataset.scheme === name));
   shots.forEach(i => {
     const src = name === 'light' ? i.dataset.light : i.dataset.dark;
@@ -630,10 +695,10 @@ function scheme(name) {
     pre.onload = pre.onerror = () => { i.src = src; i.classList.remove('fading'); };
     pre.src = src;
   });
-  try { localStorage.setItem('scheme', name); } catch {}
+  if (keep) try { localStorage.setItem('scheme', name); } catch {}
 }
 document.querySelectorAll('.switch button').forEach(b => b.addEventListener('click', () => scheme(b.dataset.scheme)));
-try { if (localStorage.getItem('scheme') === 'light') scheme('light'); } catch {}
+if (document.documentElement.dataset.theme === 'light') scheme('light', false);
 
 // Layout tabs, with arrow keys.
 const tabs = [...document.querySelectorAll('.tab')];

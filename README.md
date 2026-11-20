@@ -2,7 +2,7 @@
 
 <h1 align="center">ghostty-config</h1>
 
-<p align="center">Themes, fonts, shortcuts and every everyday setting of <a href="https://ghostty.org">Ghostty</a>, in a full-screen interface inside the terminal.<br>A single binary, installed with one command. <a href="https://vitruves.github.io/ghostty-config/">Website</a>.</p>
+<p align="center">Themes, fonts, programs and every setting of <a href="https://ghostty.org">Ghostty</a>, in a full-screen interface inside the terminal.<br>One binary, one command to install. <a href="https://vitruves.github.io/ghostty-config/">Website</a>.</p>
 
 <p align="center">
   <a href="#install"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fghostty-config.vitruves.workers.dev%2Fbadge.json&style=flat-square" alt="Installs"></a>
@@ -12,9 +12,7 @@
   <a href="https://cli.masoko.net/tools/ghostty-config/"><img src="https://img.shields.io/badge/terminal%20index-listed-555?style=flat-square" alt="Listed on The Terminal Index"></a>
 </p>
 
-<p align="center">
-  <img src="img/themes.png" alt="The wall of themes" width="820">
-</p>
+<p align="center"><img src="img/themes.png" alt="The wall of themes" width="860"></p>
 
 ## Install
 
@@ -22,35 +20,78 @@
 curl -fsSL https://ghostty-config.vitruves.workers.dev/install.sh | sh
 ```
 
-Or with pip (pipx and uv work too): `pip install ghostty-config`.
+or `pip install ghostty-config` (pipx and uv work too). Then run `ghostty-config`. Browsing changes nothing: a theme or a font is written when you press `Enter`, a setting when you change its value.
 
-The script puts a checksum-verified binary for your system (macOS or Linux, Intel or ARM) in `~/.local/bin`. No Go, no git, no dependencies. From source: `git clone https://github.com/vitruves/ghostty-config.git && cd ghostty-config && make build && make local-install`.
+<details>
+<summary><b>From source</b></summary>
 
-## Use
+Needs Go 1.26 or later.
 
-Run `ghostty-config`. Browsing changes nothing: a theme or a font is written when you press `Enter` on it, a setting when you change its value.
+```bash
+git clone https://github.com/vitruves/ghostty-config.git
+cd ghostty-config
+make build           # builds build/ghostty-config
+make local-install   # copies it to ~/.local/bin, no sudo
+```
 
-## Layouts
+`make install` puts it in `/usr/local/bin` instead (asks for sudo). Or, with Go alone: `go install github.com/vitruves/ghostty-config/cmd/ghostty-config@latest`.
 
-The same settings, three ways to reach them. A chooser asks for one at first launch; switch any time with `F4` or in Tool → Interface → Layout.
+</details>
 
-- **Atelier:** sections in a sidebar, the wall of themes, every setting in its place (the screenshots above and below).
-- **Palette:** one search line over themes, fonts, settings, shortcuts and commands, with filters. The highlighted setting opens in place; a theme previews in a strip drawn in its colours.
-- **Guided:** six plain questions, one page at a time (Colours, Font, Window, Cursor, Copy & paste, Done), with large previews and a link to all the settings of each step.
+## Everything in one place
 
-<p align="center">
-  <img src="img/atelier.png" alt="The Palette layout: one search line over everything" width="820">
-</p>
+<table>
+<tr>
+<td width="50%" valign="top"><img src="img/window.png" alt="Window settings"><br><b>212 settings</b>, grouped in cards with a live preview, every value explained, and the exact line that will be written.</td>
+<td width="50%" valign="top"><img src="img/input.png" alt="Input settings"><br><b>Cursor, mouse, clipboard, shortcuts:</b> press a new shortcut, conflicts are shown. Light or dark, any accent colour.</td>
+</tr>
+</table>
 
-<p align="center">
-  <img src="img/guide.png" alt="The Guided layout: one question at a time" width="820">
-</p>
+## Download from inside, in one Enter
 
-## Keys
+| | |
+| :--- | :--- |
+| **1071 themes** | the 252 of the curated collection in 27 families, the 819 Ghostty ships, and 5 packs (cyberdream, onedarkpro, nightfly, vscode, oasis) |
+| **70 fonts** | the whole Nerd Fonts release, Google Sans Code, Maple Mono, JuliaMono, installed without admin rights |
+| **37 programs** | zellij, yazi, starship, zoxide, fzf, atuin, lazygit, btop, neovim, helix… started with your shell |
+| **16 shaders** | cursor trails (smear, blaze, warp, sweep…) and screen effects (bloom, CRT, VHS, starfield, black hole) |
 
-The keys of Atelier; Palette and Guided show theirs in the footer.
+<table>
+<tr>
+<td width="50%" valign="top"><img src="img/programs.png" alt="Programs"><br><b>Programs</b> that put Ghostty to use: prompts and completions, images in the terminal (Kitty graphics), clickable links (OSC 8), system monitors, editors, sessions.</td>
+<td width="50%" valign="top"><img src="img/font-download.png" alt="Font downloads"><br><b>Fonts</b> you have, then the ones to download, with the Nerd Font icons included. The specimen is set in the font itself.</td>
+</tr>
+</table>
 
-<div align="center">
+<details>
+<summary><b>The 37 programs, and how they are installed</b></summary>
+
+- **Shell:** starship, zoxide, fzf, atuin, carapace, lig
+- **Images:** yazi, superfile, presenterm, fastfetch, kitten icat, chafa, viu, tdf (PDFs)
+- **Links:** ripgrep, eza, fd, delta
+- **Tools:** bat, glow, lazygit
+- **System:** btop, bottom, dust, duf, procs, hyperfine
+- **Search:** television, jq, fx, tealdeer, navi
+- **Editors:** neovim, helix, micro
+- **Sessions:** zmx, zellij
+
+From Homebrew when you have it, else from the project's GitHub release into `~/.local/bin`, checked against the SHA-256 GitHub gives; never as root. The line that starts it goes in one marked block of `~/.zshrc`, `~/.bashrc` (`~/.bash_profile` on macOS) or `conf.d/ghostty-config.fish`, backed up before its first change. Switching a program off takes its line out; `Ctrl+X` uninstalls it after a yes. A line of your own, or a program installed some other way (apt, cargo…), is left alone.
+
+</details>
+
+## Three layouts
+
+<table>
+<tr>
+<td width="50%" valign="top"><img src="img/palette.png" alt="Palette layout"><br><b>Palette:</b> one search line over themes, fonts, settings, shortcuts and commands.</td>
+<td width="50%" valign="top"><img src="img/guided.png" alt="Guided layout"><br><b>Guided:</b> six plain questions, one page at a time, with large previews.</td>
+</tr>
+</table>
+
+**Atelier**, the sections and the wall of themes above, is the third. A chooser asks at first launch; switch any time with `F4`.
+
+<details>
+<summary><b>Keys</b></summary>
 
 | Key | Action |
 | :---: | :--- |
@@ -66,35 +107,25 @@ The keys of Atelier; Palette and Guided show theirs in the footer.
 | `F4` | ghostty-config's own settings: layout, look, reload, update check, drawing |
 | `F1` `Esc` | Help; go back, then quit |
 
-</div>
+Everything can be clicked too: sections, pills, switches, the menu of a long value, and a double click on a theme card applies it. Sliders are pulled: the preview follows the pointer and the value is written when you let go. Palette and Guided show their keys in the footer.
 
-Everything can be clicked too: sections, pills, switches, the arrows beside a long value, and a double click on a theme card applies it. Sliders are pulled: the preview follows the pointer and the value is written when you let go. What the pointer is over lights up, and the mark of a changed setting turns into an arrow that puts Ghostty's default back.
+</details>
 
-<p align="center">
-  <img src="img/window.png" alt="Window settings in a light terminal" width="820">
-</p>
+<details>
+<summary><b>Good to know</b></summary>
 
-## Sections
-
-- **Themes:** 1071 themes, the 252 of the curated collection in 27 families and the 819 Ghostty 1.4 ships, plus your own, each shown as a card and checked for contrast. Create, edit and save your own.
-- **Fonts:** family, style and size with a specimen set in the font itself, spacing, ligatures, the OpenType features and variable axes the font really has, Nerd Font icons. 70 monospace families can be downloaded in one Enter, and if your font is missing or proportional the tool offers one.
-- **Window:** opacity, blur, title bar and title, padding, size and position at launch, full screen, tabs, splits, search and palette colours, background image, with a preview that follows every value.
-- **Input:** cursor, mouse (right click, scroll speed), selection, clipboard, links, and every keyboard shortcut: press the new one, conflicts are shown.
-- **Session:** window restore, startup command and directory, scrollback, notifications, bell, quick terminal, shell integration, updates, the macOS or Linux specifics, and an Advanced part. 212 Ghostty options in all on macOS with Ghostty 1.4; the few that are lists of lines (`env`, `key-remap`…) stay in the file.
-- **Extensions:** shaders (cursor trails, screen effects) and theme packs, with their source and licence shown before install. **Programs** that put Ghostty to use, installed in one Enter and started with your shell: a prompt and completions (starship, zoxide, fzf, atuin, carapace, lig), images in the terminal through the Kitty graphics protocol (yazi, superfile, presenterm, fastfetch, kitten icat, chafa, viu, tdf for PDFs), clickable file names (ripgrep, eza, fd, delta for git), everyday tools in true colour (bat, glow, lazygit), system and disk (btop, bottom, dust, duf, procs, hyperfine), search and data (television, jq, fx, tealdeer, navi), editors (neovim, helix, micro), sessions that outlive their window (zmx, zellij). The list shows one group at a time under a row of tabs: `←` `→` or a click turns them, typing searches them all. A program comes from Homebrew when you have it, else from its GitHub release into `~/.local/bin`, checked against the SHA-256 GitHub gives for the file; nothing runs as root. The line that starts it goes in one marked block of `~/.zshrc` or `~/.bashrc` (`~/.bash_profile` on macOS), backed up before its first change, or in `conf.d/ghostty-config.fish` for fish; switching a program off takes its line out, and a line of your own is left alone. `Ctrl+X` uninstalls a program after a yes: its line goes, then `brew uninstall`, or its files leave `~/.local/bin` (lig runs its own `lig uninstall` first); a program installed some other way (apt, cargo…) is left to its installer.
-- **Tool:** reload Ghostty, check the config, see the session's changes, restore a backup, the interface's own layout and look: its scheme, accent colour and contrast, and when drawn as images its size and the width of theme cards.
-
-Settings follow the Ghostty you have: 1.4's new ones (scrollback in bytes, clipboard access and limits, `link-osc8`, the SSH terminfo cache…) are offered to 1.4, and 1.3 keeps working. See [CHANGELOG.md](CHANGELOG.md) for what changed in each version.
-
-## Good to know
-
-- **Your files.** Each setting is rewritten on its own line and comments are kept. If a file changed elsewhere meanwhile, your edits there are kept too. Every file is backed up to `~/.config/ghostty-config/backups/` before its first change.
+- **Your files.** Each setting is rewritten on its own line and comments are kept. Every file is backed up to `~/.config/ghostty-config/backups/` before its first change.
 - **Checked.** After each write the config goes through `ghostty +validate-config`, and any problem is shown with its line.
-- **Reload.** On macOS with Ghostty 1.3 or later the tool asks Ghostty to reload over AppleScript (macOS asks once, under Privacy & Security → Automation); older versions get the reload shortcut instead (needs the Accessibility permission). On Linux it activates Ghostty's `reload-config` action over D-Bus, which needs `gdbus` and a single-instance Ghostty; otherwise, reload Ghostty yourself.
+- **Reload.** On macOS with Ghostty 1.3 or later the tool asks Ghostty to reload over AppleScript (macOS asks once, under Privacy & Security → Automation); older versions get the reload shortcut (needs the Accessibility permission). On Linux it activates `reload-config` over D-Bus (needs `gdbus` and a single-instance Ghostty).
+- **Ghostty 1.3 and 1.4.** Settings follow the Ghostty you have: 1.4's new ones (scrollback in bytes, clipboard access and limits, `link-osc8`, the SSH terminfo cache…) are offered to 1.4. The few options that are lists of lines (`env`, `key-remap`…) stay in the file.
 - **Display.** In Ghostty and Kitty the interface is drawn as images (Kitty graphics protocol), elsewhere and in tmux with plain text.
-- **Updates.** At most once an hour, a background check on GitHub offers new releases. Nothing else uses the network except downloads you ask for.
+- **Network.** At most once an hour, a background check on GitHub offers new releases. Nothing else uses the network except downloads you ask for.
+- **The install script** puts a checksum-verified binary in `~/.local/bin`, for macOS or Linux, Intel or ARM. No Go, no git, no dependencies.
 
-## Options
+</details>
+
+<details>
+<summary><b>Options</b></summary>
 
 ```
 -config file            edit this file instead of the default config
@@ -110,8 +141,12 @@ Settings follow the Ghostty you have: 1.4's new ones (scrollback in bytes, clipb
 -version                print the version
 ```
 
-`-cells`, `-no-images`, `-images`, `-plain`, `-no-reload` and `-no-update-check` hold for one launch. To keep a choice for every launch, set it in `F4` (Drawing, Simple glyphs, Reload Ghostty after each change, Check for updates); a flag given on the command line overrides the saved preference, and `F4` shows that row as set by the flag.
+The display and reload flags hold for one launch; `F4` keeps a choice for every launch, and a flag overrides it.
+
+</details>
+
+See [CHANGELOG.md](CHANGELOG.md) for what changed in each version.
 
 ## Credits
 
-[Ghostty](https://github.com/ghostty-org/ghostty) is by Mitchell Hashimoto and its contributors. Shaders come from [KroneCorylus/ghostty-shader-playground](https://github.com/KroneCorylus/ghostty-shader-playground), [hackrdotsh/ghostty-shaders](https://github.com/hackrdotsh/ghostty-shaders), [sahaj-b/cursor-shaders](https://github.com/sahaj-b/cursor-shaders), [hced/ghostty-cursor-trails](https://github.com/hced/ghostty-cursor-trails) and [s0xDk/ghostty-blackhole](https://github.com/s0xDk/ghostty-blackhole); programs and theme packs from the projects named in the interface. The interface is set in Google Sans Flex and Google Sans Code (SIL OFL). MIT licence.
+[Ghostty](https://github.com/ghostty-org/ghostty) is by Mitchell Hashimoto and its contributors. Shaders come from [KroneCorylus/ghostty-shader-playground](https://github.com/KroneCorylus/ghostty-shader-playground), [hackrdotsh/ghostty-shaders](https://github.com/hackrdotsh/ghostty-shaders), [sahaj-b/cursor-shaders](https://github.com/sahaj-b/cursor-shaders), [hced/ghostty-cursor-trails](https://github.com/hced/ghostty-cursor-trails) and [s0xDk/ghostty-blackhole](https://github.com/s0xDk/ghostty-blackhole); fonts, programs and theme packs from the projects named in the interface. The interface is set in Google Sans Flex and Google Sans Code (SIL OFL). MIT licence.

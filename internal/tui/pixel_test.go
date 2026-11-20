@@ -15,6 +15,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	uv "github.com/charmbracelet/ultraviolet"
 
+	"github.com/vitruves/ghostty-config/internal/extensions"
 	"github.com/vitruves/ghostty-config/internal/ghostty"
 	"github.com/vitruves/ghostty-config/internal/pix"
 )
@@ -338,6 +339,34 @@ func TestReadmeShots(t *testing.T) {
 			h.m.setPromptText("")
 			h.m.jumpToGroup("Window")
 			h.m.overlay = overlayHelp
+		})
+	}
+
+	// What the tool downloads: programs from Homebrew (a stand-in brew and an
+	// empty PATH, so nothing on this machine shows as installed) and font
+	// families. Last, as the PATH stays empty to the end of the test.
+	t.Setenv("SHELL", "/bin/zsh")
+	t.Setenv("ZDOTDIR", "")
+	t.Setenv("PATH", t.TempDir())
+	brew := filepath.Join(t.TempDir(), "brew")
+	old := extensions.Brew
+	extensions.Brew = func() string { return brew }
+	t.Cleanup(func() { extensions.Brew = old })
+	fakeInstall(t)
+	for _, iface := range []string{"midnight", "paper"} {
+		suffix := ""
+		if iface == "paper" {
+			suffix = "-light"
+		}
+		shoot(iface, "programs"+suffix, func(h *harness) {
+			forgetPrograms()
+			h.m.setPromptText("Program ")
+			h.key("right")
+			h.highlightOption("yazi")
+		})
+		shoot(iface, "font-download"+suffix, func(h *harness) {
+			h.m.setPromptText("Font ")
+			h.highlightOption("Maple Mono")
 		})
 	}
 }

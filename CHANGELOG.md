@@ -4,6 +4,22 @@ All notable changes to ghostty-config are documented here. Versions follow [Sema
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-11-20
+
+A reminder of what the interface can download for you, each in one Enter: about 70 monospace font families (the whole Nerd Fonts release, Maple Mono, JuliaMono) under Fonts, and 37 programs that put Ghostty to use under Extensions → Programs, among them zellij, yazi, starship, zoxide, fzf, atuin, lazygit, btop, neovim and helix, from Homebrew or from their checksum-checked GitHub release, and started with your shell.
+
+### Changed
+
+- **Settings screens redrawn** (Window, Input, Session… in the picture interface):
+  - Each part of a section is a card, its name in small capitals above it, a thin line between its settings.
+  - Every control ends on the same right edge; a slider's value has a column of its own, so "default" no longer pushes the track aside.
+  - Up to four values show as pills on a shared track. More, or values too long to fit, show as a button with the current value that opens the list of values, as Enter does; `←` `→` still step through them.
+  - The highlighted setting is tinted in the accent colour with a fine outline. The mark of a changed setting sits after its name and turns into the arrow that puts Ghostty's default back.
+  - The panel on the right shows the Ghostty key and its default, then, for a setting of two to five values, every value with what it does, the current one brought forward, and what will be written in a block of its own.
+  - The section tabs sit on a shared track, the open one raised. "Changed" in the left column is set apart by a line.
+  - In light themes the cards are lighter than the background.
+- The F4 settings keep their controls.
+
 ## [2.4.0] - 2026-11-16
 
 ### Added

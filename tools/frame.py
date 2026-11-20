@@ -29,6 +29,16 @@ ImageDraw.Draw(shadow).rounded_rectangle((margin, margin + 14, margin + w, margi
 out = Image.alpha_composite(out, shadow.filter(ImageFilter.GaussianBlur(22)))
 out.paste(win, (margin, margin), mask)
 
+# A hairline round the window, as macOS draws one: light on a dark window, so
+# it stands out from a dark page where the shadow cannot, faint dark on a
+# light one. Thick enough to survive the scaling below.
+dark = sum(ground) / 3 < 128
+edge = Image.new("RGBA", out.size, (0, 0, 0, 0))
+ImageDraw.Draw(edge).rounded_rectangle(
+    (margin, margin, margin + w - 1, margin + h - 1), radius,
+    outline=(255, 255, 255, 64) if dark else (0, 0, 0, 34), width=max(2, round(width / 400)) + 1)
+out = Image.alpha_composite(out, edge)
+
 scale = width / out.width
 out = out.resize((width, round(out.height * scale)), Image.LANCZOS)
 out.save(dst, optimize=True)
