@@ -1,11 +1,13 @@
-# Builds ghostty-config for macOS and Linux, Intel and ARM, when a version
-# tag (1.2.3, no "v") is pushed, and publishes the archives and their
-# checksums as the GitHub release install.sh downloads from, then the same
-# binaries as wheels on PyPI (pip install ghostty-config).
+# Builds ghostty-config for macOS, Linux and Android (Termux), Intel and ARM,
+# when a version tag (1.2.3, no "v") is pushed, and publishes the archives and
+# their checksums as the GitHub release install.sh downloads from, then the
+# same binaries as wheels on PyPI (pip install ghostty-config).
 #
 # The tool is pure Go, so one runner cross-compiles every target. Linux
-# binaries are static and run on any distribution. bump_version.sh pushes the
-# tag that starts this.
+# binaries are static and run on any distribution. Android binaries run under
+# Termux: the Linux ones die there, because Android's seccomp policy refuses
+# faccessat2, which Go calls at startup. bump_version.sh pushes the tag that
+# starts this.
 name: release
 
 on:
@@ -38,7 +40,9 @@ jobs:
           VERSION: ${{ github.ref_name }}
         run: |
           mkdir -p dist build/release
-          for target in darwin/arm64 darwin/amd64 linux/amd64 linux/arm64; do
+          # Android/arm64 is Termux on a phone. Android/x86 needs cgo to link,
+          # which this runner has no NDK for, so x86 Termux builds from source.
+          for target in darwin/arm64 darwin/amd64 linux/amd64 linux/arm64 android/arm64; do
             os="${target%/*}"
             arch="${target#*/}"
             name="ghostty-config_${VERSION}_${os}_${arch}"

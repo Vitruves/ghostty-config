@@ -4,6 +4,10 @@ All notable changes to ghostty-config are documented here. Versions follow [Sema
 
 ## [Unreleased]
 
+### Added
+
+- **Termux**: `install.sh` now detects Termux and installs the Android build. A Linux binary dies there, because Android's seccomp policy refuses the `faccessat2` call Go makes at startup, so the release workflow publishes `android/arm64` as well. Releases without one, or with one that does not run, are built from source instead (`pkg install git golang`).
+
 ## [2.5.0] - 2026-11-20
 
 A reminder of what the interface can download for you, each in one Enter: about 70 monospace font families (the whole Nerd Fonts release, Maple Mono, JuliaMono) under Fonts, and 37 programs that put Ghostty to use under Extensions → Programs, among them zellij, yazi, starship, zoxide, fzf, atuin, lazygit, btop, neovim and helix, from Homebrew or from their checksum-checked GitHub release, and started with your shell.

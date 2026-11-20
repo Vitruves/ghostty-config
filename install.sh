@@ -3,10 +3,11 @@
 #
 #   curl -fsSL https://ghostty-config.vitruves.workers.dev/install.sh | sh
 #
-# Downloads the binary of the newest release for this system (macOS or Linux,
-# Intel or ARM), checks it against the release's checksums and puts it in
-# ~/.local/bin. Nothing else is needed. Where no binary fits, it builds the
-# release from source instead, which needs git and Go 1.26 or newer.
+# Downloads the binary of the newest release for this system (macOS, Linux or
+# Android under Termux, Intel or ARM), checks it against the release's
+# checksums and puts it in ~/.local/bin. Nothing else is needed. Where no
+# binary fits, it builds the release from source instead, which needs git and
+# Go 1.26 or newer.
 #
 # The script sends nothing anywhere: the only thing counted is that it was
 # fetched.
@@ -57,10 +58,23 @@ fi
 
 # --- which binary ----------------------------------------------------------------
 
+# Termux is Android behind a Linux shell. A binary built for Linux dies there:
+# Android's seccomp policy refuses faccessat2, which Go's os/exec calls at
+# startup. The Android build takes the branch Go keeps for that system, so
+# Termux gets that one.
+is_termux() {
+	case "${PREFIX:-}" in
+	*/com.termux/files/usr) return 0 ;;
+	esac
+	[ "$(uname -o 2>/dev/null)" = "Android" ]
+}
+
 os=""
 case "$(uname -s)" in
 Darwin) os="darwin" ;;
-Linux) os="linux" ;;
+Linux)
+	if is_termux; then os="android"; else os="linux"; fi
+	;;
 esac
 arch=""
 case "$(uname -m)" in
@@ -98,12 +112,20 @@ download() {
 	[ "$got" = "$want" ] || die "the download does not match its checksum: try again"
 	tar -xzf "$tmp/$name.tar.gz" -C "$tmp"
 	mv "$tmp/$name/$BIN" "$tmp/$BIN"
+	# A binary can be built for this system and still be refused by it (an
+	# older Linux build on Android, say): only take one that runs.
+	"$tmp/$BIN" -version >/dev/null 2>&1 || return 1
 }
 
 # build compiles the release from source, as before there were binaries.
 build() {
-	has git || die "no binary fits this system ($(uname -s) $(uname -m)), and building from source needs git"
-	has go || die "no binary fits this system ($(uname -s) $(uname -m)), and building from source needs Go $MIN_GO or newer: https://go.dev/dl/"
+	if ! has git || ! has go; then
+		if is_termux; then
+			die "building ghostty-config on Termux needs git and Go: pkg install git golang"
+		fi
+		has git || die "no binary fits this system ($(uname -s) $(uname -m)), and building from source needs git"
+		has go || die "no binary fits this system ($(uname -s) $(uname -m)), and building from source needs Go $MIN_GO or newer: https://go.dev/dl/"
+	fi
 	v="$(go version | sed -n 's/.*go\([0-9]*\)\.\([0-9]*\).*/\1 \2/p')"
 	[ -n "$v" ] || die "could not read the Go version"
 	set -- $v
@@ -112,8 +134,18 @@ build() {
 	[ "$1" -gt "$want_major" ] || { [ "$1" -eq "$want_major" ] && [ "$2" -ge "$want_minor" ]; } ||
 		die "Go $MIN_GO or newer is needed, this is go$1.$2: https://go.dev/dl/"
 	say "Building ghostty-config $tag from source…"
+	# Termux's own Go already targets Android; say it plainly all the same, so
+	# a Go installed some other way still builds a binary Android runs.
+	cgo=0
+	if is_termux && [ -n "$arch" ]; then
+		GOOS=android
+		GOARCH="$arch"
+		export GOOS GOARCH
+		# Android on x86 links only through cgo; arm64 links either way.
+		if [ "$arch" = "amd64" ]; then cgo=1; fi
+	fi
 	git -c advice.detachedHead=false clone --quiet --depth 1 --branch "$tag" "$REPO" "$tmp/src"
-	(cd "$tmp/src" && CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.version=$tag" -o "$tmp/$BIN" ./cmd/ghostty-config)
+	(cd "$tmp/src" && CGO_ENABLED=$cgo go build -trimpath -ldflags "-s -w -X main.version=$tag" -o "$tmp/$BIN" ./cmd/ghostty-config)
 }
 
 if [ -n "${GHOSTTY_CONFIG_FROM_SOURCE:-}" ] || ! download; then

@@ -7,7 +7,7 @@
 <p align="center">
   <a href="#install"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fghostty-config.vitruves.workers.dev%2Fbadge.json&style=flat-square" alt="Installs"></a>
   <a href="https://github.com/vitruves/ghostty-config/tags"><img src="https://img.shields.io/github/v/tag/vitruves/ghostty-config?sort=semver&label=release&style=flat-square&color=3d6fd6" alt="Latest release"></a>
-  <img src="https://img.shields.io/badge/macOS%20%C2%B7%20Linux-555?style=flat-square" alt="macOS and Linux">
+  <img src="https://img.shields.io/badge/macOS%20%C2%B7%20Linux%20%C2%B7%20Termux-555?style=flat-square" alt="macOS, Linux and Termux">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-555?style=flat-square" alt="MIT licence"></a>
   <a href="https://cli.masoko.net/tools/ghostty-config/"><img src="https://img.shields.io/badge/terminal%20index-listed-555?style=flat-square" alt="Listed on The Terminal Index"></a>
 </p>
@@ -20,7 +20,7 @@
 curl -fsSL https://ghostty-config.vitruves.workers.dev/install.sh | sh
 ```
 
-or `pip install ghostty-config` (pipx and uv work too). Then run `ghostty-config`. Browsing changes nothing: a theme or a font is written when you press `Enter`, a setting when you change its value.
+or `pip install ghostty-config` (pipx and uv work too). Then run `ghostty-config`. On Termux the same command installs the Android build; where a release has none, it builds from source, which needs Go and git: `pkg install git golang`. Browsing changes nothing: a theme or a font is written when you press `Enter`, a setting when you change its value.
 
 <details>
 <summary><b>From source</b></summary>
