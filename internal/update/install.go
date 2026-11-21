@@ -37,15 +37,22 @@ const InstallTimeout = 2 * time.Minute
 const maxArchive = 64 << 20
 
 // ErrUnsupported says no release archive is built for this system.
-var ErrUnsupported = errors.New("no release is built for " + runtime.GOOS + "/" + runtime.GOARCH)
+var ErrUnsupported = errors.New("no release is built for this system")
 
 // Archive is the name of the release archive of a version for this system.
 func Archive(version string) (string, error) {
-	switch runtime.GOOS + "/" + runtime.GOARCH {
-	case "darwin/amd64", "darwin/arm64", "linux/amd64", "linux/arm64":
-		return fmt.Sprintf("ghostty-config_%s_%s_%s.tar.gz", version, runtime.GOOS, runtime.GOARCH), nil
+	return archiveFor(version, runtime.GOOS, runtime.GOARCH)
+}
+
+// archiveFor names the release archive of a version for a system, so every
+// published target can be checked from any machine.
+func archiveFor(version, goos, goarch string) (string, error) {
+	switch goos + "/" + goarch {
+	case "darwin/amd64", "darwin/arm64", "linux/amd64", "linux/arm64",
+		"android/amd64", "android/arm64":
+		return fmt.Sprintf("ghostty-config_%s_%s_%s.tar.gz", version, goos, goarch), nil
 	}
-	return "", ErrUnsupported
+	return "", fmt.Errorf("%w: %s/%s", ErrUnsupported, goos, goarch)
 }
 
 // Install downloads a version and puts it in place of the running binary.

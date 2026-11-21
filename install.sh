@@ -7,7 +7,7 @@
 # Android under Termux, Intel or ARM), checks it against the release's
 # checksums and puts it in ~/.local/bin. Nothing else is needed. Where no
 # binary fits, it builds the release from source instead, which needs git and
-# Go 1.26 or newer.
+# Go 1.26 or newer (and clang on Termux).
 #
 # The script sends nothing anywhere: the only thing counted is that it was
 # fetched.
@@ -38,9 +38,10 @@ fetch() {
 		if [ "$code" = "404" ]; then return 1; fi
 		return 2
 	elif has wget; then
-		wget -q "$1" -O "$2" 2>/dev/null && return 0
-		# wget exits 8 when the server answers with an error status.
-		if [ "$?" -eq 8 ]; then return 1; fi
+		# --server-response puts the status on stderr, which is the only way
+		# to tell a 404 from a 500: wget exits 8 for every HTTP error.
+		wget -q --server-response "$1" -O "$2" 2>"$tmp/fetch.err" && return 0
+		if grep -q '^[[:space:]]*HTTP/[0-9.]* 404' "$tmp/fetch.err"; then return 1; fi
 		return 2
 	else
 		die "curl or wget is needed"
@@ -138,10 +139,10 @@ download() {
 
 # build compiles the release from source, as before there were binaries.
 build() {
+	if is_termux && { ! has git || ! has go || ! has clang; }; then
+		die "building ghostty-config on Termux needs git, Go and clang: pkg install git golang clang"
+	fi
 	if ! has git || ! has go; then
-		if is_termux; then
-			die "building ghostty-config on Termux needs git and Go: pkg install git golang"
-		fi
 		has git || die "no binary fits this system ($(uname -s) $(uname -m)), and building from source needs git"
 		has go || die "no binary fits this system ($(uname -s) $(uname -m)), and building from source needs Go $MIN_GO or newer: https://go.dev/dl/"
 	fi
@@ -154,14 +155,15 @@ build() {
 		die "Go $MIN_GO or newer is needed, this is go$1.$2: https://go.dev/dl/"
 	say "Building ghostty-config $tag from source…"
 	# Termux's own Go already targets Android; say it plainly all the same, so
-	# a Go installed some other way still builds a binary Android runs.
+	# a Go installed some other way still builds a binary Android runs. cgo is
+	# not optional: Android has no /etc/resolv.conf, so without libc's resolver
+	# every name lookup fails with "connection refused".
 	cgo=0
 	if is_termux && [ -n "$arch" ]; then
 		GOOS=android
 		GOARCH="$arch"
 		export GOOS GOARCH
-		# Android on x86 links only through cgo; arm64 links either way.
-		if [ "$arch" = "amd64" ]; then cgo=1; fi
+		cgo=1
 	fi
 	git -c advice.detachedHead=false clone --quiet --depth 1 --branch "$tag" "$REPO" "$tmp/src"
 	(cd "$tmp/src" && CGO_ENABLED=$cgo go build -trimpath -ldflags "-s -w -X main.version=$tag" -o "$tmp/$BIN" ./cmd/ghostty-config)

@@ -20,7 +20,7 @@
 curl -fsSL https://ghostty-config.vitruves.workers.dev/install.sh | sh
 ```
 
-or `pip install ghostty-config` (pipx and uv work too). Then run `ghostty-config`. On Termux the same command installs the Android build; where a release has none, it builds from source, which needs Go and git: `pkg install git golang`. Browsing changes nothing: a theme or a font is written when you press `Enter`, a setting when you change its value.
+or `pip install ghostty-config` (pipx and uv work too). Then run `ghostty-config`. On Termux, use the `curl` command: pip has no Android wheel. It installs the Android build, and where a release has none, builds one from source, which needs Go, git and clang: `pkg install git golang clang`. Browsing changes nothing: a theme or a font is written when you press `Enter`, a setting when you change its value.
 
 <details>
 <summary><b>From source</b></summary>

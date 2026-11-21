@@ -6,7 +6,8 @@ All notable changes to ghostty-config are documented here. Versions follow [Sema
 
 ### Added
 
-- **Termux**: `install.sh` now detects Termux and installs the Android build. A Linux binary dies there, because Android's seccomp policy refuses the `faccessat2` call Go makes at startup, so the release workflow publishes `android/arm64` as well. Releases without one, or with one that does not run, are built from source instead (`pkg install git golang`).
+- **Termux**: `install.sh` now detects Termux and installs the Android build. A Linux binary dies there, because Android's seccomp policy refuses the `faccessat2` call Go makes at startup, so the release workflow publishes `android/arm64` and `android/amd64`. Both are built with cgo, since Android has no `/etc/resolv.conf` and Go's own resolver would fail every name lookup. Releases without one, or with one that does not run, are built from source instead (`pkg install git golang clang`).
+- **In-app updates on Termux**: the updater knows the `android/arm64` and `android/amd64` archives.
 
 ### Fixed
 
