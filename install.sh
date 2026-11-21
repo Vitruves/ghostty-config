@@ -28,12 +28,20 @@ say() { printf '%s\n' "$*"; }
 die() { printf '✗ %s\n' "$*" >&2; exit 1; }
 has() { command -v "$1" >/dev/null 2>&1; }
 
-# fetch URL FILE downloads with whichever of curl and wget is here.
+# fetch URL FILE downloads with whichever of curl and wget is here. It returns
+# 0 when the file is here, 1 when the server says there is no such file, and 2
+# for anything else, so the caller can tell "this system has no binary" from
+# "the network failed, try again".
 fetch() {
 	if has curl; then
-		curl -fsSL "$1" -o "$2"
+		code="$(curl -fsSL -w '%{http_code}' "$1" -o "$2" 2>/dev/null)" && return 0
+		if [ "$code" = "404" ]; then return 1; fi
+		return 2
 	elif has wget; then
-		wget -q "$1" -O "$2"
+		wget -q "$1" -O "$2" 2>/dev/null && return 0
+		# wget exits 8 when the server answers with an error status.
+		if [ "$?" -eq 8 ]; then return 1; fi
+		return 2
 	else
 		die "curl or wget is needed"
 	fi
@@ -99,13 +107,27 @@ sha256() {
 }
 
 # download fetches the release archive for this system, checks it and unpacks
-# the binary to $tmp/$BIN. It fails quietly when there is none.
+# the binary to $tmp/$BIN. It fails quietly when the release has none for this
+# system; a network failure stops the script instead, since building would not
+# help there.
 download() {
 	[ -n "$os" ] && [ -n "$arch" ] || return 1
 	name="${BIN}_${tag}_${os}_${arch}"
 	say "Downloading ghostty-config $tag for ${os}/${arch}…"
-	fetch "$RELEASES/$tag/$name.tar.gz" "$tmp/$name.tar.gz" 2>/dev/null || return 1
-	fetch "$RELEASES/$tag/checksums.txt" "$tmp/checksums.txt" 2>/dev/null || die "the release $tag has no checksums.txt"
+	status=0
+	fetch "$RELEASES/$tag/$name.tar.gz" "$tmp/$name.tar.gz" 2>/dev/null || status=$?
+	case "$status" in
+	0) ;;
+	1) return 1 ;;
+	*) die "could not download $name.tar.gz: check the network and run this again" ;;
+	esac
+	status=0
+	fetch "$RELEASES/$tag/checksums.txt" "$tmp/checksums.txt" 2>/dev/null || status=$?
+	case "$status" in
+	0) ;;
+	1) die "the release $tag has no checksums.txt" ;;
+	*) die "could not download the checksums of $tag: check the network and run this again" ;;
+	esac
 	want="$(grep " \*\{0,1\}$name.tar.gz\$" "$tmp/checksums.txt" | cut -d' ' -f1)"
 	[ -n "$want" ] || die "checksums.txt does not list $name.tar.gz"
 	got="$(sha256 "$tmp/$name.tar.gz")"
