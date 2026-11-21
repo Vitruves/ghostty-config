@@ -40,7 +40,7 @@ fetch() {
 }
 
 tmp="$(mktemp -d)"
-trap 'rm -rf "$tmp"' EXIT
+trap 'rm -rf "$tmp"; [ -z "${new:-}" ] || rm -f "$new"' EXIT
 
 # --- which release ------------------------------------------------------------
 
@@ -112,9 +112,6 @@ download() {
 	[ "$got" = "$want" ] || die "the download does not match its checksum: try again"
 	tar -xzf "$tmp/$name.tar.gz" -C "$tmp"
 	mv "$tmp/$name/$BIN" "$tmp/$BIN"
-	# A binary can be built for this system and still be refused by it (an
-	# older Linux build on Android, say): only take one that runs.
-	"$tmp/$BIN" -version >/dev/null 2>&1 || return 1
 }
 
 # build compiles the release from source, as before there were binaries.
@@ -148,14 +145,29 @@ build() {
 	(cd "$tmp/src" && CGO_ENABLED=$cgo go build -trimpath -ldflags "-s -w -X main.version=$tag" -o "$tmp/$BIN" ./cmd/ghostty-config)
 }
 
+downloaded=""
 if [ -n "${GHOSTTY_CONFIG_FROM_SOURCE:-}" ] || ! download; then
 	build
+else
+	downloaded=1
 fi
 
 # --- install ------------------------------------------------------------------------
 
 mkdir -p "$dest"
-install -m 755 "$tmp/$BIN" "$dest/$BIN"
+new="$dest/.$BIN.new"
+install -m 755 "$tmp/$BIN" "$new"
+
+# A binary can be built for this system and still be refused by it (a Linux
+# build under Termux, say): where the download does not run, build instead.
+# The test happens where the binary will live, since a temporary directory may
+# be mounted without permission to execute.
+if [ -n "$downloaded" ] && ! "$new" -version >/dev/null 2>&1; then
+	build
+	install -m 755 "$tmp/$BIN" "$new"
+fi
+"$new" -version >/dev/null 2>&1 || die "the binary does not run on this system ($(uname -s) $(uname -m))"
+mv -f "$new" "$dest/$BIN"
 say "Installed $("$dest/$BIN" -version 2>/dev/null || echo "$BIN") to $dest/$BIN"
 case ":$PATH:" in
 *":$dest:"*) say "Run it: $BIN" ;;
