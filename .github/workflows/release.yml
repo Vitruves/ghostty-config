@@ -155,8 +155,11 @@ jobs:
 
   pypi:
     # Trusted publishing: PyPI knows this repository, this workflow and the
-    # "pypi" environment, so no token is stored anywhere.
+    # "pypi" environment, so no token is stored anywhere. A fork that tags a
+    # test release skips this job: PyPI would refuse it, and a red job there
+    # would hide the release that mattered.
     needs: release
+    if: github.repository == 'vitruves/ghostty-config'
     runs-on: ubuntu-latest
     environment:
       name: pypi
