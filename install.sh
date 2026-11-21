@@ -3,10 +3,11 @@
 #
 #   curl -fsSL https://ghostty-config.vitruves.workers.dev/install.sh | sh
 #
-# Downloads the binary of the newest release for this system (macOS or Linux,
-# Intel or ARM), checks it against the release's checksums and puts it in
-# ~/.local/bin. Nothing else is needed. Where no binary fits, it builds the
-# release from source instead, which needs git and Go 1.26 or newer.
+# Downloads the binary of the newest release for this system (macOS, Linux or
+# Android under Termux, Intel or ARM), checks it against the release's
+# checksums and puts it in ~/.local/bin. Nothing else is needed. Where no
+# binary fits, it builds the release from source instead, which needs git and
+# Go 1.26 or newer (and clang on Termux).
 #
 # The script sends nothing anywhere: the only thing counted is that it was
 # fetched.
@@ -27,19 +28,28 @@ say() { printf '%s\n' "$*"; }
 die() { printf '✗ %s\n' "$*" >&2; exit 1; }
 has() { command -v "$1" >/dev/null 2>&1; }
 
-# fetch URL FILE downloads with whichever of curl and wget is here.
+# fetch URL FILE downloads with whichever of curl and wget is here. It returns
+# 0 when the file is here, 1 when the server says there is no such file, and 2
+# for anything else, so the caller can tell "this system has no binary" from
+# "the network failed, try again".
 fetch() {
 	if has curl; then
-		curl -fsSL "$1" -o "$2"
+		code="$(curl -fsSL -w '%{http_code}' "$1" -o "$2" 2>/dev/null)" && return 0
+		if [ "$code" = "404" ]; then return 1; fi
+		return 2
 	elif has wget; then
-		wget -q "$1" -O "$2"
+		# --server-response puts the status on stderr, which is the only way
+		# to tell a 404 from a 500: wget exits 8 for every HTTP error.
+		wget -q --server-response "$1" -O "$2" 2>"$tmp/fetch.err" && return 0
+		if grep -q '^[[:space:]]*HTTP/[0-9.]* 404' "$tmp/fetch.err"; then return 1; fi
+		return 2
 	else
 		die "curl or wget is needed"
 	fi
 }
 
 tmp="$(mktemp -d)"
-trap 'rm -rf "$tmp"' EXIT
+trap 'rm -rf "$tmp"; [ -z "${new:-}" ] || rm -f "$new"' EXIT
 
 # --- which release ------------------------------------------------------------
 
@@ -57,10 +67,23 @@ fi
 
 # --- which binary ----------------------------------------------------------------
 
+# Termux is Android behind a Linux shell. A binary built for Linux dies there:
+# Android's seccomp policy refuses faccessat2, which Go's os/exec calls at
+# startup. The Android build takes the branch Go keeps for that system, so
+# Termux gets that one.
+is_termux() {
+	case "${PREFIX:-}" in
+	*/com.termux/files/usr) return 0 ;;
+	esac
+	[ "$(uname -o 2>/dev/null)" = "Android" ]
+}
+
 os=""
 case "$(uname -s)" in
 Darwin) os="darwin" ;;
-Linux) os="linux" ;;
+Linux)
+	if is_termux; then os="android"; else os="linux"; fi
+	;;
 esac
 arch=""
 case "$(uname -m)" in
@@ -85,13 +108,27 @@ sha256() {
 }
 
 # download fetches the release archive for this system, checks it and unpacks
-# the binary to $tmp/$BIN. It fails quietly when there is none.
+# the binary to $tmp/$BIN. It fails quietly when the release has none for this
+# system; a network failure stops the script instead, since building would not
+# help there.
 download() {
 	[ -n "$os" ] && [ -n "$arch" ] || return 1
 	name="${BIN}_${tag}_${os}_${arch}"
 	say "Downloading ghostty-config $tag for ${os}/${arch}…"
-	fetch "$RELEASES/$tag/$name.tar.gz" "$tmp/$name.tar.gz" 2>/dev/null || return 1
-	fetch "$RELEASES/$tag/checksums.txt" "$tmp/checksums.txt" 2>/dev/null || die "the release $tag has no checksums.txt"
+	status=0
+	fetch "$RELEASES/$tag/$name.tar.gz" "$tmp/$name.tar.gz" 2>/dev/null || status=$?
+	case "$status" in
+	0) ;;
+	1) return 1 ;;
+	*) die "could not download $name.tar.gz: check the network and run this again" ;;
+	esac
+	status=0
+	fetch "$RELEASES/$tag/checksums.txt" "$tmp/checksums.txt" 2>/dev/null || status=$?
+	case "$status" in
+	0) ;;
+	1) die "the release $tag has no checksums.txt" ;;
+	*) die "could not download the checksums of $tag: check the network and run this again" ;;
+	esac
 	want="$(grep " \*\{0,1\}$name.tar.gz\$" "$tmp/checksums.txt" | cut -d' ' -f1)"
 	[ -n "$want" ] || die "checksums.txt does not list $name.tar.gz"
 	got="$(sha256 "$tmp/$name.tar.gz")"
@@ -102,8 +139,13 @@ download() {
 
 # build compiles the release from source, as before there were binaries.
 build() {
-	has git || die "no binary fits this system ($(uname -s) $(uname -m)), and building from source needs git"
-	has go || die "no binary fits this system ($(uname -s) $(uname -m)), and building from source needs Go $MIN_GO or newer: https://go.dev/dl/"
+	if is_termux && { ! has git || ! has go || ! has clang; }; then
+		die "building ghostty-config on Termux needs git, Go and clang: pkg install git golang clang"
+	fi
+	if ! has git || ! has go; then
+		has git || die "no binary fits this system ($(uname -s) $(uname -m)), and building from source needs git"
+		has go || die "no binary fits this system ($(uname -s) $(uname -m)), and building from source needs Go $MIN_GO or newer: https://go.dev/dl/"
+	fi
 	v="$(go version | sed -n 's/.*go\([0-9]*\)\.\([0-9]*\).*/\1 \2/p')"
 	[ -n "$v" ] || die "could not read the Go version"
 	set -- $v
@@ -112,18 +154,44 @@ build() {
 	[ "$1" -gt "$want_major" ] || { [ "$1" -eq "$want_major" ] && [ "$2" -ge "$want_minor" ]; } ||
 		die "Go $MIN_GO or newer is needed, this is go$1.$2: https://go.dev/dl/"
 	say "Building ghostty-config $tag from source…"
+	# Termux's own Go already targets Android; say it plainly all the same, so
+	# a Go installed some other way still builds a binary Android runs. cgo is
+	# not optional: Android has no /etc/resolv.conf, so without libc's resolver
+	# every name lookup fails with "connection refused".
+	cgo=0
+	if is_termux && [ -n "$arch" ]; then
+		GOOS=android
+		GOARCH="$arch"
+		export GOOS GOARCH
+		cgo=1
+	fi
 	git -c advice.detachedHead=false clone --quiet --depth 1 --branch "$tag" "$REPO" "$tmp/src"
-	(cd "$tmp/src" && CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.version=$tag" -o "$tmp/$BIN" ./cmd/ghostty-config)
+	(cd "$tmp/src" && CGO_ENABLED=$cgo go build -trimpath -ldflags "-s -w -X main.version=$tag" -o "$tmp/$BIN" ./cmd/ghostty-config)
 }
 
+downloaded=""
 if [ -n "${GHOSTTY_CONFIG_FROM_SOURCE:-}" ] || ! download; then
 	build
+else
+	downloaded=1
 fi
 
 # --- install ------------------------------------------------------------------------
 
 mkdir -p "$dest"
-install -m 755 "$tmp/$BIN" "$dest/$BIN"
+new="$dest/.$BIN.new"
+install -m 755 "$tmp/$BIN" "$new"
+
+# A binary can be built for this system and still be refused by it (a Linux
+# build under Termux, say): where the download does not run, build instead.
+# The test happens where the binary will live, since a temporary directory may
+# be mounted without permission to execute.
+if [ -n "$downloaded" ] && ! "$new" -version >/dev/null 2>&1; then
+	build
+	install -m 755 "$tmp/$BIN" "$new"
+fi
+"$new" -version >/dev/null 2>&1 || die "the binary does not run on this system ($(uname -s) $(uname -m))"
+mv -f "$new" "$dest/$BIN"
 say "Installed $("$dest/$BIN" -version 2>/dev/null || echo "$BIN") to $dest/$BIN"
 case ":$PATH:" in
 *":$dest:"*) say "Run it: $BIN" ;;

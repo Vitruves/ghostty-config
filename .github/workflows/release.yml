@@ -1,11 +1,15 @@
-# Builds ghostty-config for macOS and Linux, Intel and ARM, when a version
-# tag (1.2.3, no "v") is pushed, and publishes the archives and their
-# checksums as the GitHub release install.sh downloads from, then the same
-# binaries as wheels on PyPI (pip install ghostty-config).
+# Builds ghostty-config for macOS, Linux and Android (Termux), Intel and ARM,
+# when a version tag (1.2.3, no "v") is pushed, and publishes the archives and
+# their checksums as the GitHub release install.sh downloads from, then the
+# macOS and Linux binaries as wheels on PyPI (pip install ghostty-config).
 #
-# The tool is pure Go, so one runner cross-compiles every target. Linux
-# binaries are static and run on any distribution. bump_version.sh pushes the
-# tag that starts this.
+# The tool is pure Go, so one macOS runner cross-compiles the macOS and Linux
+# targets. Linux binaries are static and run on any distribution. Android
+# binaries run under Termux: the Linux ones die there, because Android's
+# seccomp policy refuses faccessat2, which Go calls at startup. They also need
+# cgo, because Android has no /etc/resolv.conf for Go's own resolver, so they
+# are built on Ubuntu against the NDK's clang. bump_version.sh pushes the tag
+# that starts this.
 name: release
 
 on:
@@ -16,11 +20,9 @@ permissions:
   contents: read
 
 jobs:
-  release:
+  build:
     # The tests were written on macOS and drive its settings too.
     runs-on: macos-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v5
 
@@ -37,7 +39,7 @@ jobs:
         env:
           VERSION: ${{ github.ref_name }}
         run: |
-          mkdir -p dist build/release
+          mkdir -p build/release
           for target in darwin/arm64 darwin/amd64 linux/amd64 linux/arm64; do
             os="${target%/*}"
             arch="${target#*/}"
@@ -47,9 +49,82 @@ jobs:
               -ldflags "-s -w -X main.version=$VERSION" \
               -o "build/release/$name/ghostty-config" ./cmd/ghostty-config
             cp LICENSE README.md "build/release/$name/"
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-macos-linux
+          path: build/release/
+          if-no-files-found: error
+
+  android:
+    # cgo links through the NDK's clang, which the Ubuntu runners already
+    # install. Without cgo Go's own resolver reads /etc/resolv.conf, which
+    # Android does not have, so every name lookup fails.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Build
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          ndk="${ANDROID_NDK_LATEST_HOME:-${ANDROID_NDK_HOME:-}}"
+          [ -n "$ndk" ] && [ -d "$ndk" ] || { echo "no Android NDK on this runner" >&2; exit 1; }
+          toolchain="$ndk/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          [ -d "$toolchain" ] || { echo "no $toolchain on this runner" >&2; exit 1; }
+          mkdir -p build/release
+          # API 21 is the oldest Go and the NDK still support.
+          for target in arm64 amd64; do
+            case "$target" in
+              arm64) cc=aarch64-linux-android21-clang ;;
+              amd64) cc=x86_64-linux-android21-clang ;;
+            esac
+            name="ghostty-config_${VERSION}_android_${target}"
+            mkdir -p "build/release/$name"
+            CGO_ENABLED=1 GOOS=android GOARCH="$target" CC="$toolchain/$cc" go build -trimpath \
+              -ldflags "-s -w -X main.version=$VERSION" \
+              -o "build/release/$name/ghostty-config" ./cmd/ghostty-config
+            cp LICENSE README.md "build/release/$name/"
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-android
+          path: build/release/
+          if-no-files-found: error
+
+  release:
+    needs: [build, android]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-macos-linux
+          path: build/release
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-android
+          path: build/release
+
+      - name: Archive
+        run: |
+          # One checksums.txt for the whole release, Android included.
+          mkdir -p dist
+          for dir in build/release/*/; do
+            name="$(basename "$dir")"
             tar -C build/release -czf "dist/$name.tar.gz" "$name"
           done
-          (cd dist && shasum -a 256 *.tar.gz > checksums.txt)
+          (cd dist && sha256sum -- *.tar.gz > checksums.txt)
           cat dist/checksums.txt
 
       - name: Publish
@@ -80,8 +155,11 @@ jobs:
 
   pypi:
     # Trusted publishing: PyPI knows this repository, this workflow and the
-    # "pypi" environment, so no token is stored anywhere.
+    # "pypi" environment, so no token is stored anywhere. A fork that tags a
+    # test release skips this job: PyPI would refuse it, and a red job there
+    # would hide the release that mattered.
     needs: release
+    if: github.repository == 'vitruves/ghostty-config'
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -104,6 +182,8 @@ jobs:
         env:
           VERSION: ${{ github.ref_name }}
         run: |
+          # build_wheels.py iterates its own PLATFORMS list, so the Android
+          # directories in build/release are left alone.
           python pypi/build_wheels.py "$VERSION" build/release dist
           pip install --quiet twine
           twine check --strict dist/*

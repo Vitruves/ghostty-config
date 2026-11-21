@@ -7,6 +7,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -66,6 +67,27 @@ func fakeExecutable(t *testing.T) string {
 	executable = func() (string, error) { return path, nil }
 	t.Cleanup(func() { executable = old })
 	return path
+}
+
+func TestArchiveNamesEveryPublishedSystem(t *testing.T) {
+	for _, target := range []string{
+		"darwin/amd64", "darwin/arm64", "linux/amd64", "linux/arm64",
+		"android/amd64", "android/arm64",
+	} {
+		goos, goarch, _ := strings.Cut(target, "/")
+		got, err := archiveFor("1.2.3", goos, goarch)
+		if err != nil {
+			t.Errorf("%s: %v", target, err)
+			continue
+		}
+		want := "ghostty-config_1.2.3_" + goos + "_" + goarch + ".tar.gz"
+		if got != want {
+			t.Errorf("%s: got %s, want %s", target, got, want)
+		}
+	}
+	if _, err := archiveFor("1.2.3", "windows", "amd64"); !errors.Is(err, ErrUnsupported) {
+		t.Errorf("windows/amd64: got %v, want ErrUnsupported", err)
+	}
 }
 
 func TestInstallReplacesTheBinary(t *testing.T) {
